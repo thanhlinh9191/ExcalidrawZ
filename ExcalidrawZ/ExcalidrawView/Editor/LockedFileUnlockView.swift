@@ -50,7 +50,7 @@ struct LockedFileUnlockView: View {
                 lockIcon
 
                 VStack(spacing: 6) {
-                    Text("This file is locked.")
+                    Text(.localizable(.lockedContentLockedFileOverlayTitle))
                         .font(.title2.weight(.semibold))
                         .multilineTextAlignment(.center)
 
@@ -83,9 +83,9 @@ struct LockedFileUnlockView: View {
         }
         .sheet(isPresented: $isRecoveryKeySheetPresented) {
             RecoveryKeyInputSheet(
-                title: "Use Recovery Key",
+                title: String(localizable: .lockedContentUseRecoveryKeyButton),
                 subtitle: request.fileName,
-                primaryButtonTitle: "Unlock",
+                primaryButtonTitle: String(localizable: .lockedContentUnlockButton),
                 width: 520
             ) { recoveryKey in
                 do {
@@ -104,17 +104,17 @@ struct LockedFileUnlockView: View {
             }
         }
         .confirmationDialog(
-            "Delete this file permanently?",
+            String(localizable: .lockedContentDeleteFileConfirmationTitle),
             isPresented: $isDeleteConfirmationPresented
         ) {
-            Button("Delete File", role: .destructive) {
+            Button(String(localizable: .lockedContentDeleteFileButton), role: .destructive) {
                 Task { @MainActor in
                     await deleteFilePermanently()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localizable: .generalButtonCancel), role: .cancel) {}
         } message: {
-            Text("This cannot be undone.")
+            Text(.localizable(.lockedContentDeleteCannotBeUndone))
         }
     }
 
@@ -160,7 +160,7 @@ struct LockedFileUnlockView: View {
             Button {
                 isRecoveryKeySheetPresented = true
             } label: {
-                Text("Use Recovery Key")
+                Text(.localizable(.lockedContentUseRecoveryKeyButton))
                     .font(.callout.weight(.medium))
             }
             .buttonStyle(.plain)
@@ -172,7 +172,7 @@ struct LockedFileUnlockView: View {
     @ViewBuilder
     private var inlineRecoveryKeyUnlockControls: some View {
         VStack(spacing: 10) {
-            SecureField("Recovery Key", text: $recoveryKeyText)
+            SecureField(String(localizable: .lockedContentRecoveryKeyPlaceholder), text: $recoveryKeyText)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
                 .focused($isRecoveryKeyFocused)
@@ -221,7 +221,7 @@ struct LockedFileUnlockView: View {
                     Button(role: .destructive) {
                         isDeleteConfirmationPresented = true
                     } label: {
-                        Text("Delete This File")
+                        Text(.localizable(.lockedContentDeleteThisFileButton))
                             .font(.callout.weight(.medium))
                     }
                     .buttonStyle(.plain)
@@ -235,7 +235,7 @@ struct LockedFileUnlockView: View {
     @ViewBuilder
     private var systemUnlockButtonLabel: some View {
         ZStack {
-            Label("Unlock", systemImage: systemUnlockAvailability.systemImage)
+            Label(.localizable(.lockedContentUnlockButton), systemImage: systemUnlockAvailability.systemImage)
                 .opacity(isUnlockingOrLoading ? 0 : 1)
 
             loadingButtonLabel
@@ -248,7 +248,7 @@ struct LockedFileUnlockView: View {
     @ViewBuilder
     private var recoveryUnlockButtonLabel: some View {
         ZStack {
-            Text("Unlock")
+            Text(.localizable(.lockedContentUnlockButton))
                 .opacity(isUnlockingOrLoading ? 0 : 1)
 
             loadingButtonLabel

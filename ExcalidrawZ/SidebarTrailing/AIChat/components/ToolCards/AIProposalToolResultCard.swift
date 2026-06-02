@@ -50,14 +50,14 @@ struct AIProposalToolResultCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 header
                 HStack(spacing: 8) {
-                    Text("\(artifact.elementCount) element\(artifact.elementCount == 1 ? "" : "s")")
+                    Text(.localizable(.aiProposalElementCount(artifact.elementCount)))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     
                     Spacer(minLength: 8)
 
                     if let onDismiss {
-                        Button("Dismiss") {
+                        Button(String(localizable: .generalButtonDismiss)) {
                             onDismiss()
                         }
                         .modernButtonStyle(style: .glass, size: .regular, shape: .capsule)
@@ -70,7 +70,12 @@ struct AIProposalToolResultCard: View {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
-                            Label(applyCount > 0 ? "Add Again" : "Apply", systemSymbol: .plus)
+                            Label(
+                                applyCount > 0
+                                ? String(localizable: .aiProposalAddAgainButton)
+                                : String(localizable: .aiProposalApplyButton),
+                                systemSymbol: .plus
+                            )
                         }
                     }
                     .modernButtonStyle(style: .glassProminent, size: .regular, shape: .capsule)
@@ -92,7 +97,7 @@ struct AIProposalToolResultCard: View {
         HStack(spacing: 6) {
             Image(systemSymbol: .sparkles)
                 .font(.caption.weight(.semibold))
-            Text("AI proposal")
+            Text(.localizable(.aiProposalTitle))
                 .font(.caption.weight(.semibold))
             Spacer()
         }
@@ -116,7 +121,7 @@ struct AIProposalToolResultCard: View {
                             id: UUID().uuidString,
                             status: .published,
                             createdAt: Date(),
-                            name: "AI Proposal",
+                            name: String(localizable: .aiProposalDragName),
                             elements: artifact.visibleElements
                         )
                     ]
@@ -371,9 +376,9 @@ private enum AIProposalApplyError: LocalizedError {
     var errorDescription: String? {
         switch self {
             case .emptyProposal:
-                "The AI proposal is empty."
+                String(localizable: .aiProposalErrorEmpty)
             case .noActiveCanvas:
-                "Open a canvas before applying the AI proposal."
+                String(localizable: .aiProposalErrorNoActiveCanvas)
         }
     }
 }

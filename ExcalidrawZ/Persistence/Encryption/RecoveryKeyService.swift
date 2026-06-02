@@ -18,22 +18,22 @@ enum RecoveryKeyError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
             case .invalidFormat:
-                "Enter an ExcalidrawZ Recovery Key that starts with EDZ2."
+                String(localizable: .recoveryKeyErrorInvalidFormat)
             case .invalidLength:
-                "The Recovery Key is incomplete. Check the key and try again."
+                String(localizable: .recoveryKeyErrorInvalidLength)
             case .invalidCharacter(let character):
-                "The Recovery Key contains an unsupported character: \(character)."
+                String(localizable: .recoveryKeyErrorInvalidCharacter(String(character)))
             case .randomGenerationFailed:
-                "A new Recovery Key could not be generated."
+                String(localizable: .recoveryKeyErrorRandomGenerationFailed)
         }
     }
 
     var recoverySuggestion: String? {
         switch self {
             case .invalidFormat, .invalidLength, .invalidCharacter:
-                "Paste the full Recovery Key exactly as it was shown when the file was locked."
+                String(localizable: .recoveryKeySuggestionPasteFullKey)
             case .randomGenerationFailed:
-                "Try again. If this keeps happening, restart the app."
+                String(localizable: .recoveryKeySuggestionTryAgainRestart)
         }
     }
 }

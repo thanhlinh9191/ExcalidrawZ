@@ -10,6 +10,7 @@ import SwiftUI
 
 import ChocofordUI
 import LLMKit
+import SFSafeSymbols
 
 struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
@@ -187,9 +188,9 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                             await relockUnlockedContent()
                         }
                     } label: {
-                        Label("File Unlocked", systemImage: LockedContentSymbols.keyShield)
+                        Label(.localizable(.lockedContentFileUnlockedToolbarTitle), systemImage: LockedContentSymbols.keyShield)
                     }
-                    .help("Lock Files")
+                    .help(String(localizable: .lockedContentLockFilesHelp))
                 }
 
                 if aiChatPreferences.isAIEnabled && AIChatAvailability.isAvailable {
@@ -216,10 +217,10 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 await lockFile(file)
             }
         } label: {
-            Label("Lock File", systemImage: "lock.shield")
+            Label(.localizable(.lockFileTitle), systemSymbol: .lockShield)
         }
         .disabled(isLockingFile)
-        .help("Lock File")
+        .help(String(localizable: .lockFileTitle))
         .modifier(FeatureDiscoveryTipModifier(
             kind: .lockFile,
             isEnabled: !isLockingFile
@@ -235,16 +236,16 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                     await removeFileLock(fileObjectID: fileObjectID)
                 }
             } label: {
-                Label("Remove Lock", systemImage: LockedContentSymbols.removeLock)
+                Label(.localizable(.settingsSecurityRemoveLockButton), systemImage: LockedContentSymbols.removeLock)
             }
         } label: {
-            Label("File Unlocked", systemImage: LockedContentSymbols.keyShield)
+            Label(.localizable(.lockedContentFileUnlockedToolbarTitle), systemImage: LockedContentSymbols.keyShield)
         } primaryAction: {
             Task { @MainActor in
                 await relockUnlockedContent()
             }
         }
-        .help("Lock File")
+        .help(String(localizable: .lockFileTitle))
     }
 
     @MainActor
@@ -364,7 +365,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 .init(
                     displayMode: .hud,
                     type: .complete(.green),
-                    title: "Lock removed"
+                    title: String(localizable: .lockedContentLockRemovedToastTitle)
                 )
             )
         } catch {
@@ -439,7 +440,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(file.name ?? String(localizable: .generalUntitled))
                                 .font(.headline)
-                            Text(file.updatedAt?.formatted() ?? "Not modified")
+                            Text(file.updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -449,7 +450,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(filename)
                                 .font(.headline)
-                            Text(updatedAt?.formatted() ?? "Not modified")
+                            Text(updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -459,7 +460,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(filename)
                                 .font(.headline)
-                            Text(updatedAt?.formatted() ?? "Not modified")
+                            Text(updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -468,7 +469,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                             VStack(alignment: .leading) {
                                 Text(collaborationFile.name ?? String(localizable: .generalUntitled))
                                     .font(.headline)
-                                Text(collaborationFile.updatedAt?.formatted() ?? "Not modified")
+                                Text(collaborationFile.updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }

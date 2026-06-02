@@ -24,10 +24,10 @@ struct BackupLockedPreviewView: View {
                 .font(.system(size: 44, weight: .semibold))
                 .foregroundStyle(Color.accentColor)
 
-            Text("Locked backup file")
+            Text(.localizable(.settingsBackupsLockedPreviewTitle))
                 .font(.title3.weight(.semibold))
 
-            Text("This older backup contains a user-locked file. Unlock it with the Recovery Key to preview or export it.")
+            Text(.localizable(.settingsBackupsLockedPreviewMessage))
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -41,7 +41,7 @@ struct BackupLockedPreviewView: View {
                         ProgressView()
                             .controlSize(.small)
                     } else {
-                        Label("Unlock Preview", systemSymbol: unlockSystemSymbol)
+                        Label(.localizable(.settingsBackupsUnlockPreviewButton), systemSymbol: unlockSystemSymbol)
                     }
                 }
                 .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
@@ -51,7 +51,7 @@ struct BackupLockedPreviewView: View {
                 Button {
                     onUseRecoveryKey()
                 } label: {
-                    Text("Use Recovery Key")
+                    Text(.localizable(.lockedContentUseRecoveryKeyButton))
                         .font(.callout.weight(.medium))
                 }
                 .buttonStyle(.plain)

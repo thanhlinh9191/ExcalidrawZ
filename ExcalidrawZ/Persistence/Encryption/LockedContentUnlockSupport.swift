@@ -50,7 +50,7 @@ struct LockedContentSystemUnlockAvailability: Equatable {
     static var unavailable: Self {
         .init(
             isAvailable: false,
-            buttonTitle: "Unlock with Mac Password",
+            buttonTitle: String(localizable: .lockedContentSystemUnlockMacPassword),
             systemImage: LockedContentSymbols.keyShield
         )
     }
@@ -66,22 +66,22 @@ enum LockedContentSystemUnlockError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
             case .unavailable:
-                "System authentication is not available on this device."
+                String(localizable: .lockedContentSystemUnlockErrorUnavailable)
             case .noSavedRecoveryKey:
-                "No saved Recovery Key is available on this device."
+                String(localizable: .lockedContentSystemUnlockErrorNoSavedRecoveryKey)
             case .canceled:
-                "System authentication was canceled."
+                String(localizable: .lockedContentSystemUnlockErrorCanceled)
             case .authenticationFailed:
-                "System authentication failed."
+                String(localizable: .lockedContentSystemUnlockErrorAuthenticationFailed)
             case .keychainError:
-                "The saved Recovery Key could not be read from Keychain."
+                String(localizable: .lockedContentSystemUnlockErrorKeychain)
         }
     }
 
     var recoverySuggestion: String? {
         switch self {
             case .unavailable, .noSavedRecoveryKey, .authenticationFailed, .keychainError:
-                "Enter your Recovery Key to unlock this content."
+                String(localizable: .lockedContentSystemUnlockSuggestionEnterRecoveryKey)
             case .canceled:
                 nil
         }
@@ -89,12 +89,12 @@ enum LockedContentSystemUnlockError: LocalizedError, Equatable {
 }
 
 enum LockedContentSystemUnlockReason {
-    static let lockFile = "lock this file"
-    static let unlockFile = "unlock this file"
-    static let manageLockedContent = "manage locked content"
-    static let archiveLockedFiles = "export locked files"
-    static let exportBackup = "export this backup"
-    static let previewBackupFile = "preview this backup file"
+    static let lockFile = String(localizable: .lockedContentSystemUnlockReasonLockFile)
+    static let unlockFile = String(localizable: .lockedContentSystemUnlockReasonUnlockFile)
+    static let manageLockedContent = String(localizable: .lockedContentSystemUnlockReasonManageLockedContent)
+    static let archiveLockedFiles = String(localizable: .lockedContentSystemUnlockReasonArchiveLockedFiles)
+    static let exportBackup = String(localizable: .lockedContentSystemUnlockReasonExportBackup)
+    static let previewBackupFile = String(localizable: .lockedContentSystemUnlockReasonPreviewBackupFile)
 }
 
 enum LockedContentSavedRecoveryKeyState: Equatable {
@@ -136,39 +136,39 @@ enum LockedContentSystemUnlockStore {
             case .touchID:
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with Touch ID or Mac Password",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockTouchIDMacPassword),
                     systemImage: "touchid"
                 )
             case .faceID:
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with Face ID or Passcode",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockFaceIDPasscode),
                     systemImage: "faceid"
                 )
             case .opticID:
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with Optic ID or Passcode",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockOpticIDPasscode),
                     systemImage: "opticid"
                 )
             case .none:
 #if os(macOS)
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with Mac Password",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockMacPassword),
                     systemImage: LockedContentSymbols.keyShield
                 )
 #else
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with Device Passcode",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockDevicePasscode),
                     systemImage: LockedContentSymbols.keyShield
                 )
 #endif
             @unknown default:
                 return .init(
                     isAvailable: true,
-                    buttonTitle: "Unlock with System Authentication",
+                    buttonTitle: String(localizable: .lockedContentSystemUnlockGeneric),
                     systemImage: LockedContentSymbols.keyShield
                 )
         }

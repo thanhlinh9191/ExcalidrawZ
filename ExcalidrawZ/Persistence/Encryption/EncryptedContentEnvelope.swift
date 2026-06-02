@@ -23,41 +23,41 @@ enum EncryptedContentError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
             case .contentLocked:
-                "This file is locked."
+                String(localizable: .lockedContentErrorFileLocked)
             case .contentIdentityMismatch:
-                "This locked content belongs to a different file."
+                String(localizable: .lockedContentErrorIdentityMismatch)
             case .invalidEnvelope:
-                "This locked content is damaged or incomplete."
+                String(localizable: .lockedContentErrorInvalidEnvelope)
             case .unsupportedVersion:
-                "This locked content was created by a newer unsupported version of ExcalidrawZ."
+                String(localizable: .lockedContentErrorUnsupportedVersion)
             case .unsupportedAlgorithm:
-                "This locked content uses an unsupported encryption method."
+                String(localizable: .lockedContentErrorUnsupportedAlgorithm)
             case .invalidRecoveryMetadata:
-                "The Recovery Key data saved with this locked content is damaged."
+                String(localizable: .lockedContentErrorInvalidRecoveryMetadata)
             case .invalidWrappedFileKey:
-                "The encrypted file key is damaged."
+                String(localizable: .lockedContentErrorInvalidWrappedFileKey)
             case .recoveryVerificationFailed:
-                "The locked file could not be verified with the new Recovery Key."
+                String(localizable: .lockedContentErrorRecoveryVerificationFailed)
             case .encryptionFailed:
-                "The file could not be locked."
+                String(localizable: .lockedContentErrorEncryptionFailed)
             case .decryptionFailed:
-                "The Recovery Key is incorrect or this locked content is damaged."
+                String(localizable: .lockedContentErrorDecryptionFailed)
         }
     }
 
     var recoverySuggestion: String? {
         switch self {
             case .contentLocked:
-                "Enter the Recovery Key or use system authentication to unlock it."
+                String(localizable: .lockedContentSuggestionUnlock)
             case .contentIdentityMismatch:
-                "Open the original file that this locked content belongs to."
+                String(localizable: .lockedContentSuggestionOpenOriginal)
             case .invalidEnvelope, .unsupportedVersion, .unsupportedAlgorithm,
                     .invalidRecoveryMetadata, .invalidWrappedFileKey:
-                "Use a backup or an earlier version of this file if one is available."
+                String(localizable: .lockedContentSuggestionUseBackup)
             case .recoveryVerificationFailed, .encryptionFailed:
-                "Try again before closing the file."
+                String(localizable: .lockedContentSuggestionTryAgainBeforeClosing)
             case .decryptionFailed:
-                "Check the Recovery Key and try again."
+                String(localizable: .lockedContentSuggestionCheckRecoveryKey)
         }
     }
 }

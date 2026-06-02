@@ -25,7 +25,7 @@ extension PromptInputView {
             }
         }
         .disabled(isGeneratingDebugContext)
-        .help("Show the context LLMKit would send for this draft.")
+        .help(String(localizable: .debugChatContextHelp))
     }
 
     var debugChatContextSheet: some View {
@@ -38,9 +38,9 @@ extension PromptInputView {
                     .background(.thinMaterial, in: Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Debug Context")
+                    Text(.localizable(.debugChatContextTitle))
                         .font(.headline)
-                    Text("Snapshot of the active context LLMKit would pass into the next AI run.")
+                    Text(.localizable(.debugChatContextMessage))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -50,7 +50,7 @@ extension PromptInputView {
                 if !debugContextText.isEmpty {
                     CopyFeedbackButton(
                         text: debugContextText,
-                        help: "Copy debug context",
+                        help: String(localizable: .debugChatContextCopyHelp),
                         iconFrame: CGSize(width: 16, height: 16),
                         iconFont: .body
                     )
@@ -66,7 +66,7 @@ extension PromptInputView {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help("Close")
+                .help(String(localizable: .generalButtonClose))
             }
 
             sheetBody
@@ -81,7 +81,7 @@ extension PromptInputView {
             VStack(spacing: 12) {
                 ProgressView()
                     .controlSize(.regular)
-                Text("Generating context snapshot...")
+                Text(.localizable(.debugChatContextGenerating))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -210,7 +210,7 @@ private enum DebugChatContextError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noConversation:
-            "No conversation exists yet. Send one message first, then preview the next request context."
+            String(localizable: .debugChatContextNoConversationError)
         }
     }
 }

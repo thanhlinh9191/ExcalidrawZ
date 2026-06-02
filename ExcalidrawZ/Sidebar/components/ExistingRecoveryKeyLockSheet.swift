@@ -13,10 +13,10 @@ struct ExistingRecoveryKeyLockSheet: View {
 
     var body: some View {
         RecoveryKeyInputSheet(
-            title: "Use Existing Recovery Key",
+            title: String(localizable: .lockedContentUseExistingRecoveryKeyTitle),
             subtitle: request.fileName,
-            message: "Enter the Recovery Key that unlocks your existing locked files. This file will use the same key.",
-            primaryButtonTitle: "Lock File",
+            message: String(localizable: .lockedContentUseExistingRecoveryKeyMessage),
+            primaryButtonTitle: String(localizable: .lockFileTitle),
             headerLayout: .compact
         ) { recoveryKey in
             let unlockedCount = try await PersistenceController.shared.fileRepository

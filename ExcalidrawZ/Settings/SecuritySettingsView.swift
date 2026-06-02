@@ -47,9 +47,9 @@ struct SecuritySettingsView: View {
         }
         .sheet(isPresented: $isRecoveryKeySheetPresented) {
             RecoveryKeyInputSheet(
-                title: "Use Recovery Key",
-                message: "Unlock locked content management.",
-                primaryButtonTitle: "Unlock"
+                title: String(localizable: .lockedContentUseRecoveryKeyButton),
+                message: String(localizable: .settingsSecurityUnlockManagementMessage),
+                primaryButtonTitle: String(localizable: .lockedContentUnlockButton)
             ) {
                 try await unlockManagement(with: $0)
             }
@@ -65,8 +65,8 @@ struct SecuritySettingsView: View {
                     alertToast(.init(
                         displayMode: .hud,
                         type: .complete(.green),
-                        title: "Locked content deleted",
-                        subTitle: "\(result.deletedFileCount + result.deletedBackupFileCount) item\(result.deletedFileCount + result.deletedBackupFileCount == 1 ? "" : "s") removed"
+                        title: String(localizable: .settingsSecurityLockedContentDeletedToastTitle),
+                        subTitle: String(localizable: .settingsSecurityLockedContentDeletedToastSubtitle(result.deletedFileCount + result.deletedBackupFileCount))
                     ))
                 }
             }
@@ -108,7 +108,7 @@ struct SecuritySettingsView: View {
             if isLoading {
                 HStack {
                     ProgressView()
-                    Text("Loading locked content...")
+                    Text(.localizable(.settingsSecurityLoadingLockedContent))
                         .foregroundStyle(.secondary)
                 }
             } else if lockedFiles.isEmpty {
@@ -123,7 +123,7 @@ struct SecuritySettingsView: View {
         } footer: {
 #if DEBUG
             VStack(alignment: .leading, spacing: 8) {
-                Text("Keep your Recovery Key as the fallback. ExcalidrawZ saves it in this device's Keychain for future locking and system unlock.")
+                Text(.localizable(.settingsSecurityFooter))
 
                 HStack {
                     Spacer()
@@ -137,10 +137,10 @@ struct SecuritySettingsView: View {
                             HStack {
                                 ProgressView()
                                     .controlSize(.small)
-                                Text("Resetting...")
+                                Text(.localizable(.settingsSecurityDebugResetting))
                             }
                         } else {
-                            Label("Reset Lock State", systemImage: "trash")
+                            Label(.localizable(.settingsSecurityDebugResetLockState), systemImage: "trash")
                         }
                     }
                     .disabled(isResettingDebugSecurityState)
@@ -148,7 +148,7 @@ struct SecuritySettingsView: View {
             }
 #else
             VStack(alignment: .leading, spacing: 8) {
-                Text("Keep your Recovery Key as the fallback. ExcalidrawZ saves it in this device's Keychain for future locking and system unlock.")
+                Text(.localizable(.settingsSecurityFooter))
             }
 #endif
         }
@@ -157,7 +157,7 @@ struct SecuritySettingsView: View {
     @ViewBuilder
     private var lockedContentHeader: some View {
         HStack {
-            Text("Locked Content")
+            Text(.localizable(.settingsSecurityLockedContentTitle))
 
             Spacer()
 
@@ -167,7 +167,7 @@ struct SecuritySettingsView: View {
                         await lockManagementSession()
                     }
                 } label: {
-                    Label("Lock", systemImage: "lock.shield")
+                    Label(.localizable(.settingsSecurityLockButton), systemImage: "lock.shield")
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.small)
@@ -177,7 +177,7 @@ struct SecuritySettingsView: View {
                         await beginResetRecoveryKey()
                     }
                 } label: {
-                    Label("Reset Recovery Key...", systemImage: "key")
+                    Label(.localizable(.settingsSecurityResetRecoveryKeyButton), systemImage: "key")
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.small)
@@ -193,9 +193,9 @@ struct SecuritySettingsView: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("No locked content")
+                Text(.localizable(.settingsSecurityNoLockedContentTitle))
                     .font(.headline)
-                Text("Files you lock will appear here.")
+                Text(.localizable(.settingsSecurityNoLockedContentMessage))
                     .foregroundStyle(.secondary)
             }
         }
@@ -211,9 +211,9 @@ struct SecuritySettingsView: View {
                     .foregroundStyle(Color.accentColor)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Locked Content is protected")
+                    Text(.localizable(.settingsSecurityProtectedTitle))
                         .font(.headline)
-                    Text("Unlock to view and manage locked content.")
+                    Text(.localizable(.settingsSecurityProtectedMessage))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -223,7 +223,7 @@ struct SecuritySettingsView: View {
                 Button(role: .destructive) {
                     isLostRecoveryKeyResetSheetPresented = true
                 } label: {
-                    Text("Lost Recovery Key?")
+                    Text(.localizable(.settingsSecurityLostRecoveryKeyButton))
                         .font(.callout.weight(.medium))
                 }
                 .buttonStyle(.plain)
@@ -236,7 +236,7 @@ struct SecuritySettingsView: View {
                     Button {
                         isRecoveryKeySheetPresented = true
                     } label: {
-                        Text("Use Recovery Key")
+                        Text(.localizable(.lockedContentUseRecoveryKeyButton))
                             .font(.callout.weight(.medium))
                     }
                     .buttonStyle(.plain)
@@ -252,7 +252,7 @@ struct SecuritySettingsView: View {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
-                            Label("Unlock", systemImage: systemUnlockAvailability.systemImage)
+                            Label(.localizable(.lockedContentUnlockButton), systemImage: systemUnlockAvailability.systemImage)
                         }
                     }
                     .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
@@ -471,7 +471,7 @@ struct SecuritySettingsView: View {
                     recoveryKey = currentRecoveryKey
                 } else {
                     recoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
-                        reason: "reset locked content debug state"
+                        reason: String(localizable: .lockedContentSystemUnlockReasonResetDebugState)
                     )
                 }
 
@@ -515,9 +515,9 @@ enum LockedContentDestructiveResetError: LocalizedError {
     var errorDescription: String? {
         switch self {
             case .encryptedBackupDeletionFailed(let failedCount):
-                "Failed to delete \(failedCount) encrypted backup file\(failedCount == 1 ? "" : "s")."
+                String(localizable: .settingsSecurityEncryptedBackupDeletionFailed(failedCount))
             case .noLockedContent:
-                "No locked content was found."
+                String(localizable: .settingsSecurityNoLockedContentFound)
         }
     }
 }
@@ -609,10 +609,10 @@ private struct LostRecoveryKeyResetSheet: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.red)
 
-            Text("Lost Recovery Key")
+            Text(.localizable(.settingsSecurityLostRecoveryKeyTitle))
                 .font(.title2.weight(.semibold))
 
-            Text("Delete locked content that can no longer be unlocked, then start over with a new Recovery Key the next time you lock a file.")
+            Text(.localizable(.settingsSecurityLostRecoveryKeyMessage))
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }
@@ -621,17 +621,17 @@ private struct LostRecoveryKeyResetSheet: View {
     @ViewBuilder
     private var affectedContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("This permanently deletes:")
+            Text(.localizable(.settingsSecurityLostRecoveryKeyDeletesTitle))
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.red)
 
             countRow(
-                title: "Locked files, including Trash",
+                title: String(localizable: .settingsSecurityLostRecoveryKeyLockedFilesTitle),
                 count: lockedFileCount,
                 systemImage: "lock.shield"
             )
 
-            Text("Encrypted backup copies that depend on the lost key are cleared too.")
+            Text(.localizable(.settingsSecurityLostRecoveryKeyBackupsMessage))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -671,10 +671,10 @@ private struct LostRecoveryKeyResetSheet: View {
     @ViewBuilder
     private var confirmationField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Type DELETE to continue.")
+            Text(.localizable(.settingsSecurityDeleteConfirmationInstruction))
                 .font(.callout.weight(.medium))
 
-            TextField("DELETE", text: $confirmationText)
+            TextField(String(localizable: .settingsSecurityDeleteConfirmationPlaceholder), text: $confirmationText)
                 .textFieldStyle(.roundedBorder)
                 .disabled(isWorking || totalLockedContentCount == nil)
         }
@@ -719,7 +719,7 @@ private struct LostRecoveryKeyResetSheet: View {
                     ProgressView()
                         .controlSize(.small)
                 } else {
-                    Text("Delete Locked Content")
+                    Text(.localizable(.settingsSecurityDeleteLockedContentButton))
                 }
             }
             .keyboardShortcut(.defaultAction)
@@ -786,7 +786,7 @@ private struct LockedFileSettingsRow: View {
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
-                    Text(isUnlocked ? "Temporarily unlocked" : "Locked")
+                    Text(isUnlocked ? String(localizable: .settingsSecurityTemporarilyUnlockedStatus) : String(localizable: .settingsSecurityLockedStatus))
                     if let updatedAt = file.updatedAt {
                         Text(updatedAt.formatted())
                     }
@@ -802,13 +802,13 @@ private struct LockedFileSettingsRow: View {
                     Button(role: .destructive) {
                         onRemoveLock()
                     } label: {
-                        Label("Remove Lock", systemImage: LockedContentSymbols.removeLock)
+                        Label(.localizable(.settingsSecurityRemoveLockButton), systemImage: LockedContentSymbols.removeLock)
                     }
                 } else {
                     Button {
                         onUnlock()
                     } label: {
-                        Label("Unlock...", systemImage: LockedContentSymbols.keyShield)
+                        Label(.localizable(.settingsSecurityUnlockMenuButton), systemImage: LockedContentSymbols.keyShield)
                     }
                 }
             } label: {
@@ -842,13 +842,13 @@ private struct RecoveryKeyResetSheet: View {
             VStack(alignment: .leading, spacing: 18) {
                 header
 
-                Text("Save this new Recovery Key before continuing. Locked files and checkpoints will be updated to use it.")
+                Text(.localizable(.settingsSecurityResetRecoveryKeyMessage))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 10) {
-                    Text(generatedRecoveryKey?.displayString ?? "Unable to generate Recovery Key")
+                    Text(generatedRecoveryKey?.displayString ?? String(localizable: .lockedContentUnableToGenerateRecoveryKey))
                         .font(.system(.callout, design: .monospaced).weight(.semibold))
                         .textSelection(.enabled)
                         .padding(.horizontal, 12)
@@ -858,7 +858,7 @@ private struct RecoveryKeyResetSheet: View {
 
                     CopyFeedbackButton(
                         text: generatedRecoveryKey?.displayString ?? "",
-                        help: "Copy Recovery Key",
+                        help: String(localizable: .lockedContentCopyRecoveryKeyHelp),
                         iconFrame: CGSize(width: 18, height: 18),
                         iconFont: .body
                     )
@@ -867,7 +867,7 @@ private struct RecoveryKeyResetSheet: View {
                 }
 
                 Toggle(isOn: $hasSavedRecoveryKey) {
-                    Text("I saved this new Recovery Key.")
+                    Text(.localizable(.settingsSecuritySavedNewRecoveryKeyConfirmation))
                         .font(.callout.weight(.medium))
                 }
 #if os(macOS)
@@ -913,10 +913,10 @@ private struct RecoveryKeyResetSheet: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
 
-            Text("Reset Recovery Key")
+            Text(.localizable(.settingsSecurityResetRecoveryKeyTitle))
                 .font(.title2.weight(.semibold))
 
-            Text("\(request.unlockedFileCount) temporarily unlocked file\(request.unlockedFileCount == 1 ? "" : "s")")
+            Text(.localizable(.settingsSecurityResetRecoveryKeyUnlockedFileCount(request.unlockedFileCount)))
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
@@ -949,7 +949,7 @@ private struct RecoveryKeyResetSheet: View {
                     await resetRecoveryKey()
                 }
             } label: {
-                Text("Reset Key")
+                Text(.localizable(.settingsSecurityResetKeyButton))
             }
             .keyboardShortcut(.defaultAction)
             .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)

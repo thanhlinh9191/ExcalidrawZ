@@ -137,7 +137,7 @@ struct RecoveryKeyInputSheet: View {
 
     @ViewBuilder
     private var recoveryKeyTextField: some View {
-        SecureField("Recovery Key", text: $recoveryKeyText)
+        SecureField(String(localizable: .lockedContentRecoveryKeyPlaceholder), text: $recoveryKeyText)
             .textFieldStyle(.roundedBorder)
             .font(.system(.body, design: .monospaced))
             .focused($isRecoveryKeyFocused)

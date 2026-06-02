@@ -114,17 +114,17 @@ struct LockedFileAccessSheet: View {
             }
         }
         .confirmationDialog(
-            "Delete this file permanently?",
+            String(localizable: .lockedContentDeleteFileConfirmationTitle),
             isPresented: $isDeleteConfirmationPresented
         ) {
-            Button("Delete File", role: .destructive) {
+            Button(String(localizable: .lockedContentDeleteFileButton), role: .destructive) {
                 Task { @MainActor in
                     await deleteFilePermanently()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localizable: .generalButtonCancel), role: .cancel) {}
         } message: {
-            Text("This cannot be undone.")
+            Text(.localizable(.lockedContentDeleteCannotBeUndone))
         }
         .fileExporter(
             isPresented: $isRecoveryKeyExporterPresented,
@@ -154,7 +154,7 @@ struct LockedFileAccessSheet: View {
             headerIcon
 
             VStack(alignment: .leading, spacing: 5) {
-                Text(request.mode == .lock ? "Lock File" : "Unlock File")
+                Text(request.mode == .lock ? String(localizable: .lockFileTitle) : String(localizable: .unlockFileTitle))
                     .font(.title2.weight(.semibold))
 
                 Text(request.fileName)
@@ -194,13 +194,13 @@ struct LockedFileAccessSheet: View {
                     recoveryKeyInstruction
 
                     recoveryKeyDisplay(
-                        generatedRecoveryKey?.displayString ?? "Unable to generate Recovery Key"
+                        generatedRecoveryKey?.displayString ?? String(localizable: .lockedContentUnableToGenerateRecoveryKey)
                     )
 
                     savedRecoveryKeyToggle(isOn: $hasSavedRecoveryKey)
 
                 case .useActiveUnifiedKey:
-                    Label("This file will use your existing Recovery Key.", systemImage: "key.fill")
+                    Label(.localizable(.lockedContentExistingRecoveryKeyNotice), systemImage: "key.fill")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -210,7 +210,7 @@ struct LockedFileAccessSheet: View {
 
     @ViewBuilder
     private var recoveryKeyInstruction: some View {
-        Text("Save this Recovery Key. It unlocks all locked ExcalidrawZ content.")
+        Text(.localizable(.lockedContentRecoveryKeyInstruction))
             .font(.callout)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -223,7 +223,7 @@ struct LockedFileAccessSheet: View {
                 .opacity(0)
                 .accessibilityHidden(true)
 
-            Text("Preparing Recovery Key...")
+            Text(.localizable(.lockedContentPreparingRecoveryKey))
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -236,7 +236,7 @@ struct LockedFileAccessSheet: View {
             HStack(spacing: 10) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Generating...")
+                Text(.localizable(.lockedContentGenerating))
                     .font(.system(.callout, design: .monospaced).weight(.semibold))
                     .foregroundStyle(.secondary)
             }
@@ -253,7 +253,7 @@ struct LockedFileAccessSheet: View {
     @ViewBuilder
     private func savedRecoveryKeyToggle(isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
-            Text("I saved this Recovery Key.")
+            Text(.localizable(.lockedContentSavedRecoveryKeyConfirmation))
                 .font(.callout.weight(.medium))
         }
 #if os(macOS)
@@ -265,7 +265,7 @@ struct LockedFileAccessSheet: View {
     private func copyRecoveryKeyButton(isHidden: Bool = false) -> some View {
         CopyFeedbackButton(
             text: generatedRecoveryKey?.displayString ?? "",
-            help: "Copy Recovery Key",
+            help: String(localizable: .lockedContentCopyRecoveryKeyHelp),
             iconFrame: CGSize(width: recoveryKeyControlHeight, height: recoveryKeyControlHeight),
             iconFont: .body.weight(.semibold),
             normalColor: .primary
@@ -288,7 +288,7 @@ struct LockedFileAccessSheet: View {
         .disabled(isHidden || generatedRecoveryKey == nil)
         .opacity(isHidden ? 0 : 1)
         .accessibilityHidden(isHidden)
-        .help("Save Recovery Key")
+        .help(String(localizable: .lockedContentSaveRecoveryKeyHelp))
     }
 
     @ViewBuilder
@@ -296,20 +296,20 @@ struct LockedFileAccessSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             lockFeatureRow(
                 icon: "key.fill",
-                title: "Encrypts this file",
-                message: "The file and its checkpoints are encrypted before they are written to storage.",
+                title: String(localizable: .lockedContentFeatureEncryptTitle),
+                message: String(localizable: .lockedContentFeatureEncryptMessage),
                 tint: LockSecurityPalette.safe
             )
             lockFeatureRow(
                 icon: "lock.shield",
-                title: "Requires unlock to open",
-                message: "Opening it later requires system authentication or the Recovery Key.",
+                title: String(localizable: .lockedContentFeatureUnlockTitle),
+                message: String(localizable: .lockedContentFeatureUnlockMessage),
                 tint: LockSecurityPalette.key
             )
             lockFeatureRow(
                 icon: "sparkles",
-                title: "Keeps AI out",
-                message: "AI tools cannot read locked file content, even while it is unlocked for you.",
+                title: String(localizable: .lockedContentFeatureAIOutTitle),
+                message: String(localizable: .lockedContentFeatureAIOutMessage),
                 tint: LockSecurityPalette.ai
             )
         }
@@ -352,7 +352,7 @@ struct LockedFileAccessSheet: View {
                     Button(role: .destructive) {
                         isDeleteConfirmationPresented = true
                     } label: {
-                        Text("Delete This File")
+                        Text(.localizable(.lockedContentDeleteThisFileButton))
                             .font(.callout.weight(.medium))
                     }
                     .buttonStyle(.plain)
@@ -366,7 +366,7 @@ struct LockedFileAccessSheet: View {
     @ViewBuilder
     private var unlockContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Enter your Recovery Key to unlock matching locked content.")
+            Text(.localizable(.lockedContentUnlockRecoveryKeyMessage))
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
@@ -409,7 +409,7 @@ struct LockedFileAccessSheet: View {
 
     @ViewBuilder
     private func recoveryKeyTextField(text: Binding<String>) -> some View {
-        TextField("EDZ2-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX", text: text)
+        TextField(String(localizable: .lockedContentRecoveryKeySamplePlaceholder), text: text)
             .textFieldStyle(.plain)
             .font(.system(.body, design: .monospaced))
             .autocorrectionDisabled()
@@ -447,7 +447,7 @@ struct LockedFileAccessSheet: View {
                     await performAction()
                 }
             } label: {
-                Text(request.mode == .lock ? "Lock File" : "Unlock")
+                Text(request.mode == .lock ? String(localizable: .lockFileTitle) : String(localizable: .lockedContentUnlockButton))
             }
             .keyboardShortcut(.defaultAction)
             .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
@@ -669,16 +669,16 @@ struct LockedFileAccessSheet: View {
         }
 
         return """
-        ExcalidrawZ Recovery Key
+        \(String(localizable: .lockedContentRecoveryKeyExportTitle))
 
         \(recoveryKey)
 
-        Keep this file somewhere safe. This Recovery Key unlocks locked ExcalidrawZ content if Touch ID or your Mac password is not available.
+        \(String(localizable: .lockedContentRecoveryKeyExportNote))
         """
     }
 
     private var recoveryKeyExportFilename: String {
-        "ExcalidrawZ Recovery Key"
+        String(localizable: .lockedContentRecoveryKeyExportTitle)
     }
 }
 

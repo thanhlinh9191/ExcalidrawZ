@@ -15,7 +15,7 @@ import UIKit
 
 struct CopyFeedbackButton: View {
     let text: String
-    var help: String = "Copy"
+    var help: String = String(localizable: .generalButtonCopy)
     var iconFrame: CGSize = CGSize(width: 14, height: 14)
     var iconFont: Font = .caption
     var normalColor: Color = .secondary

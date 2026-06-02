@@ -30,13 +30,13 @@ struct BackupsPlaceholderView: View {
             VStack(spacing: 10) {
                 BackupInfoRow(
                     systemSymbol: .clockArrowCirclepath,
-                    title: "Daily snapshots",
-                    message: "Choose a backup from the sidebar."
+                    title: String(localizable: .settingsBackupsDailySnapshotsTitle),
+                    message: String(localizable: .settingsBackupsDailySnapshotsMessage)
                 )
 
                 BackupInfoRow(
                     systemSymbol: .checkmarkShield,
-                    title: "Encrypted storage",
+                    title: String(localizable: .settingsBackupsEncryptedStorageTitle),
                     message: backupEncryptionDisclosure
                 )
             }
@@ -88,8 +88,8 @@ struct BackupHomeView: View {
 
                 BackupSummaryPill(
                     systemSymbol: .checkmarkShield,
-                    title: "Storage",
-                    value: "Encrypted"
+                    title: String(localizable: .settingsBackupsStorageTitle),
+                    value: String(localizable: .settingsBackupsEncryptedValue)
                 )
             }
             .frame(maxWidth: 460)
@@ -132,7 +132,7 @@ struct BackupHomeView: View {
 }
 
 private var backupEncryptionDisclosure: String {
-    "Stored encrypted on this device."
+    String(localizable: .settingsBackupsEncryptedStorageMessage)
 }
 
 private var backupTotalSizeTitle: String {

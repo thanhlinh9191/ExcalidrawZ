@@ -23,23 +23,23 @@ enum EncryptedBackupError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
             case .invalidEnvelope:
-                "This backup file is damaged or incomplete."
+                String(localizable: .encryptedBackupErrorInvalidEnvelope)
             case .unsupportedVersion:
-                "This backup file was created by a newer unsupported version of ExcalidrawZ."
+                String(localizable: .encryptedBackupErrorUnsupportedVersion)
             case .unsupportedAlgorithm:
-                "This backup file uses an unsupported encryption method."
+                String(localizable: .encryptedBackupErrorUnsupportedAlgorithm)
             case .missingKey:
-                "The backup encryption key is missing from Keychain."
+                String(localizable: .encryptedBackupErrorMissingKey)
             case .invalidKey:
-                "The backup encryption key is unavailable or damaged."
+                String(localizable: .encryptedBackupErrorInvalidKey)
             case .keyMismatch:
-                "This backup was encrypted with a different backup key."
+                String(localizable: .encryptedBackupErrorKeyMismatch)
             case .keychainError:
-                "The backup encryption key could not be read from Keychain."
+                String(localizable: .encryptedBackupErrorKeychain)
             case .encryptionFailed:
-                "The backup file could not be encrypted."
+                String(localizable: .encryptedBackupErrorEncryptionFailed)
             case .decryptionFailed:
-                "The backup file could not be decrypted on this device."
+                String(localizable: .encryptedBackupErrorDecryptionFailed)
         }
     }
 }

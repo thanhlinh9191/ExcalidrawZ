@@ -138,9 +138,9 @@ struct BackupsSettingsView: View {
         .sheet(isPresented: $isBackupPreviewRecoveryKeySheetPresented) {
             if let selectedFile {
                 RecoveryKeyInputSheet(
-                    title: "Use Recovery Key",
+                    title: String(localizable: .lockedContentUseRecoveryKeyButton),
                     subtitle: selectedFile.deletingPathExtension().lastPathComponent,
-                    primaryButtonTitle: "Unlock",
+                    primaryButtonTitle: String(localizable: .lockedContentUnlockButton),
                     headerLayout: .compact,
                     width: 520
                 ) { recoveryKey in

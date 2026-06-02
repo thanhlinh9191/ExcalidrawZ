@@ -69,10 +69,10 @@ struct ArchiveFilesView: View {
     @ViewBuilder
     private var previewSection: some View {
         VStack(spacing: 8) {
-            Text("Archive Files")
+            Text(.localizable(.archiveFilesTitle))
                 .font(.title2)
 
-            Text("Export database files as regular .excalidraw files that can be opened outside ExcalidrawZ.")
+            Text(.localizable(.archiveFilesDescription))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -93,9 +93,9 @@ struct ArchiveFilesView: View {
                             .frame(width: 24)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Include Locked Files")
+                            Text(.localizable(.archiveFilesIncludeLockedFilesTitle))
                                 .font(.callout.weight(.medium))
-                            Text("\(lockedFileCountForArchive) locked file\(lockedFileCountForArchive == 1 ? "" : "s") will be authenticated, decrypted, and exported as regular files.")
+                            Text(.localizable(.archiveFilesIncludeLockedFilesDescription(lockedFileCountForArchive)))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -103,13 +103,13 @@ struct ArchiveFilesView: View {
 
                         Spacer(minLength: 12)
 
-                        Toggle("Include Locked Files", isOn: $includeLockedFilesInArchive)
+                        Toggle(String(localizable: .archiveFilesIncludeLockedFilesTitle), isOn: $includeLockedFilesInArchive)
                             .labelsHidden()
                             .toggleStyle(.switch)
                             .disabled(isArchiving)
                     }
                 } else {
-                    Label("No locked files will be included.", systemImage: "lock.shield")
+                    Label(.localizable(.archiveFilesNoLockedFilesMessage), systemImage: "lock.shield")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -117,7 +117,7 @@ struct ArchiveFilesView: View {
                 HStack(spacing: 10) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Checking locked files...")
+                    Text(.localizable(.archiveFilesCheckingLockedFilesMessage))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -135,7 +135,7 @@ struct ArchiveFilesView: View {
                 .foregroundStyle(.red)
                 .fixedSize(horizontal: false, vertical: true)
         } else if let archiveResult, !archiveResult.failedFiles.isEmpty {
-            Label("\(archiveResult.failedFiles.count) files failed to archive.", systemImage: "exclamationmark.triangle")
+            Label(.localizable(.archiveFilesFailedMessage(archiveResult.failedFiles.count)), systemImage: "exclamationmark.triangle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -164,11 +164,11 @@ struct ArchiveFilesView: View {
                     HStack(spacing: 6) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Exporting...")
+                        Text(.localizable(.archiveFilesExportingMessage))
                     }
                     .padding(.horizontal, 6)
                 } else {
-                    Label("Export Archive", systemSymbol: .squareAndArrowDown)
+                    Label(.localizable(.archiveFilesExportButton), systemSymbol: .squareAndArrowDown)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 1)
                 }
