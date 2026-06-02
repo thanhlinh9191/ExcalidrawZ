@@ -72,6 +72,10 @@ struct AdjustElementsTool: Tool {
         ) else {
             return LockedContentAIGuard.lockedToolResult
         }
+        if adjustContext.canvasTarget.targetsProposalCanvas,
+           payload.dryRun != true {
+            await AIProposalSandbox.resetCanvasIfAvailable()
+        }
         guard let currentFileData = try await CurrentExcalidrawDataResolver.resolveLiveSnapshot(
             canvasTarget: adjustContext.canvasTarget,
             baseContent: adjustContext.currentFileData,
@@ -111,6 +115,7 @@ struct AdjustElementsTool: Tool {
             dryRun: payload.dryRun ?? false
         )
         let outputSurface = ToolOutputSurface(canvasTarget: adjustContext.canvasTarget)
+        let proposalSourceInput = proposal == nil ? nil : ToolOutputJSONValue.parseObject(from: input)
 
         let output = ToolOutput(
             ok: true,
@@ -123,6 +128,13 @@ struct AdjustElementsTool: Tool {
             mermaidResults: canvasResults.mermaidResults.isEmpty ? nil : canvasResults.mermaidResults,
             skeletonResults: canvasResults.skeletonResults.isEmpty ? nil : canvasResults.skeletonResults,
             connectResults: canvasResults.connectResults.isEmpty ? nil : canvasResults.connectResults,
+            proposalSummary: Self.makeProposalSummary(
+                proposal: proposal,
+                opCount: payload.ops.count,
+                opCounts: result.opCounts
+            ),
+            proposalSourceInput: proposalSourceInput,
+            proposalRevisionHint: proposal == nil ? nil : "If the user asks to revise this proposal later, use proposalSourceInput as the base and call adjust_elements with a complete replacement input for the revised proposal on the proposal canvas.",
             proposal: proposal
         )
 
@@ -142,6 +154,20 @@ struct AdjustElementsTool: Tool {
             return description
         }
         return error.localizedDescription
+    }
+
+    static func makeProposalSummary(
+        proposal: AIProposalArtifact?,
+        opCount: Int,
+        opCounts: [String: Int]
+    ) -> String? {
+        guard let proposal else { return nil }
+        let counts = opCounts
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: ", ")
+        let countsText = counts.isEmpty ? "none" : counts
+        return "Created an AI proposal on the proposal canvas with \(proposal.elementCount) visible element(s) from \(opCount) operation(s) (\(countsText)). The user's file has not changed unless they apply the proposal."
     }
 
     private static func describeJavaScriptException(_ error: Error) -> String? {
@@ -231,7 +257,7 @@ private extension AdjustElementsTool {
 
 }
 
-struct ToolOutput: Encodable {
+private struct ToolOutput: Encodable {
     let ok: Bool
     let version: String
     let dryRun: Bool
@@ -242,7 +268,126 @@ struct ToolOutput: Encodable {
     let mermaidResults: [ExcalidrawCore.MermaidInsertResult]?
     let skeletonResults: [ExcalidrawCore.SkeletonInsertResult]?
     let connectResults: [ExcalidrawCore.ConnectElementsResult]?
+    let proposalSummary: String?
+    let proposalSourceInput: ToolOutputJSONValue?
+    let proposalRevisionHint: String?
     let proposal: AIProposalArtifact?
+}
+
+private enum ToolOutputJSONValue: Encodable {
+    case object([String: ToolOutputJSONValue])
+    case array([ToolOutputJSONValue])
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case null
+
+    static func parseObject(from raw: String) -> ToolOutputJSONValue? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let data = trimmed.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data),
+              let resolvedObject = resolveStringifiedJSONObjectIfNeeded(object),
+              let value = ToolOutputJSONValue(resolvedObject),
+              case .object = value else {
+            return nil
+        }
+        return value
+    }
+
+    private static func resolveStringifiedJSONObjectIfNeeded(_ value: Any) -> Any? {
+        guard let string = value as? String else { return value }
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let data = trimmed.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) else {
+            return nil
+        }
+        return object
+    }
+
+    init?(_ value: Any) {
+        switch value {
+        case let dictionary as [String: Any]:
+            var object: [String: ToolOutputJSONValue] = [:]
+            for (key, value) in dictionary {
+                guard let encoded = ToolOutputJSONValue(value) else { return nil }
+                object[key] = encoded
+            }
+            self = .object(object)
+
+        case let array as [Any]:
+            var values: [ToolOutputJSONValue] = []
+            values.reserveCapacity(array.count)
+            for item in array {
+                guard let encoded = ToolOutputJSONValue(item) else { return nil }
+                values.append(encoded)
+            }
+            self = .array(values)
+
+        case let string as String:
+            self = .string(string)
+
+        case let bool as Bool:
+            self = .bool(bool)
+
+        case let number as NSNumber:
+            self = .number(number.doubleValue)
+
+        case _ as NSNull:
+            self = .null
+
+        default:
+            return nil
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .object(let object):
+            var container = encoder.container(keyedBy: DynamicCodingKey.self)
+            for key in object.keys.sorted() {
+                try container.encode(object[key], forKey: DynamicCodingKey(key))
+            }
+
+        case .array(let array):
+            var container = encoder.unkeyedContainer()
+            for value in array {
+                try container.encode(value)
+            }
+
+        case .string(let string):
+            var container = encoder.singleValueContainer()
+            try container.encode(string)
+
+        case .number(let number):
+            var container = encoder.singleValueContainer()
+            try container.encode(number)
+
+        case .bool(let bool):
+            var container = encoder.singleValueContainer()
+            try container.encode(bool)
+
+        case .null:
+            var container = encoder.singleValueContainer()
+            try container.encodeNil()
+        }
+    }
+}
+
+private struct DynamicCodingKey: CodingKey {
+    let stringValue: String
+    let intValue: Int? = nil
+
+    init(_ stringValue: String) {
+        self.stringValue = stringValue
+    }
+
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+
+    init?(intValue: Int) {
+        nil
+    }
 }
 
 private struct ToolOutputSurface {
@@ -281,7 +426,11 @@ struct ToolInput: Decodable {
         case ops
     }
 
-    init(version: String? = nil, dryRun: Bool? = nil, ops: [Operation]) {
+    init(
+        version: String? = nil,
+        dryRun: Bool? = nil,
+        ops: [Operation]
+    ) {
         self.version = version
         self.dryRun = dryRun
         self.ops = ops

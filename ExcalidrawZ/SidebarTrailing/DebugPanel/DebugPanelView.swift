@@ -11,7 +11,6 @@ import LLMCore
 
 struct DebugPanelView: View {
     @EnvironmentObject private var fileState: FileState
-    @ObservedObject private var aiChatRenderDebug = AIChatRenderDebug.state
 
     private let actionColumns = [
         GridItem(.flexible(minimum: 100), spacing: 8),
@@ -51,7 +50,6 @@ struct DebugPanelView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 debugHeader
-                aiChatRenderDebugSection
                 cameraSection
                 adjustSection
                 logsSection
@@ -59,27 +57,6 @@ struct DebugPanelView: View {
             .padding(12)
         }
         .scrollIndicators(.hidden)
-    }
-
-    @ViewBuilder
-    private var aiChatRenderDebugSection: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle("Render counters", isOn: $aiChatRenderDebug.isEnabled)
-
-                Text("Counters print once per second with the [AIChatRender] prefix for the AI chat publish/render hot path.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                debugActionButton("Reset AI Chat Debug Flags") {
-                    aiChatRenderDebug.reset()
-                }
-            }
-        } label: {
-            Label("AI Chat Render Debug", systemImage: "waveform.path.ecg")
-                .font(.headline)
-        }
     }
 
     private var cameraTarget: ExcalidrawCoordinatorRegistry.CanvasTarget {

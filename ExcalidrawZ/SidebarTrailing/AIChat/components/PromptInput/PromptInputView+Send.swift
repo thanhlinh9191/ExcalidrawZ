@@ -370,7 +370,7 @@ extension PromptInputView {
         }
     }
 
-    private func refreshExistingConversationToolsIfNeeded(
+    func refreshExistingConversationToolsIfNeeded(
         conversationID: String,
         model: SupportedModel,
         mode: AIChatInteractionMode,

@@ -58,11 +58,6 @@ struct AIChatView: View {
     /// even if the user clears all chats from the More menu.
     @State var hasDismissedWelcome: Bool = false
     @State var isShowingWelcomeManually: Bool = false
-
-    #if DEBUG
-    @ObservedObject var aiChatRenderDebug = AIChatRenderDebug.state
-    #endif
-
     /// Show the welcome cover when no conversations exist anywhere yet AND
     /// the user hasn't already dismissed it. We treat `nil` (cache not
     /// loaded) as "don't show yet" — flashing the welcome before LLMKit

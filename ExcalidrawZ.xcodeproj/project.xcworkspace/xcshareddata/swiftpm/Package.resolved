@@ -25,7 +25,7 @@
       "location" : "https://github.com/chocoford/ChocofordKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "bf050572cec4c00697c7b2eac6ed4bb5d69b7daf"
+        "revision" : "56df0be3b155313208bce4439025fe36b3e1dbf4"
       }
     },
     {
@@ -70,7 +70,7 @@
       "location" : "https://github.com/chocoford/LLMKit.git",
       "state" : {
         "branch" : "dev",
-        "revision" : "64619818c11a61f7e8d9f61222f549bc1a648b4a"
+        "revision" : "a4daf523d50a9ff34057a5e930b30e7dc30a341d"
       }
     },
     {

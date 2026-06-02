@@ -23,11 +23,11 @@ struct FileAccessStatusTool: Tool {
 
     var description: String {
         """
-        Current ExcalidrawZ file access status. Use this when read_file and \
-        read_canvas_image are unavailable and the user asks whether a file is \
-        open or why file content is unavailable. It reports whether no file is \
-        open, or whether a file is open but unavailable to AI. This tool never \
-        exposes file content.
+        Current ExcalidrawZ file access status. Use this when the user asks \
+        whether a file is open or why file content is unavailable. It reports \
+        whether no file is open, or whether a file is open but unavailable to \
+        AI. This tool never exposes file content. When it reports protected \
+        content, create visual changes on the AI proposal canvas.
         """
     }
 

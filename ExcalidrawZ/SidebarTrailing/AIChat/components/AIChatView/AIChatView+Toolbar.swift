@@ -80,29 +80,6 @@ extension AIChatView {
                     }
 #endif
                     
-#if DEBUG
-                    Divider()
-                    
-                    Menu {
-                        Toggle("Render counters", isOn: $aiChatRenderDebug.isEnabled)
-                        Toggle("Hide message list", isOn: $aiChatRenderDebug.hideMessageList)
-                        Toggle("Minimal prompt input", isOn: $aiChatRenderDebug.useMinimalPromptInput)
-                        Toggle("Hide prompt action bar", isOn: $aiChatRenderDebug.hidePromptActionBar)
-                        Toggle("Hide generating effect", isOn: $aiChatRenderDebug.hideGeneratingEffect)
-                        Toggle("Stack scroll host", isOn: $aiChatRenderDebug.useStackMessageListHost)
-                        
-                        Divider()
-                        
-                        Button {
-                            aiChatRenderDebug.reset()
-                        } label: {
-                            Label("Reset flags", systemSymbol: .arrowCounterclockwise)
-                        }
-                    } label: {
-                        Label("Render debug", systemImage: "waveform.path.ecg")
-                    }
-#endif
-                    
                     Divider()
                     
                     Button(role: .destructive) {

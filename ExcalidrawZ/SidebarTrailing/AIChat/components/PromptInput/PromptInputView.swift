@@ -221,6 +221,12 @@ struct PromptInputView<Background: View, Header: View>: View {
     @State var draftHasContent: Bool = false
     @State var draftHasImages: Bool = false
     @State var draftSendRequestToken: Int = 0
+#if DEBUG
+    @State var debugContextText: String = ""
+    @State var debugContextError: String = ""
+    @State var isDebugContextPresented: Bool = false
+    @State var isGeneratingDebugContext: Bool = false
+#endif
 
     @FocusState var isInputFocused: Bool
 
@@ -457,6 +463,11 @@ struct PromptInputView<Background: View, Header: View>: View {
             guard !isEnabled else { return }
             cancelCurrentGeneration()
         }
+#if DEBUG
+        .sheet(isPresented: $isDebugContextPresented) {
+            debugChatContextSheet
+        }
+#endif
     }
 
     @MainActor

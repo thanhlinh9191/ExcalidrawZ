@@ -13,6 +13,7 @@ struct AnimatedPresence<Value: Equatable, Content: View>: View {
     var contentAnimation: Animation = .easeInOut(duration: 0.16)
     var contentTransition: AnimatedPresenceContentTransition = .fadeWithContainer
     var contentTransitionDelay: Duration = .milliseconds(140)
+    var removalAnimation: Animation? = nil
     var removalDelay: Duration = .milliseconds(240)
     @ViewBuilder var content: (Value) -> Content
 
@@ -135,7 +136,7 @@ struct AnimatedPresence<Value: Equatable, Content: View>: View {
     }
 
     private func collapseContainerAndScheduleRemoval() {
-        withAnimation(animation) {
+        withAnimation(removalAnimation ?? animation) {
             visibleHeight = 0
         }
 

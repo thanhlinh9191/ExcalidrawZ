@@ -44,6 +44,10 @@ extension PromptInputView {
             fileAccessToggleButton
 
             modelPicker
+
+#if DEBUG
+            debugChatContextButton
+#endif
         }
     }
 

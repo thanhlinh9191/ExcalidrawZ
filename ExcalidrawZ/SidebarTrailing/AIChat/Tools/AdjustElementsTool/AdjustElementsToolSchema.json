@@ -102,7 +102,7 @@
       "properties": {
         "op": { "const": "add" },
         "elements": {
-          "description": "Canonical Excalidraw skeleton objects passed together to one insertFromSkeleton call. Include a temporary id on each skeleton entry, including text, frames, images, and arrows. Element order controls z-order: earlier skeletons are behind later skeletons, so put background rectangles/frames/lanes first and standalone foreground text/annotations last. If label is present, label.text is required. If the add op has layout, graph nodes without x/y are placed by the layout engine; skeletons with both x and y are pinned. Standalone decoration elements should include finite x/y. If the add op does not have layout, every placed skeleton must include finite x and y; bound arrows may omit x/y only when they use start.id and end.id. connect handles existing elements or cross-batch links. Bound arrows support both directed and undirected relationships; set arrowheads to null for visually headless connectors. If fontFamily is included, 5 is the app default; 4 is invalid. For centered standalone text, include an explicit width; textAlign alone does not center auto-width text."
+          "description": "Canonical Excalidraw skeleton objects passed together to one insertFromSkeleton call. Always pass an array, even for one shape. Include a temporary id on each skeleton entry, including text, frames, images, and arrows. Element order controls z-order: earlier skeletons are behind later skeletons, so put background rectangles/frames/lanes first and standalone foreground text/annotations last. If label is present, label.text is required. Coordinates, layout, or group placement must be explicit: use add.layout for auto-layout, use add.place/add.position to place the whole inserted group, or include finite x and y on manually placed skeletons. If add.layout is present, graph nodes without x/y are placed by the layout engine; skeletons with both x and y are pinned. For manual placement without add.layout/place/position, every placed skeleton should include finite x and y; bound arrows may omit x/y when they use start.id and end.id. A single manually placed shape should include x and y, for example {\"type\":\"diamond\",\"id\":\"d1\",\"x\":200,\"y\":200,\"width\":120,\"height\":120,\"label\":{\"text\":\"菱形\"}}. connect handles existing elements or cross-batch links. Bound arrows support both directed and undirected relationships; set arrowheads to null for visually headless connectors. If fontFamily is included, 5 is the app default; 4 is invalid. For centered standalone text, include an explicit width; textAlign alone does not center auto-width text."
         },
         "layout": {
           "type": "string",
@@ -437,7 +437,7 @@
         "arrow": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Optional arrow styling and label. Geometry is computed by Excalidraw; do not calculate edge coordinates. For undirected relationships, set startArrowhead and endArrowhead to null.",
+          "description": "Optional arrow styling and label. Geometry is computed by Excalidraw. For undirected relationships, set startArrowhead and endArrowhead to null.",
           "properties": {
             "strokeColor": { "type": "string" },
             "strokeWidth": { "type": "number" },
