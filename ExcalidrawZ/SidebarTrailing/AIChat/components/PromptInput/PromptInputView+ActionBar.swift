@@ -71,6 +71,10 @@ extension PromptInputView {
         .tint(activeFileAccessAllowsAI ? .accentColor : .secondary.opacity(0.75))
         .disabled(!hasActiveFileForAIAccessControl || !canToggleAIFileAccess)
         .help(fileAccessHelpText)
+        .modifier(FeatureDiscoveryTipModifier(
+            kind: .aiFileVisibility,
+            isEnabled: hasActiveFileForAIAccessControl && canToggleAIFileAccess
+        ))
     }
 
     @MainActor

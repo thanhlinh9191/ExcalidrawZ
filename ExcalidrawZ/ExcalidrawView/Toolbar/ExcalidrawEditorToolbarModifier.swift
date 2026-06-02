@@ -220,6 +220,10 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
         .disabled(isLockingFile)
         .help("Lock File")
+        .modifier(FeatureDiscoveryTipModifier(
+            kind: .lockFile,
+            isEnabled: !isLockingFile
+        ))
     }
 
     @ViewBuilder

@@ -7,6 +7,9 @@
 
 import SwiftUI
 import ChocofordUI
+#if DEBUG && canImport(TipKit)
+import TipKit
+#endif
 #if os(macOS) && !APP_STORE
 import Sparkle
 #endif
@@ -22,6 +25,7 @@ private struct FolderChildren: Identifiable, Hashable {
 
 struct GeneralSettingsView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.alertToast) private var alertToast
 #if os(macOS) && !APP_STORE
     @EnvironmentObject var updateChecker: UpdateChecker
 #endif
@@ -206,6 +210,22 @@ struct GeneralSettingsView: View {
         } header: {
             Text("Layout")
         }
+
+        Section {
+            HStack {
+                Text("Feature Tips")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    resetFeatureTips()
+                } label: {
+                    Label("Reset Tips", systemImage: "lightbulb")
+                }
+            }
+        } header: {
+            Text("Debug")
+        }
 #endif
         
 #if os(macOS) && !APP_STORE
@@ -272,6 +292,26 @@ struct GeneralSettingsView: View {
             content()
         }
     }
+
+#if DEBUG
+    private func resetFeatureTips() {
+#if canImport(TipKit)
+        if #available(macOS 14.0, iOS 17.0, *) {
+            do {
+                try Tips.resetDatastore()
+                FeatureDiscoveryTips.configureIfAvailable()
+                alertToast(.init(
+                    displayMode: .hud,
+                    type: .complete(.green),
+                    title: "Tips reset"
+                ))
+            } catch {
+                alertToast(error)
+            }
+        }
+#endif
+    }
+#endif
 }
 
 #if DEBUG
