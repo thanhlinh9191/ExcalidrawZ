@@ -488,7 +488,7 @@ struct LocalFileRowMenuItems: View {
                                     .deleteConversations(
                                         forFileScope: scope
                                     )
-                                await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
+                                AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                             } catch {
                                 print("Warning: Failed to delete AI conversations for local file \(file): \(error)")
                             }
