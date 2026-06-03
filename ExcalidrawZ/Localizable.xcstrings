@@ -4861,6 +4861,50 @@
         }
       }
     },
+    "aiChatFileAccessHelpAccessAllowed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI can read and edit this file. Click to prevent file access and use proposal edits instead."
+          }
+        }
+      }
+    },
+    "aiChatFileAccessHelpAccessDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI cannot read or edit this file. Click to allow direct file access and editing."
+          }
+        }
+      }
+    },
+    "aiChatFileAccessHelpLockedFile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file is locked. AI cannot read or edit it; generated changes use a proposal canvas."
+          }
+        }
+      }
+    },
+    "aiChatFileAccessHelpNoActiveFile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No file is open. AI can answer without file access."
+          }
+        }
+      }
+    },
     "aiChatInputAttachmentMenuItemImage": {
       "extractionState": "manual",
       "localizations": {
@@ -7231,6 +7275,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "日期和時間"
+          }
+        }
+      }
+    },
+    "aiChatToolFileAccessStatusName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Access Status"
           }
         }
       }

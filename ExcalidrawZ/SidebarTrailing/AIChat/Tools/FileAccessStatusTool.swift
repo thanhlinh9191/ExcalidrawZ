@@ -19,7 +19,7 @@ struct FileAccessStatusTool: Tool {
 
     var name: String { "file_access_status" }
 
-    var displayName: String { "File Access Status" }
+    var displayName: String { String(localizable: .aiChatToolFileAccessStatusName) }
 
     var description: String {
         """

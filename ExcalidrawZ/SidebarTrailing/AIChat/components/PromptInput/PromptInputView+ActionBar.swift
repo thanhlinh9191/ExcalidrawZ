@@ -86,17 +86,17 @@ extension PromptInputView {
     @MainActor
     var fileAccessHelpText: String {
         guard hasActiveFileForAIAccessControl else {
-            return "No file is open. AI can answer without file access."
+            return String(localizable: .aiChatFileAccessHelpNoActiveFile)
         }
 
         guard canToggleAIFileAccess else {
-            return "This file is locked. AI cannot read or edit it; generated changes use a proposal canvas."
+            return String(localizable: .aiChatFileAccessHelpLockedFile)
         }
 
         if activeFileAccessAllowsAI {
-            return "AI can read and edit this file. Click to prevent file access and use proposal edits instead."
+            return String(localizable: .aiChatFileAccessHelpAccessAllowed)
         } else {
-            return "AI cannot read or edit this file. Click to allow direct file access and editing."
+            return String(localizable: .aiChatFileAccessHelpAccessDenied)
         }
     }
 
