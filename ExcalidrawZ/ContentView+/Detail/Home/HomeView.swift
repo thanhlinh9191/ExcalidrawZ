@@ -192,8 +192,8 @@ struct RecentlyFilesProvider: View {
     
     @FetchRequest(
         sortDescriptors: [
-            .init(keyPath: \File.visitedAt, ascending: false),
-            .init(keyPath: \File.updatedAt, ascending: false),
+            .init(keyPath: \CollaborationFile.visitedAt, ascending: false),
+            .init(keyPath: \CollaborationFile.updatedAt, ascending: false),
         ],
         animation: .default
     )
@@ -201,11 +201,46 @@ struct RecentlyFilesProvider: View {
     
     
     @State private var recentlyFiles: [FileState.ActiveFile] = []
+
+    private struct FileRefreshKey: Equatable {
+        let id: String
+        let visitedAt: Date?
+        let updatedAt: Date?
+        let createdAt: Date?
+    }
+
+    private var filesRefreshKey: [FileRefreshKey] {
+        files.map {
+            FileRefreshKey(
+                id: $0.objectID.uriRepresentation().absoluteString,
+                visitedAt: $0.visitedAt,
+                updatedAt: $0.updatedAt,
+                createdAt: $0.createdAt
+            )
+        }
+    }
+
+    private var collaborationFilesRefreshKey: [FileRefreshKey] {
+        collaborationFiles.map {
+            FileRefreshKey(
+                id: $0.objectID.uriRepresentation().absoluteString,
+                visitedAt: $0.visitedAt,
+                updatedAt: $0.updatedAt,
+                createdAt: $0.createdAt
+            )
+        }
+    }
     
     var body: some View {
         content(recentlyFiles)
             .onHover { isHovered in
                 if isHovered { getRecentlyFiles() }
+            }
+            .onChange(of: filesRefreshKey) { _ in
+                getRecentlyFiles()
+            }
+            .onChange(of: collaborationFilesRefreshKey) { _ in
+                getRecentlyFiles()
             }
             .onChange(of: scenePhase) { _ in
                 getRecentlyFiles()

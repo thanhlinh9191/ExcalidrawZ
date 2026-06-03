@@ -238,6 +238,7 @@ final class FileState: ObservableObject {
             return
         }
         self.currentActiveFile = file
+        recordVisit(for: file)
         let context = PersistenceController.shared.container.viewContext
         switch file {
             case .localFile(let url):
@@ -315,6 +316,32 @@ final class FileState: ObservableObject {
                         collaboratingFilesState[room] = .loading
                     }
                 }
+        }
+    }
+
+    @MainActor
+    private func recordVisit(for file: ActiveFile) {
+        let now = Date()
+        switch file {
+            case .file(let dbFile):
+                guard dbFile.inTrash == false else { return }
+                dbFile.visitedAt = now
+                saveVisitedAtChange(in: dbFile.managedObjectContext)
+            case .collaborationFile(let room):
+                room.visitedAt = now
+                saveVisitedAtChange(in: room.managedObjectContext)
+            case .localFile, .temporaryFile:
+                break
+        }
+    }
+
+    @MainActor
+    private func saveVisitedAtChange(in context: NSManagedObjectContext?) {
+        guard let context, context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            logger.error("Failed to save file visit timestamp: \(error.localizedDescription)")
         }
     }
     
