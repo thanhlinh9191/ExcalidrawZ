@@ -217,8 +217,11 @@ actor FileSyncCoordinator {
     /// - Returns: File data
     /// - Throws: FileCoordinatorError if unable to open file
     func openFile(_ url: URL) async throws -> Data {
-        return try await fileCoordinator.coordinatedRead(url: url) { coordinatedURL in
-            try Data(contentsOf: coordinatedURL)
+        let fileCoordinator = self.fileCoordinator
+        return try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await fileCoordinator.coordinatedRead(url: url) { coordinatedURL in
+                try Data(contentsOf: coordinatedURL)
+            }
         }
     }
 
@@ -228,21 +231,30 @@ actor FileSyncCoordinator {
     ///   - data: The data to write
     /// - Throws: FileCoordinatorError if unable to save file
     func saveFile(at url: URL, data: Data) async throws {
-        try await fileCoordinator.coordinatedWrite(url: url, data: data)
+        let fileCoordinator = self.fileCoordinator
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await fileCoordinator.coordinatedWrite(url: url, data: data)
+        }
     }
 
     /// Download an iCloud file
     /// - Parameter url: The file URL to download
     /// - Throws: FileCoordinatorError if unable to download
     func downloadFile(_ url: URL) async throws {
-        try await fileCoordinator.downloadFile(url: url)
+        let fileCoordinator = self.fileCoordinator
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await fileCoordinator.downloadFile(url: url)
+        }
     }
 
     /// Delete a file safely
     /// - Parameter url: The file URL to delete
     /// - Throws: FileCoordinatorError if unable to delete
     func deleteFile(_ url: URL) async throws {
-        try await fileCoordinator.deleteFile(url: url)
+        let fileCoordinator = self.fileCoordinator
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await fileCoordinator.deleteFile(url: url)
+        }
     }
 
     // MARK: - File Event Handling

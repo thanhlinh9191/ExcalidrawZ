@@ -232,8 +232,7 @@ struct ExcalidrawFileCover: View {
                                 let content = try await file.loadContent()
                                 excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
                             case .localFile(let url):
-                                try await FileCoordinator.shared.downloadFile(url: url)
-                                excalidrawFile = try ExcalidrawFile(contentsOf: url)
+                                excalidrawFile = try await loadLocalFileForPreview(at: url)
                             case .temporaryFile(let url):
                                 excalidrawFile = try ExcalidrawFile(contentsOf: url)
                             case .collaborationFile(let collaborationFile):
@@ -302,6 +301,13 @@ struct ExcalidrawFileCover: View {
         }
     }
 
+    private func loadLocalFileForPreview(at url: URL) async throws -> ExcalidrawFile {
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await FileCoordinator.shared.downloadFile(url: url)
+            return try ExcalidrawFile(contentsOf: url)
+        }
+    }
+
     @MainActor
     private func finishGeneration(cacheKey: String, generationToken: UUID) {
         guard self.generationToken == generationToken,
@@ -310,7 +316,6 @@ struct ExcalidrawFileCover: View {
         generationTask = nil
     }
 }
-
 
 #if canImport(AppKit)
 extension NSImage {
