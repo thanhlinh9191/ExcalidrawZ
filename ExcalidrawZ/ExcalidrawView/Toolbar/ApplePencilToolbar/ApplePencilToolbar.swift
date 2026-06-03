@@ -471,6 +471,7 @@ struct ApplePencilToolbar: View {
     @Namespace var activeToolNamespace
     
     @State private var isMathInputSheetPresented = false
+    @State private var isMermaidInputSheetPresented = false
 
     var body: some View {
         ZStack {
@@ -591,16 +592,7 @@ struct ApplePencilToolbar: View {
     private func moreTools() -> some View {
         Menu {
             Button {
-                Task {
-                    try? await toolState.toggleExtraTool(.text2Diagram)
-                }
-            } label: {
-                Text(.localizable(.toolbarText2Diagram))
-            }
-            Button {
-                Task {
-                    try? await toolState.toggleExtraTool(.mermaid)
-                }
+                isMermaidInputSheetPresented.toggle()
             } label: {
                 Text(.localizable(.toolbarMermaid))
             }
@@ -631,6 +623,7 @@ struct ApplePencilToolbar: View {
 #if os(iOS)
         .menuOrder(.fixed)
 #endif
+        .modifier(MermaidInputSheetViewModifier(isPresented: $isMermaidInputSheetPresented))
         .modifier(MathInputSheetViewModifier(isPresented: $isMathInputSheetPresented))
     }
 }

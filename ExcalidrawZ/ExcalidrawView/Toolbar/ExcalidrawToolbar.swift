@@ -30,6 +30,7 @@ struct ExcalidrawToolbar: View {
     @State private var isApplePencilDisconnectConfirmationDialogPresented = false
     
     @State private var isMathInputSheetPresented = false
+    @State private var isMermaidInputSheetPresented = false
     @State private var isPDFPickerPresented = false
     
     
@@ -377,13 +378,7 @@ struct ExcalidrawToolbar: View {
                             if case .file(let file) = fileState.currentActiveFile, file.inTrash {
                                 layoutState.isResotreAlertIsPresented.toggle()
                             } else {
-                                Task {
-                                    do {
-                                        try await toolState.excalidrawWebCoordinator?.toggleToolbarAction(key: "h")
-                                    } catch {
-                                        alertToast(error)
-                                    }
-                                }
+                                toolState.setActivedTool(.cursor)
                             }
                         } label: {
                             Text(.localizable(.toolbarEdit))
@@ -577,6 +572,7 @@ struct ExcalidrawToolbar: View {
     private func moreTools() -> some View {
         Menu {
 #if DEBUG
+#if !os(iOS)
             Button {
                 Task {
                     try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .text2Diagram)
@@ -587,9 +583,7 @@ struct ExcalidrawToolbar: View {
 #endif
 #endif
             Button {
-                Task {
-                    try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .mermaid)
-                }
+                isMermaidInputSheetPresented.toggle()
             } label: {
                 Text(.localizable(.toolbarMermaid))
             }
@@ -618,6 +612,7 @@ struct ExcalidrawToolbar: View {
 #if os(iOS)
         .menuOrder(.fixed)
 #endif
+        .modifier(MermaidInputSheetViewModifier(isPresented: $isMermaidInputSheetPresented))
         .modifier(MathInputSheetViewModifier(isPresented: $isMathInputSheetPresented))
         .modifier(PDFInsertSheetViewModifier(isPresented: $isPDFPickerPresented))
     }
@@ -655,6 +650,7 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
                                 self.sizeClass = newSizeClass
                             }
                         }
+                        .watch(value: layoutState.isInspectorPresented) { _ in
                             DispatchQueue.main.async {
                                 self.sizeClass = getSizeClass(containerSize.width)
                             }
