@@ -162,9 +162,11 @@ struct ExcalidrawEditor: View {
                 onApplyUnlockedContent: applyUnlockedFileContentToEditor
             )
         )
+        .modifier(InspectorPresentationModifier())
         .allowsHitTesting(interactionEnabled)
         .observeExcalidrawFileStatus(
             for: activeFile,
+            activeFileLockState: lockedContentState.activeFileLockState,
             conflictFileURL: $conflictFileURL,
         ) { latestData, onDone in
             handleLatestData(latestData)
@@ -180,6 +182,7 @@ struct ExcalidrawEditor: View {
 #if os(iOS)
         .applyIOSAutoSync(
             activeFile: activeFile,
+            activeFileLockState: lockedContentState.activeFileLockState,
             localFileBinding: localFileBinding
         ) { latestData in
             await pullUpdatingFromCloud(latestData: latestData)
@@ -341,6 +344,11 @@ struct ExcalidrawEditor: View {
     }
     
     private func handleLatestData(_ latestData: Data) {
+        guard lockedContentState.activeFileLockState != .locked else {
+            logger.info("Ignored cloud update while active file is locked")
+            return
+        }
+
         // Check if user has been idle long enough
         let isIdle = if let lastEdit = lastEditTime {
             Date().timeIntervalSince(lastEdit) > idleTimeout
@@ -397,6 +405,11 @@ struct ExcalidrawEditor: View {
     }
 
     private func pullUpdatingFromCloud(latestData: Data) async {
+        guard lockedContentState.activeFileLockState != .locked else {
+            self.logger.info("Skipped cloud pull while active file is locked")
+            return
+        }
+
         self.logger.info("pullUpdatingFromCloud")
         do {
             let file = try ExcalidrawFile(data: latestData, id: excalidrawFile?.id)
@@ -476,6 +489,11 @@ struct ExcalidrawEditor: View {
         // Block updates while loading new file.
         guard !isLoadingFile else {
             logger.info("Blocked update during file loading")
+            return .rejected
+        }
+
+        guard lockedContentState.activeFileLockState != .locked else {
+            logger.info("Blocked update while active file is locked")
             return .rejected
         }
 

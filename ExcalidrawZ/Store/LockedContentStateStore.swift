@@ -9,9 +9,15 @@ import Combine
 import CoreData
 import Foundation
 
+struct LockedContentAutomaticUnlockRequest: Equatable, Sendable {
+    let fileID: String
+    let token: UUID
+}
+
 @MainActor
 final class LockedContentStateStore: ObservableObject {
     @Published private(set) var activeFileLockState: FileContentLockState = .plaintext
+    @Published private(set) var automaticUnlockRequest: LockedContentAutomaticUnlockRequest?
     @Published private var fileLockStates: [String: FileContentLockState] = [:]
 
     private struct ManagedFileReference {
@@ -22,6 +28,7 @@ final class LockedContentStateStore: ObservableObject {
     private var activeFileID: String?
     private var activeManagedFile: ManagedFileReference?
     private var suppressedAutomaticUnlockFileID: String?
+    private var pendingAutomaticUnlockAfterAppReturnFileID: String?
     @Published private(set) var hasActiveUnlockSession = false
     @Published private var unlockFailedFileIDs: Set<String> = []
     private var idleRelockTask: Task<Void, Never>?
@@ -92,6 +99,12 @@ final class LockedContentStateStore: ObservableObject {
         if suppressedAutomaticUnlockFileID == fileID {
             suppressedAutomaticUnlockFileID = nil
         }
+        if pendingAutomaticUnlockAfterAppReturnFileID == fileID {
+            pendingAutomaticUnlockAfterAppReturnFileID = nil
+        }
+        if automaticUnlockRequest?.fileID == fileID {
+            automaticUnlockRequest = nil
+        }
     }
 
     func markUnlockFailed(fileID: String) {
@@ -119,20 +132,39 @@ final class LockedContentStateStore: ObservableObject {
         if suppressedAutomaticUnlockFileID != fileID {
             suppressedAutomaticUnlockFileID = nil
         }
+        if pendingAutomaticUnlockAfterAppReturnFileID != fileID {
+            pendingAutomaticUnlockAfterAppReturnFileID = nil
+        }
+        if automaticUnlockRequest?.fileID != fileID {
+            automaticUnlockRequest = nil
+        }
     }
 
     func allowsAutomaticUnlock(for fileID: String) -> Bool {
-        suppressedAutomaticUnlockFileID != fileID
+        suppressedAutomaticUnlockFileID != fileID ||
+        automaticUnlockRequest?.fileID == fileID
+    }
+
+    func consumeAutomaticUnlockRequestToken(for fileID: String) -> UUID? {
+        guard automaticUnlockRequest?.fileID == fileID else {
+            return nil
+        }
+        let token = automaticUnlockRequest?.token
+        automaticUnlockRequest = nil
+        return token
     }
 
     func relockCurrentSession(activeFile: FileState.ActiveFile?) async {
         suppressedAutomaticUnlockFileID = activeFile?.id
+        pendingAutomaticUnlockAfterAppReturnFileID = nil
         await forgetTransientUnlockSession()
         await refresh(activeFile: activeFile)
     }
 
-    func relockForAppInactivity() async {
-        suppressedAutomaticUnlockFileID = activeManagedFile?.fileID
+    func relockForAppInactivity(allowAutomaticUnlockOnNextActive: Bool = false) async {
+        let fileID = activeManagedFile?.fileID
+        suppressedAutomaticUnlockFileID = fileID
+        pendingAutomaticUnlockAfterAppReturnFileID = allowAutomaticUnlockOnNextActive ? fileID : nil
         await forgetTransientUnlockSession()
 
         if let activeManagedFile {
@@ -142,6 +174,27 @@ final class LockedContentStateStore: ObservableObject {
                 fallback: .locked
             )
         }
+    }
+
+    func activatePendingAutomaticUnlockAfterAppReturn() {
+        guard let fileID = pendingAutomaticUnlockAfterAppReturnFileID else { return }
+        pendingAutomaticUnlockAfterAppReturnFileID = nil
+
+        guard activeFileID == fileID,
+              activeFileLockState == .locked else {
+            if suppressedAutomaticUnlockFileID == fileID {
+                suppressedAutomaticUnlockFileID = nil
+            }
+            return
+        }
+
+        if suppressedAutomaticUnlockFileID == fileID {
+            suppressedAutomaticUnlockFileID = nil
+        }
+        automaticUnlockRequest = LockedContentAutomaticUnlockRequest(
+            fileID: fileID,
+            token: UUID()
+        )
     }
 
     func noteUserActivity() {
@@ -162,6 +215,8 @@ final class LockedContentStateStore: ObservableObject {
         activeFileID = nil
         activeManagedFile = nil
         suppressedAutomaticUnlockFileID = nil
+        pendingAutomaticUnlockAfterAppReturnFileID = nil
+        automaticUnlockRequest = nil
         hasActiveUnlockSession = false
         unlockFailedFileIDs.removeAll()
         idleRelockTask?.cancel()

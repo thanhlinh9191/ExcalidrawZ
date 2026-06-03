@@ -21,9 +21,41 @@ struct ExcalidrawTrailingControls: View {
     }
 
     private var shouldShowControls: Bool {
-        containerHorizontalSizeClass != .compact &&
+        shouldShowInCurrentSizeClass &&
         fileState.currentActiveFile != nil &&
         !fileState.activeCollaborationFileIsLoading
+    }
+
+    private var shouldShowInCurrentSizeClass: Bool {
+#if os(iOS)
+        true
+#else
+        containerHorizontalSizeClass != .compact
+#endif
+    }
+
+    private var topPadding: CGFloat {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact ? 116 : 16
+#else
+        16
+#endif
+    }
+
+    private var trailingPadding: CGFloat {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact ? 12 : 8
+#else
+        8
+#endif
+    }
+
+    private var controlSpacing: CGFloat {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact ? 8 : 10
+#else
+        10
+#endif
     }
 
     private func isDisabled(tab: LayoutState.InspectorTab) -> Bool {
@@ -37,7 +69,7 @@ struct ExcalidrawTrailingControls: View {
 
     var body: some View {
         if shouldShowControls {
-            VStack(alignment: .trailing, spacing: 10) {
+            VStack(alignment: .trailing, spacing: controlSpacing) {
                 InspectorTabButton(
                     tab: .preference,
                     icon: .sliderHorizontal3,
@@ -83,13 +115,14 @@ struct ExcalidrawTrailingControls: View {
                 )
 #endif
             }
-            .padding(.top, 16)
-            .padding(.trailing, 8)
+            .padding(.top, topPadding)
+            .padding(.trailing, trailingPadding)
         }
     }
 }
 
 private struct InspectorTabButton: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @EnvironmentObject private var layoutState: LayoutState
 
     let tab: LayoutState.InspectorTab
@@ -101,19 +134,39 @@ private struct InspectorTabButton: View {
         layoutState.isInspectorPresented && layoutState.activeInspectorTab == tab
     }
 
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
+    private var iconSize: CGFloat {
+        16
+    }
+
+    private var iconFrame: CGFloat {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact ? 28 : 24
+#else
+        24
+#endif
+    }
+
     var body: some View {
         Button {
             guard !isDisabled else { return }
             layoutState.toggleInspector(tab)
         } label: {
             Label(title, systemSymbol: icon)
-                .font(.system(size: 16))
-                .frame(width: 24, height: 24)
+                .font(.system(size: iconSize))
+                .frame(width: iconFrame, height: iconFrame)
         }
         .labelStyle(.iconOnly)
         .modernButtonStyle(
             style: isActive ? .glassProminent : .glass,
-            size: .large,
+            size: isCompactIOS ? .regular : .large,
             shape: .circle
         )
         .help(title)

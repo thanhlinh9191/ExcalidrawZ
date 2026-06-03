@@ -13,17 +13,20 @@ private struct FileStatusObserverModifier: ViewModifier {
     @EnvironmentObject private var fileState: FileState
     
     var activeFile: FileState.ActiveFile?
+    var activeFileLockState: FileContentLockState
     @Binding private var conflictFileURL: URL?
     var onSyncing: (Data, _ onDone: @escaping () -> Void) -> Void
     var onResolveConflict: (URL) -> Void
     
     init(
         activeFile: FileState.ActiveFile?,
+        activeFileLockState: FileContentLockState,
         conflictFileURL: Binding<URL?>,
         onSyncing: @escaping (Data, _ onDone: @escaping () -> Void) -> Void,
         onResolveConflict: @escaping (URL) -> Void
     ) {
         self.activeFile = activeFile
+        self.activeFileLockState = activeFileLockState
         self._conflictFileURL = conflictFileURL
         self.onSyncing = onSyncing
         self.onResolveConflict = onResolveConflict
@@ -90,11 +93,18 @@ private struct FileStatusObserverModifier: ViewModifier {
                 cloudCheckTask?.cancel()
                 startCloudCheckIfNeeded()
             }
+            .watch(value: activeFileLockState) { lockState in
+                cloudCheckTask?.cancel()
+                if lockState == .plaintext {
+                    startCloudCheckIfNeeded()
+                }
+            }
     }
     
     /// Handle file status changes for currently active file
     private func handleFileStatusChange(_ status: FileStatus) {
         guard let file = activeFile else { return }
+        guard activeFileLockState == .plaintext else { return }
         
         // Handle iCloudStatus (unified for all file types)
         handleICloudStatus(status.iCloudStatus, for: file)
@@ -171,6 +181,12 @@ private struct FileStatusObserverModifier: ViewModifier {
     
     /// Start periodic iCloud check for CoreData files
     private func startCloudCheckIfNeeded() {
+        guard activeFileLockState == .plaintext else {
+            cloudCheckTask?.cancel()
+            cloudCheckTask = nil
+            return
+        }
+
         // Only check for CoreData files
         guard case .file(let dbFile) = activeFile, let fileID = dbFile.id?.uuidString else {
             // For CollaborationFile, we could also add checks here
@@ -191,7 +207,7 @@ private struct FileStatusObserverModifier: ViewModifier {
                     relativePath: relativePath,
                     fileID: fileID
                 ) {
-                    if hasUpdate {
+                    if hasUpdate && !Task.isCancelled {
                         // Update FileStatusService to trigger UI refresh
                         await MainActor.run {
                             FileStatusService.shared.updateICloudStatus(
@@ -213,6 +229,7 @@ extension View {
     @ViewBuilder
     func observeExcalidrawFileStatus(
         for file: FileState.ActiveFile?,
+        activeFileLockState: FileContentLockState,
         conflictFileURL: Binding<URL?>,
         onSyncing: @escaping (Data, _ onDone: @escaping () -> Void) -> Void,
         onResolveConflict: @escaping (URL) -> Void
@@ -220,6 +237,7 @@ extension View {
         modifier(
             FileStatusObserverModifier(
                 activeFile: file,
+                activeFileLockState: activeFileLockState,
                 conflictFileURL: conflictFileURL,
                 onSyncing: onSyncing,
                 onResolveConflict: onResolveConflict
@@ -227,4 +245,3 @@ extension View {
         )
     }
 }
-

@@ -15,6 +15,7 @@ struct LockedFileUnlockRequest {
     let fileID: String
     let fileName: String
     let allowsAutomaticSystemUnlock: Bool
+    let automaticSystemUnlockToken: UUID?
 }
 
 struct LockedFileUnlockView: View {
@@ -40,6 +41,13 @@ struct LockedFileUnlockView: View {
 
     private var isUnlockingOrLoading: Bool {
         isWorking || isLoadingUnlockedContent || isDeletingFile
+    }
+
+    private var unlockTaskID: LockedFileUnlockTaskID {
+        LockedFileUnlockTaskID(
+            fileID: request.fileID,
+            automaticSystemUnlockToken: request.automaticSystemUnlockToken
+        )
     }
 
     var body: some View {
@@ -73,7 +81,7 @@ struct LockedFileUnlockView: View {
         .onAppear {
             systemUnlockAvailability = LockedContentSystemUnlockStore.availability()
         }
-        .task(id: request.fileID) {
+        .task(id: unlockTaskID) {
             recoveryKeyText = ""
             errorMessage = nil
             allowsPermanentDeleteAfterFailure = false
@@ -429,4 +437,9 @@ struct LockedFileUnlockView: View {
             alertToast(error)
         }
     }
+}
+
+private struct LockedFileUnlockTaskID: Equatable {
+    let fileID: String
+    let automaticSystemUnlockToken: UUID?
 }

@@ -10,7 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import ChocofordUI
 
-enum LockedFileAccessMode {
+enum LockedFileAccessMode: Sendable {
     case lock
     case unlock
 }

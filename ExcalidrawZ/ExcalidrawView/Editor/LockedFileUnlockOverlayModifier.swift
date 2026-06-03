@@ -57,6 +57,9 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
             .watch(value: lockedContentState.activeFileLockState) { lockState in
                 handleLockStateChange(lockState)
             }
+            .watch(value: lockedContentState.automaticUnlockRequest) { request in
+                handleAutomaticUnlockRequest(request)
+            }
             .watch(value: documentLoadCompletion) { completion in
                 guard let completion else { return }
                 handleDocumentLoadFinished(fileID: completion.fileID)
@@ -96,6 +99,16 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
     }
 
     @MainActor
+    private func handleAutomaticUnlockRequest(_ request: LockedContentAutomaticUnlockRequest?) {
+        guard let request,
+              request.fileID == activeFile?.id,
+              lockedContentState.activeFileLockState == .locked else { return }
+
+        reset()
+        presentIfNeeded()
+    }
+
+    @MainActor
     private func presentIfNeeded() {
         guard lockedContentState.activeFileLockState == .locked,
               phase != .loading,
@@ -109,11 +122,15 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
         dismissTask?.cancel()
         dismissTask = nil
         onPrepareLockedFile()
+        let automaticUnlockToken = lockedContentState
+            .consumeAutomaticUnlockRequestToken(for: activeFile.id)
         let nextRequest = LockedFileUnlockRequest(
             fileObjectID: file.objectID,
             fileID: activeFile.id,
             fileName: file.name ?? String(localizable: .generalUntitled),
-            allowsAutomaticSystemUnlock: lockedContentState.allowsAutomaticUnlock(for: activeFile.id)
+            allowsAutomaticSystemUnlock: automaticUnlockToken != nil
+                || lockedContentState.allowsAutomaticUnlock(for: activeFile.id),
+            automaticSystemUnlockToken: automaticUnlockToken
         )
         request = nextRequest
         phase = .hidden

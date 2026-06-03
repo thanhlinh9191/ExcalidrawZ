@@ -23,6 +23,7 @@ struct LockedContentAutoRelockModifier: ViewModifier {
     @State private var eventMonitor: Any?
     @State private var screenLockObserver: NSObjectProtocol?
     @State private var sessionResignObserver: NSObjectProtocol?
+    @State private var sessionBecomeActiveObserver: NSObjectProtocol?
 #elseif os(iOS)
     @State private var protectedDataObserver: NSObjectProtocol?
 #endif
@@ -47,11 +48,17 @@ struct LockedContentAutoRelockModifier: ViewModifier {
         switch scenePhase {
             case .active:
                 lockedContentState.noteUserActivity()
+                lockedContentState.activatePendingAutomaticUnlockAfterAppReturn()
 
-            case .inactive, .background:
+            case .inactive:
+                break
+
+            case .background:
 #if os(iOS)
                 Task { @MainActor in
-                    await lockedContentState.relockForAppInactivity()
+                    await lockedContentState.relockForAppInactivity(
+                        allowAutomaticUnlockOnNextActive: true
+                    )
                 }
 #endif
 
@@ -90,7 +97,9 @@ struct LockedContentAutoRelockModifier: ViewModifier {
             queue: .main
         ) { _ in
             Task { @MainActor in
-                await lockedContentState.relockForAppInactivity()
+                await lockedContentState.relockForAppInactivity(
+                    allowAutomaticUnlockOnNextActive: true
+                )
             }
         }
         sessionResignObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -99,7 +108,18 @@ struct LockedContentAutoRelockModifier: ViewModifier {
             queue: .main
         ) { _ in
             Task { @MainActor in
-                await lockedContentState.relockForAppInactivity()
+                await lockedContentState.relockForAppInactivity(
+                    allowAutomaticUnlockOnNextActive: true
+                )
+            }
+        }
+        sessionBecomeActiveObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.sessionDidBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                lockedContentState.activatePendingAutomaticUnlockAfterAppReturn()
             }
         }
 #elseif os(iOS)
@@ -110,7 +130,9 @@ struct LockedContentAutoRelockModifier: ViewModifier {
             queue: .main
         ) { _ in
             Task { @MainActor in
-                await lockedContentState.relockForAppInactivity()
+                await lockedContentState.relockForAppInactivity(
+                    allowAutomaticUnlockOnNextActive: true
+                )
             }
         }
 #endif
@@ -126,6 +148,10 @@ struct LockedContentAutoRelockModifier: ViewModifier {
             NSWorkspace.shared.notificationCenter.removeObserver(sessionResignObserver)
         }
         sessionResignObserver = nil
+        if let sessionBecomeActiveObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(sessionBecomeActiveObserver)
+        }
+        sessionBecomeActiveObserver = nil
 #elseif os(iOS)
         if let protectedDataObserver {
             NotificationCenter.default.removeObserver(protectedDataObserver)

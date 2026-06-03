@@ -37,7 +37,6 @@ struct CompactExcalidrawHomeView: View {
 #if os(iOS)
                 .modifier(ApplePencilToolbarModifier())
 #endif
-                .modifier(InspectorPresentationModifier())
                 .environmentObject(toolState)
             }
             

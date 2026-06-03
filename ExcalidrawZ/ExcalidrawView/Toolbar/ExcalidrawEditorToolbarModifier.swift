@@ -65,16 +65,17 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
         .toolbar(content: toolbarContent)
         .sheet(item: $lockedFileAccessRequest) { request in
-            LockedFileAccessSheet(request: request) { _ in
+            LockedFileAccessSheet(request: request) { mode in
                 Task { @MainActor in
-                    await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+                    await finishLockedFileAccess(mode: mode)
                 }
             }
         }
         .sheet(item: $existingRecoveryKeyLockRequest) { request in
+            let mode = request.mode
             ExistingRecoveryKeyLockSheet(request: request) {
                 Task { @MainActor in
-                    await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+                    await finishLockedFileAccess(mode: mode)
                 }
             }
         }
@@ -110,10 +111,12 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
 #if os(iOS)
     @ToolbarContentBuilder
     private func toolbarContent_iOS() -> some ToolbarContent {
-        ToolbarItemGroup(
-            placement: containerHorizontalSizeClass == .regular ? .principal : .bottomBar
-        ) {
-            ExcalidrawToolbar()
+        if lockedContentState.activeFileLockState != .locked {
+            ToolbarItemGroup(
+                placement: containerHorizontalSizeClass == .regular ? .principal : .bottomBar
+            ) {
+                ExcalidrawToolbar()
+            }
         }
         
         toolbarContent_macOS()
@@ -278,7 +281,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 fileObjectID: request.fileObjectID,
                 recoveryKey: recoveryKey
             )
-            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+            await finishLockedFileAccess(mode: request.mode)
         } catch let unlockError as LockedContentSystemUnlockError {
             await handleSavedRecoveryKeyLockError(unlockError, request: request)
         } catch {
@@ -320,7 +323,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 fileObjectID: request.fileObjectID,
                 recoveryKey: recoveryKey
             )
-            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+            await finishLockedFileAccess(mode: request.mode)
         } catch {
             alertToast(error)
         }
@@ -353,6 +356,16 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @MainActor
     private func relockUnlockedContent() async {
         await lockedContentState.relockCurrentSession(activeFile: fileState.currentActiveFile)
+    }
+
+    @MainActor
+    private func finishLockedFileAccess(mode: LockedFileAccessMode) async {
+        switch mode {
+            case .lock:
+                await lockedContentState.relockCurrentSession(activeFile: fileState.currentActiveFile)
+            case .unlock:
+                await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+        }
     }
 
     @MainActor
