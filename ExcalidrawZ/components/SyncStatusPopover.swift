@@ -24,7 +24,7 @@ struct SyncStatusPopover: View {
                 content()
             }
         }
-        .onChange(of: syncState.hasActiveSyncOperations, initial: true, throttle: 0.2, latest: true) { _, newVal in
+        .onChange(of: syncState.hasActiveSyncOperations, initial: true, throttle: 0.2, latest: true) { newVal in
             withAnimation(.smooth) {
                 isPresented = newVal
             }
@@ -102,7 +102,7 @@ struct SyncStatusContentView: View {
             .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
-        .onChange(of: syncState.syncingFilesCount, throttle: 0.5, latest: true) { _, newCount in
+        .onChange(of: syncState.syncingFilesCount, throttle: 0.5, latest: true) { newCount in
             // Only update if count is stable (> 0) or clearly done (stayed 0)
             debouncedSyncingFilesCount = newCount
         }

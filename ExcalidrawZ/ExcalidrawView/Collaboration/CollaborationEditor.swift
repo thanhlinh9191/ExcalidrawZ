@@ -80,7 +80,7 @@ struct CollaborationEditor: View {
                         }
                     }
                 }
-                .onChange(of: excalidrawFile, throttle: 1.0, latest: true) { _, newValue in
+                .onChange(of: excalidrawFile, throttle: 1.0, latest: true) { newValue in
                     guard let newValue, loadingState == .loaded else { return }
                     guard let content = newValue.content else { return }
                     guard content != loadedContent || newValue.roomID != loadedRoomID else { return }

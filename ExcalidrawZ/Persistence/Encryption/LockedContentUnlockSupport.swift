@@ -175,33 +175,25 @@ enum LockedContentSystemUnlockStore {
     }
 
     static func save(_ recoveryKey: RecoveryKey) throws {
-        var accessControlError: Unmanaged<CFError>?
-        guard let accessControl = SecAccessControlCreateWithFlags(
-            nil,
-            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            .userPresence,
-            &accessControlError
-        ) else {
-            throw LockedContentSystemUnlockError.unavailable
-        }
-
-        let query = baseQuery()
-        let deleteStatus = SecItemDelete(query as CFDictionary)
         var updatedAttributes: [String: Any] = [:]
         updatedAttributes[kSecValueData as String] = recoveryKey.storageData
-        updatedAttributes[kSecAttrAccessControl as String] = accessControl
 
-        if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
-            let updateStatus = SecItemUpdate(query as CFDictionary, updatedAttributes as CFDictionary)
-            guard updateStatus == errSecSuccess else {
-                throw keychainError(for: updateStatus)
-            }
+        let query = synchronizableQuery()
+        let updateStatus = SecItemUpdate(query as CFDictionary, updatedAttributes as CFDictionary)
+        if updateStatus == errSecSuccess {
+            deleteLegacyLocalRecoveryKey()
             UserDefaults.standard.set(true, forKey: savedRecoveryKeyMarkerKey)
             return
         }
 
+        guard updateStatus == errSecItemNotFound else {
+            throw keychainError(for: updateStatus)
+        }
+
         var attributes = query
         attributes.merge(updatedAttributes) { _, newValue in newValue }
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
+
         let status = SecItemAdd(attributes as CFDictionary, nil)
         if status == errSecDuplicateItem {
             let updateStatus = SecItemUpdate(query as CFDictionary, updatedAttributes as CFDictionary)
@@ -211,11 +203,13 @@ enum LockedContentSystemUnlockStore {
         } else if status != errSecSuccess {
             throw keychainError(for: status)
         }
+        deleteLegacyLocalRecoveryKey()
         UserDefaults.standard.set(true, forKey: savedRecoveryKeyMarkerKey)
     }
 
     static func deleteSavedRecoveryKey() {
-        SecItemDelete(baseQuery() as CFDictionary)
+        SecItemDelete(synchronizableQuery() as CFDictionary)
+        deleteLegacyLocalRecoveryKey()
         UserDefaults.standard.set(false, forKey: savedRecoveryKeyMarkerKey)
     }
 
@@ -224,7 +218,16 @@ enum LockedContentSystemUnlockStore {
     }
 
     static func savedRecoveryKeyState() throws -> LockedContentSavedRecoveryKeyState {
-        var query = baseQuery()
+        let synchronizableState = try savedRecoveryKeyState(query: synchronizableQuery())
+        if synchronizableState == .available {
+            return .available
+        }
+
+        return try savedRecoveryKeyState(query: legacyLocalQuery())
+    }
+
+    private static func savedRecoveryKeyState(query: [String: Any]) throws -> LockedContentSavedRecoveryKeyState {
+        var query = query
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnAttributes as String] = true
         query[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUISkip
@@ -284,11 +287,37 @@ enum LockedContentSystemUnlockStore {
     }
 
     private static func loadRecoveryKeySync(context: LAContext) throws -> RecoveryKey {
-        var query = baseQuery()
+        do {
+            let recoveryKey = try loadSynchronizableRecoveryKey()
+            UserDefaults.standard.set(true, forKey: savedRecoveryKeyMarkerKey)
+            return recoveryKey
+        } catch LockedContentSystemUnlockError.noSavedRecoveryKey {
+            let recoveryKey = try loadLegacyLocalRecoveryKey(context: context)
+            try? save(recoveryKey)
+            return recoveryKey
+        }
+    }
+
+    private static func loadSynchronizableRecoveryKey() throws -> RecoveryKey {
+        var query = synchronizableQuery()
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        return try loadRecoveryKey(query: query)
+    }
+
+    private static func loadLegacyLocalRecoveryKey(context: LAContext) throws -> RecoveryKey {
+        var query = legacyLocalQuery()
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecUseAuthenticationContext as String] = context
 
+        let recoveryKey = try loadRecoveryKey(query: query)
+        UserDefaults.standard.set(true, forKey: savedRecoveryKeyMarkerKey)
+        return recoveryKey
+    }
+
+    private static func loadRecoveryKey(query: [String: Any]) throws -> RecoveryKey {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess else {
@@ -301,9 +330,9 @@ enum LockedContentSystemUnlockStore {
         guard let data = item as? Data else {
             throw LockedContentSystemUnlockError.noSavedRecoveryKey
         }
+
         let recoveryKey = try RecoveryKey(storageData: data)
         UserDefaults.standard.set(true, forKey: savedRecoveryKeyMarkerKey)
-        try? save(recoveryKey)
         return recoveryKey
     }
 
@@ -339,11 +368,25 @@ enum LockedContentSystemUnlockStore {
         }
     }
 
+    private static func synchronizableQuery() -> [String: Any] {
+        var query = baseQuery()
+        query[kSecAttrSynchronizable as String] = kCFBooleanTrue
+        return query
+    }
+
+    private static func legacyLocalQuery() -> [String: Any] {
+        baseQuery()
+    }
+
     private static func baseQuery() -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
+    }
+
+    private static func deleteLegacyLocalRecoveryKey() {
+        SecItemDelete(legacyLocalQuery() as CFDictionary)
     }
 }

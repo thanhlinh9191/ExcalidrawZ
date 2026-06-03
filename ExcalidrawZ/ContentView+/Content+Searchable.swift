@@ -98,7 +98,7 @@ struct SearchResultsProvider: View {
     
     var body: some View {
         content(searchResults)
-            .onChange(of: searchText, initial: true, throttle: 0.5, latest: true) { _, newValue in
+            .onChange(of: searchText, initial: true, throttle: 0.5, latest: true) { newValue in
                 guard !isSearching else { return }
                 fetchFiles()
             }
@@ -266,7 +266,7 @@ struct SerachContent: View {
                 }
             }
         }
-        .onChange(of: searchText, initial: true, throttle: 0.5, latest: true) { _, newValue in
+        .onChange(of: searchText, initial: true, throttle: 0.5, latest: true) { newValue in
             guard !isSearching else { return }
             fetchFiles()
         }
