@@ -123,23 +123,32 @@ struct ExcalidrawToolbar: View {
         leadingTollsContent()
         
         ExcalidrawToolbarToolContainer { sizeClass in
+            let pickerItems = toolbarPickerItems(for: sizeClass)
+
             HStack(spacing: 10) {
                 ZStack {
                     Color.clear
                     if sizeClass == .dense {
                         denseContent()
                     } else {
-                        segmentedPicker(sizeClass: sizeClass)
+                        segmentedPicker(
+                            sizeClass: sizeClass,
+                            primaryPickerItems: pickerItems.primary,
+                            secondaryPickerItems: pickerItems.secondary
+                        )
                     }
                 }
             }
             
             
             if #available(macOS 26.0, iOS 26.0, *),
-               !secondaryPickerItems.isEmpty,
+               !pickerItems.secondary.isEmpty,
                let tool = toolState.activatedTool,
                sizeClass != .dense {
-                secondaryPickerItemsMenu(tool: tool)
+                secondaryPickerItemsMenu(
+                    tool: tool,
+                    secondaryPickerItems: pickerItems.secondary
+                )
             }
         }
         
@@ -167,16 +176,63 @@ struct ExcalidrawToolbar: View {
     }
     
     @State private var lastActivatedSecondaryTool: ExcalidrawTool?
+
+    private func toolbarPickerItems(
+        for sizeClass: ExcalidrawToolbarToolSizeClass
+    ) -> (primary: [ExcalidrawTool], secondary: [ExcalidrawTool]) {
+        switch sizeClass {
+            case .dense:
+                return ([], [])
+            case .compact:
+                return (
+                    [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line],
+                    [.freedraw, .text, .image, .eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
+                )
+            case .regular:
+                return (
+                    [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line, .freedraw, .text, .image],
+                    [.eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
+                )
+            case .expanded:
+                return (
+                    [
+                        .cursor,
+                        .rectangle,
+                        .diamond,
+                        .ellipse,
+                        .arrow,
+                        .line,
+                        .freedraw,
+                        .text,
+                        .image,
+                        .eraser,
+                        .laser,
+                        .lasso,
+                        .hand,
+                        .frame,
+                        .webEmbed,
+                        .magicFrame,
+                    ],
+                    []
+                )
+        }
+    }
     
     @ViewBuilder
     private func segmentedPicker(
         sizeClass: ExcalidrawToolbarToolSizeClass,
+        primaryPickerItems: [ExcalidrawTool],
+        secondaryPickerItems: [ExcalidrawTool],
         size: CGFloat = 20,
         withFooter: Bool = true
     ) -> some View {
         HStack(spacing: size / 2) {
             SegmentedPicker(selection: $toolState.activatedTool) {
-                primaryToolPikcerItems(size: size, withFooter: withFooter)
+                primaryToolPikcerItems(
+                    primaryPickerItems,
+                    size: size,
+                    withFooter: withFooter
+                )
             }
             .padding({
                 if #available(macOS 26.0, iOS 26.0, *) {
@@ -203,44 +259,16 @@ struct ExcalidrawToolbar: View {
                         .fill(.regularMaterial)
                 }
             }
-            .watch(value: sizeClass) {
-                _,
-                newValue in
-                if newValue == .compact {
-                    primaryPickerItems = [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line]
-                    secondaryPickerItems = [.freedraw, .text, .image, .eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
-                } else if newValue == .regular {
-                    primaryPickerItems = [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line, .freedraw, .text, .image]
-                    secondaryPickerItems = [.eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame,]
-                } else /*if newValue == .expanded || newValue == .dense*/ {
-                    primaryPickerItems = [
-                        .cursor,
-                        .rectangle,
-                        .diamond,
-                        .ellipse,
-                        .arrow,
-                        .line,
-                        .freedraw,
-                        .text,
-                        .image,
-                        .eraser,
-                        .laser,
-                        .lasso,
-                        .hand,
-                        .frame,
-                        .webEmbed,
-                        .magicFrame,
-                    ]
-                    secondaryPickerItems = []
-                }
-            }
-            
             if #available(macOS 26.0, iOS 26.0, *) {
                 
             } else if !secondaryPickerItems.isEmpty,
                       sizeClass != .expanded,
                       let tool = toolState.activatedTool {
-                secondaryPickerItemsMenu(tool: tool, size: size)
+                secondaryPickerItemsMenu(
+                    tool: tool,
+                    secondaryPickerItems: secondaryPickerItems,
+                    size: size
+                )
                     .buttonStyle(.borderless)
                     .padding(size / 3)
                     .background {
@@ -279,6 +307,7 @@ struct ExcalidrawToolbar: View {
     @ViewBuilder
     private func secondaryPickerItemsMenu(
         tool: ExcalidrawTool,
+        secondaryPickerItems: [ExcalidrawTool],
         size: CGFloat = 20,
     ) -> some View {
         Menu {
@@ -317,20 +346,13 @@ struct ExcalidrawToolbar: View {
         .menuIndicator(.visible)
     }
     
-    @State private var primaryPickerItems: [ExcalidrawTool] = []
-    @State private var secondaryPickerItems: [ExcalidrawTool] = []
-    
     @ViewBuilder
-    private func primaryToolPikcerItems(size: CGFloat, withFooter: Bool) -> some View {
+    private func primaryToolPikcerItems(
+        _ primaryPickerItems: [ExcalidrawTool],
+        size: CGFloat,
+        withFooter: Bool
+    ) -> some View {
         ForEach(primaryPickerItems, id: \.self) { tool in
-            toolPickerItemView(tool: tool, size: size, withFooter: withFooter)
-                .tag(tool)
-        }
-    }
-    
-    @ViewBuilder
-    private func secondaryToolPikcerItems(size: CGFloat, withFooter: Bool) -> some View {
-        ForEach(secondaryPickerItems, id: \.self) { tool in
             toolPickerItemView(tool: tool, size: size, withFooter: withFooter)
                 .tag(tool)
         }
