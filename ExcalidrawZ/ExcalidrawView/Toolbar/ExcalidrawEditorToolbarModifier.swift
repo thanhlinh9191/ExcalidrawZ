@@ -64,6 +64,9 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
             }
         }
         .toolbar(content: toolbarContent)
+#if os(iOS)
+        .modifier(CompactExcalidrawBottomToolbarStateModifier())
+#endif
         .sheet(item: $lockedFileAccessRequest) { request in
             LockedFileAccessSheet(request: request) { mode in
                 Task { @MainActor in
@@ -104,36 +107,45 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @ToolbarContentBuilder
     private func toolbarContent() -> some ToolbarContent {
 #if os(iOS)
-        toolbarContent_iOS()
-#else
-        toolbarContent_macOS()
+        iOSToolbarContent()
+#elseif os(macOS)
+        macOSToolbarContent()
 #endif
     }
     
 #if os(iOS)
     @ToolbarContentBuilder
-    private func toolbarContent_iOS() -> some ToolbarContent {
+    private func iOSToolbarContent() -> some ToolbarContent {
         if lockedContentState.activeFileLockState != .locked {
-            ToolbarItemGroup(
-                placement: containerHorizontalSizeClass == .regular ? .principal : .bottomBar
-            ) {
-                ExcalidrawToolbar()
+            if containerHorizontalSizeClass == .compact {
+                CompactExcalidrawBottomToolbarContent()
+            } else {
+                ToolbarItemGroup(placement: .principal) {
+                    ExcalidrawToolbar()
+                }
             }
         }
-        
-        toolbarContent_macOS()
+
+        sharedNavigationToolbarContent()
+        sharedPrimaryActionToolbarContent()
+    }
+#endif
+
+#if os(macOS)
+    @ToolbarContentBuilder
+    private func macOSToolbarContent() -> some ToolbarContent {
+        sharedNavigationToolbarContent()
+        macOSToolPickerToolbarContent()
+        sharedPrimaryActionToolbarContent()
     }
 #endif
 
     @ToolbarContentBuilder
-    private func toolbarContent_macOS() -> some ToolbarContent {
+    private func sharedNavigationToolbarContent() -> some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
             if #available(macOS 13.0, iOS 16.0, *),
                appPreference.sidebarLayout == .sidebar {
 
-            } else if #available(macOS 13.0, iOS 16.0, *),
-               appPreference.sidebarLayout == .sidebar {
-                
             } else if containerHorizontalSizeClass != .compact {
                 Button {
                     layoutState.isSidebarPresented.toggle()
@@ -154,7 +166,11 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 NewFileButton()
             }
         }
+    }
+
 #if os(macOS)
+    @ToolbarContentBuilder
+    private func macOSToolPickerToolbarContent() -> some ToolbarContent {
         ToolbarItemGroup(placement: .status) {
             if #available(macOS 26.0, iOS 26.0, *) {
                 ExcalidrawToolbar()
@@ -165,8 +181,11 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 ExcalidrawToolbar()
             }
         }
+    }
 #endif
-        
+
+    @ToolbarContentBuilder
+    private func sharedPrimaryActionToolbarContent() -> some ToolbarContent {
 //        ToolbarItemGroup(placement: .confirmationAction) {
         ToolbarItemGroup(placement: .primaryAction) {
             if fileState.currentActiveFile != nil {

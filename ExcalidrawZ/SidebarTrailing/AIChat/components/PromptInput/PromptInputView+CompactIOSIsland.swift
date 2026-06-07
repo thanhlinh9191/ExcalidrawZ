@@ -54,6 +54,47 @@ extension PromptInputView {
     }
 
     @ViewBuilder
+    var iOSToolbarTextInputContent: some View {
+        let isExpanded = iOSIslandInputIsExpanded
+
+        iOSToolbarTextInputSurface(isExpanded: isExpanded)
+        .frame(alignment: .bottom)
+        .animation(.smooth(duration: 0.2), value: isExpanded)
+    }
+
+    @ViewBuilder
+    private func iOSToolbarTextInputSurface(isExpanded: Bool) -> some View {
+        PromptDraftInputField(
+            draftKey: promptDraftKey,
+            draftState: promptDraftState,
+            showsAttachments: true,
+            sendRequestToken: draftSendRequestToken,
+            focus: $isInputFocused,
+            onSubmit: { text, images in
+                submitDraft(prompt: text, pastedImages: images)
+            },
+            onPaste: handlePastedItem,
+            onSummaryChange: { hasContent, hasImages in
+                updateDraftSummary(hasContent: hasContent, hasImages: hasImages)
+            }
+        )
+        .id(ObjectIdentifier(promptDraftState))
+        .readHeight($iOSIslandDraftFieldHeight)
+        .padding(.leading, 2)
+        .padding(.trailing, 42)
+        .padding(.vertical, isExpanded ? 6 : 0)
+        .frame(
+            minHeight: isExpanded ? iOSIslandExpandedInputMinHeight : iOSIslandCircleControlLength,
+            maxHeight: isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength,
+            alignment: isExpanded ? .bottom : .center
+        )
+        .overlay(alignment: isExpanded ? .bottomTrailing : .trailing) {
+            iOSToolbarPrimaryActionButton
+                .padding(.trailing, 0)
+        }
+    }
+
+    @ViewBuilder
     private func iOSIslandTextInputSurface(isExpanded: Bool) -> some View {
         PromptDraftInputField(
             draftKey: promptDraftKey,
@@ -191,6 +232,45 @@ extension PromptInputView {
             width: iOSIslandPrimaryActionLength,
             height: iOSIslandPrimaryActionLength
         )
+        .clipShape(Circle())
+        .contentShape(Circle())
+        .disabled(!primaryActionIsStop && !hasInputText)
+    }
+
+    @ViewBuilder
+    var iOSToolbarPrimaryActionButton: some View {
+        Button {
+            if primaryActionIsStop {
+                cancelCurrentGeneration()
+            } else {
+                draftSendRequestToken += 1
+            }
+        } label: {
+            if #available(iOS 17.0, *) {
+                Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .contentTransition(.symbolEffect(.replace))
+            } else {
+                Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 28, height: 28)
+            }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(
+            primaryActionIsStop || hasInputText
+            ? AnyShapeStyle(Color.white)
+            : AnyShapeStyle(Color.secondary)
+        )
+        .background {
+            Circle()
+                .fill(
+                    primaryActionIsStop || hasInputText
+                    ? AnyShapeStyle(Color.accentColor)
+                    : AnyShapeStyle(.regularMaterial)
+                )
+        }
         .clipShape(Circle())
         .contentShape(Circle())
         .disabled(!primaryActionIsStop && !hasInputText)

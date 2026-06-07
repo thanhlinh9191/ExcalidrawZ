@@ -455,6 +455,14 @@ struct PromptInputView<Background: View, Header: View>: View {
 #endif
     }
 
+    var usesCompactIOSToolbarText: Bool {
+#if os(iOS)
+        style.surface == .compactIOSToolbarText
+#else
+        false
+#endif
+    }
+
     var body: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.body")
 
@@ -476,7 +484,9 @@ struct PromptInputView<Background: View, Header: View>: View {
     @ViewBuilder
     private var bodyContent: some View {
 #if os(iOS)
-        if usesCompactIOSIslandInput {
+        if usesCompactIOSToolbarText {
+            iOSToolbarTextInputContent
+        } else if usesCompactIOSIslandInput {
             iOSIslandInputContent
         } else {
             regularBodyContent

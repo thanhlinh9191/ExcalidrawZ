@@ -145,9 +145,6 @@ struct ExcalidrawEditor: View {
                 .allowsHitTesting(!isLoadingFile)
         }
         .readSize($editorContentSize)
-        // AI chat island floats above the editor only — sidebar / inspector /
-        // home content are *not* in this view's frame, so bottom-center here
-        // means bottom-center of the actual canvas the user is looking at.
         .overlay(alignment: .bottom) {
             AIChatIslandOverlay(canvasSize: editorContentSize)
         }
@@ -193,24 +190,27 @@ struct ExcalidrawEditor: View {
             }
         }
         .watch(value: fileState.currentActiveFileIsInTrash) { _ in
-            collapseAIChatIslandIfCurrentFileIsTrashed()
+            collapseCompactAISurfacesIfCurrentFileIsTrashed()
         }
         .watch(value: layoutState.isAIChatIslandMode) { _ in
-            collapseAIChatIslandIfCurrentFileIsTrashed()
+            collapseCompactAISurfacesIfCurrentFileIsTrashed()
+        }
+        .watch(value: layoutState.isCompactAIChatToolbarPresented) { _ in
+            collapseCompactAISurfacesIfCurrentFileIsTrashed()
         }
         .task {
             await lockedContentState.prepareForActiveFileChange(to: activeFile)
             await loadExcalidrawFile(from: activeFile)
         }
         .onAppear {
-            collapseAIChatIslandIfCurrentFileIsTrashed()
+            collapseCompactAISurfacesIfCurrentFileIsTrashed()
         }
     }
 
-    private func collapseAIChatIslandIfCurrentFileIsTrashed() {
+    private func collapseCompactAISurfacesIfCurrentFileIsTrashed() {
         guard fileState.currentActiveFileIsInTrash else { return }
-        guard layoutState.isAIChatIslandMode else { return }
         layoutState.isAIChatIslandMode = false
+        layoutState.exitCompactAIChatToolbar()
     }
 
     private func beginFileLoadRevealGuard(fileID: String) {

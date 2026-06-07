@@ -18,7 +18,7 @@ struct AIChatView: View {
     @EnvironmentObject var llmState: LLMStateObject
     @EnvironmentObject var aiChatState: AIChatState
     @Environment(\.alertToast) var alertToast
-    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+    @Environment(\.containerHorizontalSizeClass) var containerHorizontalSizeClass
     @ObservedObject var prefs = AIChatPreferences.shared
     
     /// Conversation id lives on `FileState` (chats are scoped to the current
@@ -166,7 +166,7 @@ struct AIChatView: View {
                        fileState.currentActiveFile != nil,
                        !fileState.currentActiveFileIsInTrash {
                         layoutState.isInspectorPresented = false
-                        layoutState.enterAIChatIsland()
+                        layoutState.enterCompactAIChatToolbar()
                     }
                 }
                 .transition(.opacity)

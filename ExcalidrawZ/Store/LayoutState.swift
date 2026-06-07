@@ -24,12 +24,13 @@ final class LayoutState: ObservableObject {
     /// Whether the inspector is visible. Independent from `activeInspectorTab` so that
     /// closing the inspector preserves which tab the user last looked at.
     ///
-    /// `didSet` enforces mutual exclusion with the AI chat island: opening the
-    /// inspector on the aiChat tab while the island is up would mean two
-    /// presentations of the same conversation — close the island instead.
+    /// `didSet` enforces mutual exclusion with compact AI chat surfaces:
+    /// opening the inspector on the aiChat tab while the island / compact
+    /// toolbar prompt is up would mean two presentations of the same
+    /// conversation — close the compact surface instead.
     @Published var isInspectorPresented: Bool = false {
         didSet {
-            collapseIslandIfShowingAIChatInspector()
+            collapseCompactAISurfacesIfShowingAIChatInspector()
         }
     }
 
@@ -37,7 +38,7 @@ final class LayoutState: ObservableObject {
     /// Persists across open/close cycles.
     @Published var activeInspectorTab: InspectorTab = .library {
         didSet {
-            collapseIslandIfShowingAIChatInspector()
+            collapseCompactAISurfacesIfShowingAIChatInspector()
         }
     }
 
@@ -59,6 +60,20 @@ final class LayoutState: ObservableObject {
     /// reopens it on aiChat).
     @Published var isAIChatIslandMode: Bool = false
 
+    /// Compact iOS-only presentation where the bottom toolbar swaps its
+    /// regular controls for the AI prompt input. Kept separate from
+    /// `isAIChatIslandMode` because the surface is no longer a floating
+    /// island even though it reuses the compact input styling.
+    @Published var isCompactAIChatToolbarPresented: Bool = false {
+        didSet {
+            guard isCompactAIChatToolbarPresented else { return }
+            if isInspectorPresented && activeInspectorTab == .aiChat {
+                isInspectorPresented = false
+            }
+            isAIChatIslandMode = false
+        }
+    }
+
     /// Persistent drag offset of the island (relative to its default top-right
     /// anchor). Lives here — not in the island view's @State — so the position
     /// survives unmount/remount when the island is shown/hidden.
@@ -66,6 +81,7 @@ final class LayoutState: ObservableObject {
 
     /// Open the island; close the inspector if it was showing aiChat.
     func enterAIChatIsland() {
+        isCompactAIChatToolbarPresented = false
         if isInspectorPresented && activeInspectorTab == .aiChat {
             isInspectorPresented = false
         }
@@ -75,8 +91,25 @@ final class LayoutState: ObservableObject {
     /// Close the island; reopen the inspector on the aiChat tab.
     func exitAIChatIsland() {
         isAIChatIslandMode = false
+        isCompactAIChatToolbarPresented = false
         activeInspectorTab = .aiChat
         isInspectorPresented = true
+    }
+
+    func enterCompactAIChatToolbar() {
+        withAnimation(.smooth) {
+            if isInspectorPresented && activeInspectorTab == .aiChat {
+                isInspectorPresented = false
+            }
+            isAIChatIslandMode = false
+            isCompactAIChatToolbarPresented = true
+        }
+    }
+
+    func exitCompactAIChatToolbar() {
+        withAnimation(.smooth) {
+            isCompactAIChatToolbarPresented = false
+        }
     }
 
     /// Triggered by clicking a specific tab button.
@@ -102,14 +135,15 @@ final class LayoutState: ObservableObject {
     }
 
     /// Mutual-exclusion guard: any path that ends up with the inspector
-    /// presenting the AI chat tab forces the island closed. Both the reverse
-    /// direction (open island → close aiChat inspector) is handled in
-    /// `enterAIChatIsland`, so the two presentations can never overlap
-    /// regardless of which one was triggered first.
-    private func collapseIslandIfShowingAIChatInspector() {
-        guard isAIChatIslandMode else { return }
+    /// presenting the AI chat tab forces compact AI surfaces closed. The
+    /// reverse directions are handled by the individual enter methods, so the
+    /// presentations can never overlap regardless of which one was triggered
+    /// first.
+    private func collapseCompactAISurfacesIfShowingAIChatInspector() {
+        guard isAIChatIslandMode || isCompactAIChatToolbarPresented else { return }
         if isInspectorPresented, activeInspectorTab == .aiChat {
             isAIChatIslandMode = false
+            isCompactAIChatToolbarPresented = false
         }
     }
 }

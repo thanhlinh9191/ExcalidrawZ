@@ -11,6 +11,10 @@ import Combine
 import SFSafeSymbols
 import ChocofordUI
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 struct ExcalidrawToolbar: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
@@ -20,7 +24,6 @@ struct ExcalidrawToolbar: View {
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var toolState: ToolState
     @EnvironmentObject var layoutState: LayoutState
-    @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
     
 #if canImport(AppKit)
     @State private var window: NSWindow?
@@ -30,10 +33,6 @@ struct ExcalidrawToolbar: View {
     @State private var windowFrameCancellable: AnyCancellable?
     @State private var isApplePencilDisconnectConfirmationDialogPresented = false
     
-    @State private var isMathInputSheetPresented = false
-    @State private var isMermaidInputSheetPresented = false
-    @State private var isPDFPickerPresented = false
-
     private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
         switch fileState.currentActiveFile {
             case .collaborationFile:
@@ -378,48 +377,7 @@ struct ExcalidrawToolbar: View {
     @ViewBuilder
     private func compactContent() -> some View {
         if toolState.inDragMode {
-            compactStatusBar
-
-            Spacer(minLength: 0)
-
-            compactInspectorTabButton(
-                tab: .preference,
-                icon: .sliderHorizontal3,
-                title: String(localizable: .canvasPreferencesTitle)
-            )
-            if shouldCollapseCompactInspectorTabs {
-                compactInspectorTabButton(
-                    tab: .aiChat,
-                    icon: .sparkles,
-                    title: "AI Chat",
-                    action: toggleCompactAIChatPresentation
-                )
-                compactInspectorTabsMenu()
-            } else {
-                compactInspectorTabButton(
-                    tab: .search,
-                    icon: .magnifyingglass,
-                    title: String(localizable: .searchButtonTitle)
-                )
-                .keyboardShortcut("f", modifiers: .command)
-                compactInspectorTabButton(
-                    tab: .library,
-                    icon: .book,
-                    title: String(localizable: .librariesTitle)
-                )
-                compactInspectorTabButton(
-                    tab: .history,
-                    icon: .clockArrowCirclepath,
-                    title: String(localizable: .checkpoints)
-                )
-                compactInspectorTabButton(
-                    tab: .aiChat,
-                    icon: .sparkles,
-                    title: "AI Chat",
-                    action: toggleCompactAIChatPresentation
-                )
-            }
-            compactEditButton
+            compactDragModeControls
         } else if let activatedTool = toolState.activatedTool, activatedTool != .cursor {
             if containerHorizontalSizeClass == .compact {
                 Text(activatedTool.localization).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 6)
@@ -567,6 +525,52 @@ struct ExcalidrawToolbar: View {
     }
 
     @ViewBuilder
+    private var compactDragModeControls: some View {
+        compactStatusBar
+
+        Spacer(minLength: 0)
+
+        compactInspectorTabButton(
+            tab: .preference,
+            icon: .sliderHorizontal3,
+            title: String(localizable: .canvasPreferencesTitle)
+        )
+        if shouldCollapseCompactInspectorTabs {
+            compactInspectorTabButton(
+                tab: .aiChat,
+                icon: .sparkles,
+                title: "AI Chat",
+                action: toggleCompactAIChatPresentation
+            )
+            compactInspectorTabsMenu()
+        } else {
+            compactInspectorTabButton(
+                tab: .search,
+                icon: .magnifyingglass,
+                title: String(localizable: .searchButtonTitle)
+            )
+            .keyboardShortcut("f", modifiers: .command)
+            compactInspectorTabButton(
+                tab: .library,
+                icon: .book,
+                title: String(localizable: .librariesTitle)
+            )
+            compactInspectorTabButton(
+                tab: .history,
+                icon: .clockArrowCirclepath,
+                title: String(localizable: .checkpoints)
+            )
+            compactInspectorTabButton(
+                tab: .aiChat,
+                icon: .sparkles,
+                title: "AI Chat",
+                action: toggleCompactAIChatPresentation
+            )
+        }
+        compactEditButton
+    }
+
+    @ViewBuilder
     private var compactStatusBar: some View {
 #if os(iOS)
         if let activeFile = fileState.currentActiveFile {
@@ -704,23 +708,9 @@ struct ExcalidrawToolbar: View {
         return layoutState.isInspectorPresented && layoutState.activeInspectorTab == tab
     }
 
-    private var shouldOpenCompactAIChatAsIsland: Bool {
-#if os(iOS)
-        return containerHorizontalSizeClass == .compact &&
-            AIChatAvailability.isAvailable &&
-            aiChatPreferences.isAIEnabled &&
-            !fileState.currentActiveFileIsInTrash
-#else
-        return false
-#endif
-    }
-
     private func toggleCompactAIChatPresentation() {
         if layoutState.isAIChatIslandMode {
             layoutState.isAIChatIslandMode = false
-        } else if shouldOpenCompactAIChatAsIsland {
-            layoutState.isInspectorPresented = false
-            layoutState.enterAIChatIsland()
         } else {
             layoutState.toggleInspector(.aiChat)
         }
@@ -768,51 +758,7 @@ struct ExcalidrawToolbar: View {
     
     @ViewBuilder
     private func moreTools() -> some View {
-        Menu {
-#if DEBUG
-#if !os(iOS)
-            Button {
-                Task {
-                    try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .text2Diagram)
-                }
-            } label: {
-                Text(.localizable(.toolbarText2Diagram))
-            }
-#endif
-#endif
-            Button {
-                isMermaidInputSheetPresented.toggle()
-            } label: {
-                Text(.localizable(.toolbarMermaid))
-            }
-            
-            Button {
-                isMathInputSheetPresented.toggle()
-            } label: {
-                Text(.localizable(.toolbarLatexMath))
-            }
-            
-            Button {
-                isPDFPickerPresented.toggle()
-            } label: {
-                Text(localizable: .toolbarInsertPDF)
-            }
-        } label: {
-            if #available(macOS 15.0, iOS 18.0, *) {
-                Label(.localizable(.toolbarMoreTools), systemImage: "xmark.triangle.circle.square")
-            } else if #available(macOS 13.0, iOS 16.0, *) {
-                Label(.localizable(.toolbarMoreTools), systemSymbol: .chartXyaxisLine)
-            } else {
-                Label(.localizable(.toolbarMoreTools), systemSymbol: .chartXyaxisLine)
-            }
-        }
-        .menuIndicator(.hidden)
-#if os(iOS)
-        .menuOrder(.fixed)
-#endif
-        .modifier(MermaidInputSheetViewModifier(isPresented: $isMermaidInputSheetPresented))
-        .modifier(MathInputSheetViewModifier(isPresented: $isMathInputSheetPresented))
-        .modifier(PDFInsertSheetViewModifier(isPresented: $isPDFPickerPresented))
+        ExcalidrawToolbarMoreToolsMenu()
     }
 }
 
@@ -1011,7 +957,7 @@ struct ExcalidrawToolbarItemModifer: ViewModifier {
     }
 }
 
-private struct CursorModeTrailingButton: View {
+struct CursorModeTrailingButton: View {
     @Environment(\.alertToast) private var alertToast
 
     @ObservedObject var coordinator: ExcalidrawCanvasView.Coordinator

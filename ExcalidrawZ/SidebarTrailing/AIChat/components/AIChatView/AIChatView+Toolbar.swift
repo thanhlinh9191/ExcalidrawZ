@@ -13,7 +13,15 @@ extension AIChatView {
         if layoutState.isInspectorPresented {
             ToolbarItemGroup(placement: .destructiveAction) {
                 Button {
+#if os(iOS)
+                    if containerHorizontalSizeClass == .compact {
+                        layoutState.enterCompactAIChatToolbar()
+                    } else {
+                        layoutState.enterAIChatIsland()
+                    }
+#else
                     layoutState.enterAIChatIsland()
+#endif
                 } label: {
                     Label(.localizable(.aiChatButtonIslandMode), systemSymbol: .menubarDockRectangle)
                 }
