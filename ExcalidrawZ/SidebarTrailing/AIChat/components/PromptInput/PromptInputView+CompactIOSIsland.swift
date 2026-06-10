@@ -65,15 +65,6 @@ extension PromptInputView {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .animation(.smooth(duration: 0.25), value: isIOSIslandFullscreenInputPresented)
-        .if(showsCompactIOSFullChatButton) { content in
-            content
-                .navigationDestination(isPresented: $isIOSIslandFullChatPresented) {
-                    AIChatView()
-                        .background(.background)
-                        .navigationTitle(String(localizable: .aiChatTitle))
-                        .navigationBarTitleDisplayMode(.inline)
-                }
-        }
     }
 
     var iOSIslandInputIsExpanded: Bool {
@@ -112,6 +103,7 @@ extension PromptInputView {
                 }
             },
             focus: $isInputFocused,
+            autofocus: focusOnAppear,
             onSubmit: { text, images in
                 submitCompactIOSIslandDraft(prompt: text, pastedImages: images)
             },
@@ -473,7 +465,7 @@ extension PromptInputView {
     private func enterIOSIslandFullChat() {
         isInputFocused = false
         isIOSIslandFullscreenInputPresented = false
-        isIOSIslandFullChatPresented = true
+        layoutState.presentCompactAIChatFullChat()
     }
 
     @ViewBuilder

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 import ChocofordUI
 import Logging
 
@@ -220,28 +221,39 @@ struct ExcalidrawFileCover: View {
         generationTask = Task {
             do {
                 // Load ExcalidrawFile based on source
-                let excalidrawFile: ExcalidrawFile
+                var excalidrawFile: ExcalidrawFile
+                let mediaHydrationFileObjectID: NSManagedObjectID?
                 
                 switch source {
                     case .activeFile(let activeFile):
                         // Load from ActiveFile
                         switch activeFile {
                             case .file(let file):
+                                mediaHydrationFileObjectID = file.objectID
                                 let content = try await file.loadContent()
                                 excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
                             case .localFile(let url):
+                                mediaHydrationFileObjectID = nil
                                 excalidrawFile = try await loadLocalFileForPreview(at: url)
                             case .temporaryFile(let url):
+                                mediaHydrationFileObjectID = nil
                                 excalidrawFile = try ExcalidrawFile(contentsOf: url)
                             case .collaborationFile(let collaborationFile):
+                                mediaHydrationFileObjectID = nil
                                 let content = try await collaborationFile.loadContent()
                                 excalidrawFile = try ExcalidrawFile(data: content, id: collaborationFile.id?.uuidString)
                         }
                         
                     case .excalidrawFile(let file):
+                        mediaHydrationFileObjectID = nil
                         // Use provided ExcalidrawFile directly
                         excalidrawFile = file
                 }
+
+                excalidrawFile = await hydrateMediaForPreview(
+                    excalidrawFile,
+                    fileObjectID: mediaHydrationFileObjectID
+                )
                 
                 // Wait for coordinator to be ready
                 while fileState.excalidrawWebCoordinator?.isLoading == true {
@@ -306,12 +318,52 @@ struct ExcalidrawFileCover: View {
         }
     }
 
+    private func hydrateMediaForPreview(
+        _ excalidrawFile: ExcalidrawFile,
+        fileObjectID: NSManagedObjectID?
+    ) async -> ExcalidrawFile {
+        guard let fileObjectID,
+              excalidrawFile.files.isEmpty,
+              excalidrawFile.elements.contains(where: \.isImageElement) else {
+            return excalidrawFile
+        }
+
+        do {
+            let resources = try await PersistenceController.shared
+                .mediaItemRepository
+                .getResourceFiles(forFile: fileObjectID)
+            guard !resources.isEmpty else { return excalidrawFile }
+
+            var hydratedFile = excalidrawFile
+            let resourceFiles = Dictionary(
+                resources.map { ($0.id, $0) },
+                uniquingKeysWith: { existing, _ in existing }
+            )
+            hydratedFile.files = resourceFiles.merging(hydratedFile.files) { _, fileResource in
+                fileResource
+            }
+            return hydratedFile
+        } catch {
+            logger.warning("Failed to hydrate media for preview \(fileID): \(error)")
+            return excalidrawFile
+        }
+    }
+
     @MainActor
     private func finishGeneration(cacheKey: String, generationToken: UUID) {
         guard self.generationToken == generationToken,
               generatingCacheKey == cacheKey else { return }
         generatingCacheKey = nil
         generationTask = nil
+    }
+}
+
+private extension ExcalidrawElement {
+    var isImageElement: Bool {
+        if case .image = self {
+            return true
+        }
+        return false
     }
 }
 

@@ -7,15 +7,18 @@
 
 #if os(iOS)
 import SwiftUI
+import ChocofordUI
 import UIKit
 import LLMCore
 import LLMKit
+import SFSafeSymbols
 
 private enum CompactAIChatOverlayMetrics {
     static let horizontalPadding: CGFloat = 12
     static let toolbarBottomPadding: CGFloat = 13
     static let toolbarControlLength: CGFloat = 80
     static let tickerHeight: CGFloat = 46
+    static let tickerFullscreenButtonLength: CGFloat = 38
     static let draftAttachmentsBottomPadding: CGFloat = toolbarBottomPadding + tickerHeight + 8
     static let tickerAppearDelay: Duration = .milliseconds(140)
     static let tickerCollapseDuration: Duration = .milliseconds(360)
@@ -180,16 +183,16 @@ struct CompactAIChatGeneratingOverlay: View {
         AIChatReplyTickerHost(onReplyTextChange: updateReplyTickerVisibility) { replyText in
             let text = renderedReplyText ?? replyText
             if text != nil || layoutState.isCompactAIChatReplyStartPending {
-                Button {
-                    layoutState.enterCompactAIChatInputEditing()
-                } label: {
-                    CompactAIChatReplyTickerView(
-                        text: text,
-                        isPending: layoutState.isCompactAIChatReplyStartPending
-                    )
-                }
-                .buttonStyle(.plain)
-                .help("AI Chat")
+                CompactAIChatReplyTickerView(
+                    text: text,
+                    isPending: layoutState.isCompactAIChatReplyStartPending,
+                    onTapTicker: {
+                        layoutState.enterCompactAIChatInputEditing()
+                    },
+                    onOpenFullChat: {
+                        layoutState.presentCompactAIChatFullChat()
+                    }
+                )
                 .scaleEffect(
                     x: tickerScaleX,
                     y: tickerScaleY,
@@ -487,16 +490,25 @@ private struct CompactAIChatDraftAttachmentThumbnail: View {
 private struct CompactAIChatReplyTickerView: View {
     let text: String?
     let isPending: Bool
+    let onTapTicker: () -> Void
+    let onOpenFullChat: () -> Void
 
     var body: some View {
-        ZStack {
-            if let text {
-                ReplyTickerView(text: text)
-                    .transition(.opacity)
-            } else if isPending {
-                pendingContent
-                    .transition(.opacity)
+        HStack(spacing: 0) {
+            Button(action: onTapTicker) {
+                tickerContent
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: CompactAIChatOverlayMetrics.tickerHeight,
+                        maxHeight: CompactAIChatOverlayMetrics.tickerHeight
+                    )
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .help("AI Chat")
+
+            fullscreenButton
+                .padding(.trailing, 4)
         }
         .frame(
             maxWidth: .infinity,
@@ -505,6 +517,9 @@ private struct CompactAIChatReplyTickerView: View {
         )
         .background {
             tickerBackground
+            if text == nil, isPending {
+                tickerGlow
+            }
         }
         .clipShape(Capsule())
         .contentShape(Capsule())
@@ -513,12 +528,33 @@ private struct CompactAIChatReplyTickerView: View {
     }
 
     @ViewBuilder
-    private var pendingContent: some View {
-        Color.clear
-            .frame(maxWidth: .infinity)
-            .background {
-                tickerGlow
-            }
+    private var tickerContent: some View {
+        if let text {
+            ReplyTickerView(text: text)
+                .transition(.opacity)
+        } else if isPending {
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .transition(.opacity)
+        }
+    }
+
+    @ViewBuilder
+    private var fullscreenButton: some View {
+        Button(action: onOpenFullChat) {
+            Image(systemSymbol: .rectangleExpandVertical)
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: 16, height: 16)
+        }
+        .modernButtonStyle(style: .glassProminent, size: .regular, shape: .circle)
+        .frame(
+            width: CompactAIChatOverlayMetrics.tickerFullscreenButtonLength,
+            height: CompactAIChatOverlayMetrics.tickerFullscreenButtonLength
+        )
+        .clipShape(Circle())
+        .contentShape(Circle())
+        .help(.localizable(.aiChatButtonFullscreen))
+        .accessibilityLabel(Text(localizable: .aiChatButtonFullscreen))
     }
 
     @ViewBuilder

@@ -178,7 +178,7 @@ struct AIChatView: View {
                        fileState.currentActiveFile != nil,
                        !fileState.currentActiveFileIsInTrash {
                         layoutState.isInspectorPresented = false
-                        layoutState.enterCompactAIChatToolbar()
+                        layoutState.enterCompactAIChatInputEditing()
                     }
                 }
                 .transition(.opacity)

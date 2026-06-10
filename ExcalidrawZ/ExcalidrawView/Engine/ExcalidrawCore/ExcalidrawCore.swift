@@ -1143,6 +1143,7 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "replaceAllElements")
     }
 
     @MainActor
@@ -1154,6 +1155,7 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "addElements")
     }
 
     @MainActor
@@ -1165,6 +1167,7 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "updateElements")
     }
 
     @MainActor
@@ -1176,6 +1179,7 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "removeElements")
     }
 
     @MainActor
@@ -1195,7 +1199,9 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
-        return try decodeJavaScriptHelperResult(result, as: MermaidInsertResult.self)
+        let insertResult = try decodeJavaScriptHelperResult(result, as: MermaidInsertResult.self)
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "insertFromMermaid")
+        return insertResult
     }
 
     @MainActor
@@ -1219,7 +1225,9 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
-        return try decodeJavaScriptHelperResult(result, as: SkeletonInsertResult.self)
+        let insertResult = try decodeJavaScriptHelperResult(result, as: SkeletonInsertResult.self)
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "insertFromSkeleton")
+        return insertResult
     }
 
     private func resourceFiles(
@@ -1255,7 +1263,9 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
-        return try decodeJavaScriptHelperResult(result, as: ConnectElementsResult.self)
+        let connectResult = try decodeJavaScriptHelperResult(result, as: ConnectElementsResult.self)
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "connectElements")
+        return connectResult
     }
 
     @MainActor
@@ -1302,6 +1312,38 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
+    }
+
+    @MainActor
+    func activateHandTool() async throws {
+        guard !self.isLoading else { return }
+        let previousLastTool = self.lastTool
+        self.lastTool = .hand
+        do {
+            _ = try await webView.callAsyncJavaScript(
+                """
+                const helper = window.excalidrawZHelper;
+                if (!helper || typeof helper.toggleToolbarAction !== "function") {
+                    throw new Error("Excalidraw helper is not ready.");
+                }
+                const api = helper._api;
+                if (api && typeof api.setActiveTool === "function") {
+                    try {
+                        api.setActiveTool({ type: "hand" });
+                    } catch (_) {
+                        helper.toggleToolbarAction("H");
+                    }
+                } else {
+                    helper.toggleToolbarAction("H");
+                }
+                """,
+                arguments: [:],
+                contentWorld: .page
+            )
+        } catch {
+            self.lastTool = previousLastTool
+            throw error
+        }
     }
 
     @MainActor

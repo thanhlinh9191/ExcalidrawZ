@@ -244,7 +244,6 @@ struct PromptInputView<Background: View, Header: View>: View {
     @State var iOSIslandTextAreaIsSingleLine: Bool = true
     @State var iOSIslandTextAreaIsOverflowing: Bool = false
     @State var isIOSIslandFullscreenInputPresented: Bool = false
-    @State var isIOSIslandFullChatPresented: Bool = false
 #if os(iOS)
     @EnvironmentObject var layoutState: LayoutState
     @State var iOSSelectedPhotoPickerItems: [PhotosPickerItem] = []

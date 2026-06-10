@@ -199,6 +199,7 @@ struct PromptDraftInputField: View {
     let linesOverflow: Binding<Bool>?
     let onTextAreaSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
+    var autofocus: Bool = false
     let onSubmit: (String, [PendingPastedImage]) -> Bool
     let onPaste: (TextAreaPasteItem) -> PromptImagePasteResult
     let onSummaryChange: (Bool, Bool) -> Void
@@ -232,6 +233,7 @@ struct PromptDraftInputField: View {
                 linesOverflow: linesOverflow,
                 onSingleLineChanged: onTextAreaSingleLineChanged,
                 focus: focus,
+                autofocus: autofocus,
                 onSubmit: submit,
                 onPaste: handlePaste
             )
@@ -472,6 +474,7 @@ private struct PromptDraftTextArea: View {
     let linesOverflow: Binding<Bool>?
     let onSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
+    var autofocus: Bool = false
     let onSubmit: () -> Void
     let onPaste: (TextAreaPasteItem) -> TextAreaInsertion?
 
@@ -502,6 +505,7 @@ private struct PromptDraftTextArea: View {
         if let onSingleLineChanged {
             textArea = textArea.onSingleLineChanged(onSingleLineChanged)
         }
+        textArea = textArea.autofocus(autofocus)
         return textArea
     }
 }

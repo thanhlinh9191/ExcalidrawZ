@@ -15,7 +15,7 @@ extension AIChatView {
                 Button {
 #if os(iOS)
                     if containerHorizontalSizeClass == .compact {
-                        layoutState.enterCompactAIChatToolbar()
+                        layoutState.enterCompactAIChatInputEditing()
                     } else {
                         layoutState.enterAIChatIsland()
                     }

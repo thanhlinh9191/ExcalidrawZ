@@ -479,6 +479,8 @@ final class FileState: ObservableObject {
     var didUpdateFile = false
     var didUpdateFileState: [ActiveFile : Bool] = [:]
     var isCreatingFile = false
+    private var pendingProgrammaticCanvasCommitDates: [String: Date] = [:]
+    private var recentLocalCanvasMutationDates: [String: Date] = [:]
     
     var recoverWatchUpdateWorkItem: DispatchWorkItem?
     
@@ -501,6 +503,59 @@ final class FileState: ObservableObject {
             return coreIsLoading || activeCollaborationFileIsLoading
         }
         return excalidrawWebCoordinator?.isLoading == true
+    }
+
+    func noteProgrammaticCanvasMutation(fileID: String) {
+        pendingProgrammaticCanvasCommitDates[fileID] = Date()
+        recentLocalCanvasMutationDates[fileID] = Date()
+        pruneProgrammaticCanvasMutationDates()
+    }
+
+    func recentLocalCanvasMutationDate(for activeFile: ActiveFile?) -> Date? {
+        pruneRecentLocalCanvasMutationDates()
+        guard let fileID = activeFile?.id else { return nil }
+        return recentLocalCanvasMutationDates[fileID]
+    }
+
+    private func consumeProgrammaticCanvasCommitAllowance(fileID: String) -> Bool {
+        pruneProgrammaticCanvasMutationDates()
+        guard pendingProgrammaticCanvasCommitDates.removeValue(forKey: fileID) != nil else {
+            return false
+        }
+        return true
+    }
+
+    private func shouldAcceptCanvasUpdate(
+        fileID: String,
+        label: String
+    ) -> Bool {
+        let hasProgrammaticAllowance = consumeProgrammaticCanvasCommitAllowance(fileID: fileID)
+        if shouldIgnoreUpdate {
+            guard hasProgrammaticAllowance, !activeCanvasIsLoading else {
+                return false
+            }
+            logger.info("Accepting programmatic canvas update while update gate is recovering: \(label)")
+            recoverWatchUpdateWorkItem?.cancel()
+            recoverWatchUpdateWorkItem = nil
+            shouldIgnoreUpdate = false
+            didUpdateFile = false
+        }
+        return true
+    }
+
+    private func pruneRecentLocalCanvasMutationDates() {
+        let cutoff = Date().addingTimeInterval(-30)
+        recentLocalCanvasMutationDates = recentLocalCanvasMutationDates.filter { _, date in
+            date >= cutoff
+        }
+    }
+
+    private func pruneProgrammaticCanvasMutationDates() {
+        let cutoff = Date().addingTimeInterval(-10)
+        pendingProgrammaticCanvasCommitDates = pendingProgrammaticCanvasCommitDates.filter { _, date in
+            date >= cutoff
+        }
+        pruneRecentLocalCanvasMutationDates()
     }
     
     @discardableResult
@@ -583,13 +638,15 @@ final class FileState: ObservableObject {
     
     @discardableResult
     func updateFile(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
+        let activeFile = ActiveFile.file(file)
         let didUpdateFlag = didUpdateFileState[.file(file)] ?? false
-        guard !shouldIgnoreUpdate, !file.inTrash else {
+        guard !file.inTrash,
+              shouldAcceptCanvasUpdate(fileID: activeFile.id, label: file.name ?? "Untitled") else {
             return false
         }
         let didUpdateFile = didUpdateFlag
         let id = file.objectID
-        self.didUpdateFileState[.file(file)] = true
+        self.didUpdateFileState[activeFile] = true
         Task.detached {
             do {
                 guard let content = excalidrawFile.content else { return }
@@ -659,7 +716,7 @@ final class FileState: ObservableObject {
     
     /// Remember to call `startAccessingSecurityScopedResource` before calling this function.
     func updateLocalFile(to url: URL, with excalidrawFile: ExcalidrawFile, context: NSManagedObjectContext) async throws {
-        guard !shouldIgnoreUpdate/*, let fileURL = self.currentLocalFile*/ else { return }
+        guard shouldAcceptCanvasUpdate(fileID: url.absoluteString, label: url.lastPathComponent) else { return }
         let didUpdateFile = didUpdateFile
         var excalidrawFile = excalidrawFile
         try excalidrawFile.updateContentFilesFromFiles()

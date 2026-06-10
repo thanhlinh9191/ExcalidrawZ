@@ -116101,6 +116101,17 @@
         }
       }
     },
+    "whatsNewCompactTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's New"
+          }
+        }
+      }
+    },
     "whatsNewTitle": {
       "extractionState": "manual",
       "localizations": {

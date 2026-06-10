@@ -99,6 +99,11 @@ final class LayoutState: ObservableObject {
     /// state.
     @Published var isCompactAIChatReplyStartPending: Bool = false
 
+    /// Compact iOS-only full chat route. Owned at the editor/layout level so
+    /// all compact AI entry points push the same `AIChatView` destination
+    /// instead of each overlay carrying its own navigation state.
+    @Published var isCompactAIChatFullChatPresented: Bool = false
+
     /// Persistent drag offset of the island (relative to its default top-right
     /// anchor). Lives here — not in the island view's @State — so the position
     /// survives unmount/remount when the island is shown/hidden.
@@ -157,6 +162,10 @@ final class LayoutState: ObservableObject {
             isCompactAIChatReplyTickerVisible = false
             isCompactAIChatReplyStartPending = false
         }
+    }
+
+    func presentCompactAIChatFullChat() {
+        isCompactAIChatFullChatPresented = true
     }
 
     /// Triggered by clicking a specific tab button.

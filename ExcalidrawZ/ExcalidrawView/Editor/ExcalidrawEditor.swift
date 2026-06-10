@@ -176,6 +176,12 @@ struct ExcalidrawEditor: View {
         .overlay(alignment: .bottom) {
             CompactAIChatDraftAttachmentsOverlay()
         }
+        .navigationDestination(isPresented: $layoutState.isCompactAIChatFullChatPresented) {
+            AIChatView()
+                .background(.background)
+                .navigationTitle(String(localizable: .aiChatTitle))
+                .navigationBarTitleDisplayMode(.inline)
+        }
 #endif
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatToolbarPresented)
@@ -210,7 +216,9 @@ struct ExcalidrawEditor: View {
             activeFileLockState: lockedContentState.activeFileLockState,
             localFileBinding: localFileBinding
         ) { latestData in
-            await pullUpdatingFromCloud(latestData: latestData)
+            await MainActor.run {
+                handleLatestData(latestData)
+            }
         }
 #endif
         .watch(value: activeFile) { (newFile: FileState.ActiveFile?) in
@@ -378,7 +386,7 @@ struct ExcalidrawEditor: View {
         }
 
         // Check if user has been idle long enough
-        let isIdle = if let lastEdit = lastEditTime {
+        let isIdle = if let lastEdit = latestLocalCanvasEditTime() {
             Date().timeIntervalSince(lastEdit) > idleTimeout
         } else {
             true  // No edit yet, consider idle
@@ -409,7 +417,7 @@ struct ExcalidrawEditor: View {
                 try? await Task.sleep(nanoseconds: UInt64(idleTimeout * 1_000_000_000))
 
                 // Check if still idle and still have cloud data
-                if let lastEdit = await MainActor.run(body: { self.lastEditTime }),
+                if let lastEdit = await MainActor.run(body: { self.latestLocalCanvasEditTime() }),
                    Date().timeIntervalSince(lastEdit) >= idleTimeout,
                    let stillCloudData = await MainActor.run(body: { self.latestCloudData }) {
                     // Apply deferred cloud update
@@ -429,6 +437,20 @@ struct ExcalidrawEditor: View {
                     }
                 }
             }
+        }
+    }
+
+    private func latestLocalCanvasEditTime() -> Date? {
+        let mutationDate = fileState.recentLocalCanvasMutationDate(for: activeFile)
+        switch (lastEditTime, mutationDate) {
+            case (.some(let lastEdit), .some(let mutation)):
+                return max(lastEdit, mutation)
+            case (.some(let lastEdit), .none):
+                return lastEdit
+            case (.none, .some(let mutation)):
+                return mutation
+            case (.none, .none):
+                return nil
         }
     }
 

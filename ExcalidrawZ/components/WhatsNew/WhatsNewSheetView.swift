@@ -256,9 +256,10 @@ struct WhatsNewView: View {
             }
             .padding(20)
         }
+#endif
         .background {
             VStack {
-                Color.clear.frame(height: 20)
+                Color.clear.frame(height: containerHorizontalSizeClass == .compact ? 80 : 20)
                 // V2 special
                 Image("AI Cover")
                     .resizable()
@@ -267,7 +268,7 @@ struct WhatsNewView: View {
                     .mask {
                         VStack(spacing: 0) {
                             Color.black.frame(height: 100)
-                            if #available(macOS 14.0, *) {
+                            if #available(macOS 14.0, iOS 17.0, *) {
                                 SmoothLinearGradient(
                                     from: .black,
                                     to: .black.opacity(0),
@@ -285,7 +286,7 @@ struct WhatsNewView: View {
                     }
                     .mask {
                         HStack(spacing: 0) {
-                            if #available(macOS 14.0, *) {
+                            if #available(macOS 14.0, iOS 17.0, *) {
                                 SmoothLinearGradient(
                                     from: .black.opacity(0),
                                     to: .black,
@@ -309,8 +310,14 @@ struct WhatsNewView: View {
             }
             .ignoresSafeArea()
         }
-#elseif os(iOS)
-        .navigationTitle(Text(.localizable(.whatsNewTitle)))
+#if os(iOS)
+        .navigationTitle(
+            Text(.localizable(
+                containerHorizontalSizeClass == .compact
+                    ? .whatsNewCompactTitle
+                    : .whatsNewTitle
+            ))
+        )
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -420,7 +427,7 @@ struct WhatsNewView: View {
         .padding(.horizontal, containerHorizontalSizeClass == .compact ? 10 : 40)
         .padding(.bottom, 40)
     }
-    
+
     @ViewBuilder
     private func warnningSection() -> some View {
         VStack {
