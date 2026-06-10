@@ -13,6 +13,20 @@ import ChocofordUI
 
 private let libraryItemLogger = Logger(label: "LibraryItemView")
 
+private enum LibraryItemInsertionError: LocalizedError {
+    case canvasNotReady
+    case noItemsInserted
+
+    var errorDescription: String? {
+        switch self {
+            case .canvasNotReady:
+                return "Canvas is not ready yet."
+            case .noItemsInserted:
+                return "No library item was added to the canvas."
+        }
+    }
+}
+
 struct LibraryItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.alertToast) var alertToast
@@ -92,8 +106,7 @@ struct LibraryItemView: View {
         } label: {
             content()
         } primaryAction: {
-            addToCanvas()
-            alertToast(.init(displayMode: .hud, type: .complete(.green), title: "Added"))
+            addToCanvas(showsSuccessToast: true)
         }
         .buttonStyle(.borderless)
         .sheet(isPresented: $isEditPresented) {
@@ -124,7 +137,7 @@ struct LibraryItemView: View {
 
             if fileState.currentActiveFile != nil {
                 Button {
-                    addToCanvas()
+                    addToCanvas(showsSuccessToast: true)
                 } label: {
                     Label(.localizable(.librariesButtonItemAddToCanvas), systemSymbol: .plusSquare)
                 }
@@ -153,16 +166,71 @@ struct LibraryItemView: View {
         }
     }
     
-    private func addToCanvas() {
+    private var activeCanvasCoordinator: ExcalidrawCanvasView.Coordinator? {
+        switch fileState.currentActiveFile {
+            case .collaborationFile:
+                fileState.excalidrawCollaborationWebCoordinator
+            case .file, .localFile, .temporaryFile:
+                fileState.excalidrawWebCoordinator
+            case nil:
+                nil
+        }
+    }
+
+    private func addToCanvas(showsSuccessToast: Bool = false) {
         guard fileState.currentActiveFile != nil else {
             return
         }
         Task {
             do {
-                try await libraryViewModel.excalidrawWebCoordinator?.loadLibraryItem(item: item.excalidrawLibrary)
+                guard let coordinator = activeCanvasCoordinator else {
+                    throw LibraryItemInsertionError.canvasNotReady
+                }
+                let sourceElements = item.excalidrawLibrary.libraryItems.flatMap { $0.elements }
+                let viewportCenter = try await coordinator.getViewportCenter()
+                let elements = try LibraryItemCanvasElementPreprocessor.prepare(
+                    elements: sourceElements,
+                    placement: .center(x: viewportCenter.x, y: viewportCenter.y)
+                )
+                guard !elements.isEmpty else {
+                    throw LibraryItemInsertionError.noItemsInserted
+                }
+                let insertedElementIDs = elements.map(\.id)
+                try await coordinator.addElements(elements)
+                await focusInsertedElements(ids: insertedElementIDs, coordinator: coordinator)
+                if showsSuccessToast {
+                    alertToast(.init(
+                        displayMode: .hud,
+                        type: .complete(.green),
+                        title: String(localizable: .librariesButtonItemAddToCanvas)
+                    ))
+                }
             } catch {
+                libraryItemLogger.error("Failed to add library item to canvas: \(error.localizedDescription)")
                 alertToast(error)
             }
+        }
+    }
+
+    private func focusInsertedElements(
+        ids: [String],
+        coordinator: ExcalidrawCanvasView.Coordinator
+    ) async {
+        guard !ids.isEmpty else { return }
+        do {
+            try await Task.sleep(nanoseconds: 100_000_000)
+            try Task.checkCancellation()
+            try await coordinator.zoomToFitElements(
+                ids: ids,
+                options: .init(
+                    animate: true,
+                    duration: 300,
+                    viewportZoomFactor: 0.7
+                )
+            )
+        } catch is CancellationError {
+        } catch {
+            libraryItemLogger.warning("Failed to focus inserted library item: \(error.localizedDescription)")
         }
     }
     

@@ -30,8 +30,7 @@ struct SemiCircularUsageGauge: View {
                     AIAppearancePalette.foregroundGradient,
                     style: StrokeStyle(lineWidth: 14, lineCap: .round)
                 )
-
-            VStack(alignment: .center, spacing: 2) {
+            VStack(alignment: .center, spacing: 0) {
                 Text(percentageText)
                     .font(.system(size: 34, weight: .semibold, design: .rounded))
                     .foregroundStyle(AIAppearancePalette.foregroundGradient)
@@ -41,10 +40,9 @@ struct SemiCircularUsageGauge: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
-            .frame(maxWidth: .infinity)
-            .padding(.bottom, 4)
+            .offset(y: 8)
         }
-        .padding(.top, 8)
+        .padding(.bottom, 8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(localizable: .settingsAIUsageGaugeAccessibilityLabel))
         .accessibilityValue(

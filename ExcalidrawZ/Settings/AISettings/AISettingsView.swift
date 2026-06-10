@@ -16,7 +16,7 @@ struct AISettingsView: View {
     @EnvironmentObject var store: Store
     @ObservedObject var prefs = AIChatPreferences.shared
     @ObservedObject var router = SettingsRouter.shared
-
+    
     @State var selectedTab: SettingsTab = .usage
     @State var activityGrouping: ActivityGrouping = .recent
     @State var transactions: [CreditsTransaction] = []
@@ -33,16 +33,16 @@ struct AISettingsView: View {
     @State var aiUserInfoLoadError: String?
     @State var didCopyAIAccountID: Bool = false
     @State var isPresentingAIEnableConsent: Bool = false
-
+    
     /// Model list for the Default Model picker, sourced from the agent's
     /// `allowedModels`. Loaded lazily on first appearance so opening
     /// Settings doesn't pay a network cost up-front.
     @State var availableModels: [SupportedModel] = []
-
+    
     let pageSize: Int = 20
     let aggregatePageSize: Int = 100
     let agentID = "excalidraw-canvas"
-
+    
     var usesCompactSettingsLayout: Bool {
 #if os(iOS)
         containerHorizontalSizeClass == .compact
@@ -50,7 +50,7 @@ struct AISettingsView: View {
         false
 #endif
     }
-
+    
     var body: some View {
         SwiftUI.Group {
             if #available(macOS 14.0, iOS 17.0, *) {
@@ -69,18 +69,6 @@ struct AISettingsView: View {
                 .task { await loadAISettingsDataIfEnabled() }
             }
         }
-        .task {
-            consumePendingAISettingsRoute()
-        }
-        .watch(value: router.pendingAISettingsRoute) {
-            consumePendingAISettingsRoute()
-        }
-        .watch(value: prefs.isAIEnabled) { _, isEnabled in
-            guard isEnabled else { return }
-            Task {
-                await loadAISettingsDataIfEnabled()
-            }
-        }
 #if os(iOS)
         .toolbar {
             if usesCompactSettingsLayout, prefs.isAIEnabled {
@@ -95,8 +83,20 @@ struct AISettingsView: View {
                 prefs.isAIEnabled = true
             }
         }
+        .watch(value: router.pendingAISettingsRoute) {
+            consumePendingAISettingsRoute()
+        }
+        .watch(value: prefs.isAIEnabled) { _, isEnabled in
+            guard isEnabled else { return }
+            Task {
+                await loadAISettingsDataIfEnabled()
+            }
+        }
+        .task {
+            consumePendingAISettingsRoute()
+        }
     }
-
+    
     @MainActor
     private func consumePendingAISettingsRoute() {
         guard let route = router.pendingAISettingsRoute else { return }
@@ -108,7 +108,7 @@ struct AISettingsView: View {
         }
         router.pendingAISettingsRoute = nil
     }
-
+    
     @MainActor
     private func loadAISettingsDataIfEnabled() async {
         guard AIChatAvailability.canUseAI else { return }
@@ -119,7 +119,7 @@ struct AISettingsView: View {
         await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiSettingsAppear)
         await loadAIAccountInfoIfNeeded()
     }
-
+    
     @MainActor
     var aiEnabledBinding: Binding<Bool> {
         Binding(

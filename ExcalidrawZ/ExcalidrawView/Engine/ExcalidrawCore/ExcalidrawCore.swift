@@ -219,6 +219,11 @@ extension ExcalidrawCore {
         var zoom: Double?
     }
 
+    struct CanvasPoint: Codable, Hashable {
+        var x: Double
+        var y: Double
+    }
+
     struct CameraAnimationOptions: Codable, Hashable {
         var animate: Bool = true
         var duration: Int = 300
@@ -888,8 +893,9 @@ extension ExcalidrawCore {
     @MainActor
     @discardableResult
     func loadLibraryItem(item: ExcalidrawLibrary) async throws -> LoadLibraryItemResult? {
+        let libraryItemsJSON = try item.libraryItems.jsonStringified()
         let raw = try await self.webView.callAsyncJavaScript(
-            "return await window.excalidrawZHelper.loadLibraryItem(\(item.jsonStringified()));",
+            "return await window.excalidrawZHelper.loadLibraryItem(\(libraryItemsJSON));",
             arguments: [:],
             contentWorld: .page
         )
@@ -909,6 +915,30 @@ extension ExcalidrawCore {
         let camera = try decodeJavaScriptResult(result, as: CameraState.self)
         cameraState = camera
         return camera
+    }
+
+    @MainActor
+    func getViewportCenter() async throws -> CanvasPoint {
+        guard !self.webView.isLoading else {
+            throw InvalidJavaScriptResult()
+        }
+        let result = try await webView.callAsyncJavaScript(
+            """
+            const api = window.excalidrawZHelper?._api;
+            if (!api) {
+                throw new Error("getViewportCenter: excalidrawAPI not ready");
+            }
+            const appState = api.getAppState();
+            const zoom = appState.zoom?.value ?? 1;
+            return JSON.stringify({
+                x: appState.width / 2 / zoom - appState.scrollX,
+                y: appState.height / 2 / zoom - appState.scrollY,
+            });
+            """,
+            arguments: [:],
+            contentWorld: .page
+        )
+        return try decodeJavaScriptResult(result, as: CanvasPoint.self)
     }
 
     @MainActor

@@ -98,25 +98,20 @@ struct AddLibraryItemToCanvasTool: Tool {
             itemID: params.itemID
         )
 
-        // 2. Decode as raw JSON, transform (translate + remap ids),
-        //    re-encode.
-        let transformedData = try transformElements(
+        // 2. Transform (translate + remap ids), then decode as
+        //    [ExcalidrawElement] for the coordinator API.
+        let decodedElements = try LibraryItemCanvasElementPreprocessor.prepare(
             blob: elementsBlob,
-            target: (params.x, params.y)
+            placement: .topLeft(x: params.x, y: params.y)
         )
 
-        // 3. Decode as [ExcalidrawElement] for the coordinator API
-        //    (which is type-checked, not raw JSON).
-        let decoder = JSONDecoder()
-        let decodedElements = try decoder.decode([ExcalidrawElement].self, from: transformedData)
-
-        // 4. Push to canvas.
+        // 3. Push to canvas.
         try await applyToCanvas(
             elements: decodedElements,
             canvasTarget: addContext.canvasTarget
         )
 
-        // 5. Surface the new ids so the AI can chain follow-ups
+        // 4. Surface the new ids so the AI can chain follow-ups
         //    (`adjust_elements` updates / arrow bindings against the
         //    just-inserted shapes).
         let newIDs = decodedElements.map { $0.id }
@@ -154,140 +149,6 @@ struct AddLibraryItemToCanvasTool: Tool {
             }
             return blob
         }
-    }
-
-    // MARK: - JSON transform
-
-    /// Apply (translate + id-regen) to the raw elements JSON. We work
-    /// at the JSON-dict level rather than going through `ExcalidrawElement`
-    /// because the enum's value-type variants make in-place mutation
-    /// awkward (you'd reconstruct each shape variant by hand).
-    private func transformElements(
-        blob: Data,
-        target: (x: Double?, y: Double?)
-    ) throws -> Data {
-        guard var elements = try JSONSerialization.jsonObject(with: blob) as? [[String: Any]],
-              !elements.isEmpty else {
-            throw ToolError.executionFailed("Library item elements blob isn't a JSON array.")
-        }
-
-        // 1. Translation offset — needed only if caller supplied at least
-        //    one coordinate. If both are nil, we keep the original layout.
-        let offset = computeOffset(elements: elements, target: target)
-
-        // 2. Build id mapping: every element id → fresh nanoID. Group ids
-        //    are a separate identity space (multiple elements share
-        //    them), so we collect those distinctly.
-        var idMapping: [String: String] = [:]
-        var groupIDMapping: [String: String] = [:]
-        for element in elements {
-            if let oldID = element["id"] as? String {
-                idMapping[oldID] = idMapping[oldID] ?? ExcalidrawNanoID.make()
-            }
-            if let groupIDs = element["groupIds"] as? [String] {
-                for gid in groupIDs {
-                    groupIDMapping[gid] = groupIDMapping[gid] ?? ExcalidrawNanoID.make()
-                }
-            }
-        }
-
-        // 3. Apply offset + id remap.
-        for i in elements.indices {
-            elements[i] = remapIDs(
-                in: elements[i],
-                idMapping: idMapping,
-                groupIDMapping: groupIDMapping
-            )
-            if let dx = offset?.dx, let x = elements[i]["x"] as? Double {
-                elements[i]["x"] = x + dx
-            }
-            if let dy = offset?.dy, let y = elements[i]["y"] as? Double {
-                elements[i]["y"] = y + dy
-            }
-        }
-
-        return try JSONSerialization.data(withJSONObject: elements)
-    }
-
-    /// Computes the translation needed so the bounding-box top-left
-    /// lands at `target`. Returns nil if neither target coord supplied
-    /// (= keep original layout).
-    private func computeOffset(
-        elements: [[String: Any]],
-        target: (x: Double?, y: Double?)
-    ) -> (dx: Double, dy: Double)? {
-        guard target.x != nil || target.y != nil else { return nil }
-
-        // Bounding-box top-left = min(x), min(y) across all elements.
-        // Note: this ignores width/height for max calculation because we
-        // only need the top-left for positioning; the bbox's full extent
-        // doesn't matter for translation.
-        let xs = elements.compactMap { $0["x"] as? Double }
-        let ys = elements.compactMap { $0["y"] as? Double }
-        guard let minX = xs.min(), let minY = ys.min() else {
-            return (target.x ?? 0, target.y ?? 0)
-        }
-        return (
-            dx: (target.x ?? minX) - minX,
-            dy: (target.y ?? minY) - minY
-        )
-    }
-
-    /// Walk a single element's JSON dict and substitute ids using the
-    /// supplied mappings. Foreign refs (ids not in our mapping —
-    /// pointing to canvas elements outside this item) are left
-    /// untouched.
-    private func remapIDs(
-        in element: [String: Any],
-        idMapping: [String: String],
-        groupIDMapping: [String: String]
-    ) -> [String: Any] {
-        var out = element
-
-        // Element's own id.
-        if let oldID = out["id"] as? String, let newID = idMapping[oldID] {
-            out["id"] = newID
-        }
-
-        // text → containerId, generic → frameId — both are scalar id
-        // refs to other elements in the same item.
-        for key in ["containerId", "frameId"] {
-            if let oldRef = out[key] as? String, let newRef = idMapping[oldRef] {
-                out[key] = newRef
-            }
-        }
-
-        // boundElements is on parents (shape with bound text, shape
-        // with arrow connections) and lists [{id, type}] entries. We
-        // remap each entry's id in place; type is left alone.
-        if var bound = out["boundElements"] as? [[String: Any]] {
-            for i in bound.indices {
-                if let oldID = bound[i]["id"] as? String,
-                   let newID = idMapping[oldID] {
-                    bound[i]["id"] = newID
-                }
-            }
-            out["boundElements"] = bound
-        }
-
-        // arrow/linear bindings — both endpoints have an `elementId`
-        // field that points to the bound shape.
-        for key in ["startBinding", "endBinding"] {
-            if var binding = out[key] as? [String: Any],
-               let oldID = binding["elementId"] as? String,
-               let newID = idMapping[oldID] {
-                binding["elementId"] = newID
-                out[key] = binding
-            }
-        }
-
-        // groupIds — remap each entry through the group-id mapping
-        // (separate space from element ids).
-        if let groupIDs = out["groupIds"] as? [String] {
-            out["groupIds"] = groupIDs.map { groupIDMapping[$0] ?? $0 }
-        }
-
-        return out
     }
 
     // MARK: - Canvas
@@ -337,6 +198,224 @@ struct AddLibraryItemToCanvasTool: Tool {
         if let n = any as? Double { return n }
         if let n = any as? Int { return Double(n) }
         if let n = any as? NSNumber { return n.doubleValue }
+        return nil
+    }
+}
+
+enum LibraryItemCanvasElementPreprocessor {
+    enum Placement {
+        case original
+        case topLeft(x: Double?, y: Double?)
+        case center(x: Double, y: Double)
+    }
+
+    enum PreparationError: LocalizedError {
+        case emptyElements
+        case invalidElementsJSON
+
+        var errorDescription: String? {
+            switch self {
+                case .emptyElements:
+                    return "Library item has no elements."
+                case .invalidElementsJSON:
+                    return "Library item elements data is not a JSON array."
+            }
+        }
+    }
+
+    static func prepare(
+        elements: [ExcalidrawElement],
+        placement: Placement
+    ) throws -> [ExcalidrawElement] {
+        guard !elements.isEmpty else {
+            throw PreparationError.emptyElements
+        }
+        let data = try JSONEncoder().encode(elements)
+        return try prepare(blob: data, placement: placement)
+    }
+
+    static func prepare(
+        blob: Data,
+        placement: Placement
+    ) throws -> [ExcalidrawElement] {
+        let transformedData = try transformElements(blob: blob, placement: placement)
+        return try JSONDecoder().decode([ExcalidrawElement].self, from: transformedData)
+    }
+
+    /// Apply (translate + id-regen) to the raw elements JSON. We work
+    /// at the JSON-dict level rather than going through `ExcalidrawElement`
+    /// because the enum's value-type variants make in-place mutation
+    /// awkward (you'd reconstruct each shape variant by hand).
+    private static func transformElements(
+        blob: Data,
+        placement: Placement
+    ) throws -> Data {
+        guard var elements = try JSONSerialization.jsonObject(with: blob) as? [[String: Any]] else {
+            throw PreparationError.invalidElementsJSON
+        }
+        guard !elements.isEmpty else {
+            throw PreparationError.emptyElements
+        }
+
+        let offset = computeOffset(elements: elements, placement: placement)
+        let idMapping = makeElementIDMapping(elements)
+        let groupIDMapping = makeGroupIDMapping(elements)
+
+        for index in elements.indices {
+            elements[index] = remapIDs(
+                in: elements[index],
+                idMapping: idMapping,
+                groupIDMapping: groupIDMapping
+            )
+            if let dx = offset?.dx, let x = number(elements[index]["x"]) {
+                elements[index]["x"] = x + dx
+            }
+            if let dy = offset?.dy, let y = number(elements[index]["y"]) {
+                elements[index]["y"] = y + dy
+            }
+        }
+
+        return try JSONSerialization.data(withJSONObject: elements)
+    }
+
+    private static func computeOffset(
+        elements: [[String: Any]],
+        placement: Placement
+    ) -> (dx: Double, dy: Double)? {
+        switch placement {
+            case .original:
+                return nil
+            case .topLeft(let x, let y):
+                guard x != nil || y != nil else { return nil }
+                guard let bounds = bounds(of: elements) else {
+                    return (x ?? 0, y ?? 0)
+                }
+                return (
+                    dx: (x ?? bounds.minX) - bounds.minX,
+                    dy: (y ?? bounds.minY) - bounds.minY
+                )
+            case .center(let x, let y):
+                guard let bounds = bounds(of: elements) else {
+                    return (x, y)
+                }
+                return (
+                    dx: x - bounds.midX,
+                    dy: y - bounds.midY
+                )
+        }
+    }
+
+    private static func makeElementIDMapping(_ elements: [[String: Any]]) -> [String: String] {
+        var mapping: [String: String] = [:]
+        for element in elements {
+            if let id = element["id"] as? String {
+                mapping[id] = mapping[id] ?? ExcalidrawNanoID.make()
+            }
+        }
+        return mapping
+    }
+
+    private static func makeGroupIDMapping(_ elements: [[String: Any]]) -> [String: String] {
+        var mapping: [String: String] = [:]
+        for element in elements {
+            guard let groupIDs = element["groupIds"] as? [String] else { continue }
+            for groupID in groupIDs {
+                mapping[groupID] = mapping[groupID] ?? ExcalidrawNanoID.make()
+            }
+        }
+        return mapping
+    }
+
+    /// Walk a single element's JSON dict and substitute ids using the
+    /// supplied mappings. Foreign refs (ids not in our mapping) are left
+    /// untouched.
+    private static func remapIDs(
+        in element: [String: Any],
+        idMapping: [String: String],
+        groupIDMapping: [String: String]
+    ) -> [String: Any] {
+        var output = element
+
+        if let id = output["id"] as? String,
+           let newID = idMapping[id] {
+            output["id"] = newID
+        }
+
+        for key in ["containerId", "frameId"] {
+            if let id = output[key] as? String,
+               let newID = idMapping[id] {
+                output[key] = newID
+            }
+        }
+
+        if var boundElements = output["boundElements"] as? [[String: Any]] {
+            for index in boundElements.indices {
+                if let id = boundElements[index]["id"] as? String,
+                   let newID = idMapping[id] {
+                    boundElements[index]["id"] = newID
+                }
+            }
+            output["boundElements"] = boundElements
+        }
+
+        for key in ["startBinding", "endBinding"] {
+            if var binding = output[key] as? [String: Any],
+               let id = binding["elementId"] as? String,
+               let newID = idMapping[id] {
+                binding["elementId"] = newID
+                output[key] = binding
+            }
+        }
+
+        if let groupIDs = output["groupIds"] as? [String] {
+            output["groupIds"] = groupIDs.map { groupIDMapping[$0] ?? $0 }
+        }
+
+        return output
+    }
+
+    private struct Bounds {
+        var minX: Double
+        var minY: Double
+        var maxX: Double
+        var maxY: Double
+
+        var midX: Double { (minX + maxX) / 2 }
+        var midY: Double { (minY + maxY) / 2 }
+    }
+
+    private static func bounds(of elements: [[String: Any]]) -> Bounds? {
+        var result: Bounds?
+        for element in elements {
+            guard let x = number(element["x"]),
+                  let y = number(element["y"]) else {
+                continue
+            }
+            let width = number(element["width"]) ?? 0
+            let height = number(element["height"]) ?? 0
+            let minX = min(x, x + width)
+            let minY = min(y, y + height)
+            let maxX = max(x, x + width)
+            let maxY = max(y, y + height)
+
+            if let current = result {
+                result = Bounds(
+                    minX: Swift.min(current.minX, minX),
+                    minY: Swift.min(current.minY, minY),
+                    maxX: Swift.max(current.maxX, maxX),
+                    maxY: Swift.max(current.maxY, maxY)
+                )
+            } else {
+                result = Bounds(minX: minX, minY: minY, maxX: maxX, maxY: maxY)
+            }
+        }
+        return result
+    }
+
+    private static func number(_ value: Any?) -> Double? {
+        if let value = value as? Double { return value }
+        if let value = value as? Int { return Double(value) }
+        if let value = value as? NSNumber { return value.doubleValue }
         return nil
     }
 }
