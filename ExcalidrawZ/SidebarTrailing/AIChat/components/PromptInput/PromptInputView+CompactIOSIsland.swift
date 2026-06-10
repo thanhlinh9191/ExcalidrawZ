@@ -7,8 +7,10 @@
 
 #if os(iOS)
 import SwiftUI
+import PhotosUI
 import ChocofordUI
 import SFSafeSymbols
+import UIKit
 
 extension PromptInputView {
     private var iOSIslandCircleControlLength: CGFloat { 44 }
@@ -283,9 +285,27 @@ extension PromptInputView {
             Button {
                 isImagePickerPresented = true
             } label: {
-                Label(.localizable(.aiChatInputAttachmentMenuItemImage), systemSymbol: .photo)
+                Label(.localizable(.exportSheetButtonFile), systemSymbol: .doc)
             }
             .disabled(!canInsertImages)
+
+            PhotosPicker(
+                selection: $iOSSelectedPhotoPickerItems,
+                matching: .images
+            ) {
+                Label(.localizable(.aiChatInputAttachmentMenuItemPhotoLibrary), systemSymbol: .photoOnRectangle)
+            }
+            .disabled(!canInsertImages)
+
+            Button {
+                isIOSCameraPickerPresented = true
+            } label: {
+                Label(.localizable(.aiChatInputAttachmentMenuItemCamera), systemSymbol: .camera)
+            }
+            .disabled(
+                !canInsertImages ||
+                    !UIImagePickerController.isSourceTypeAvailable(.camera)
+            )
         } label: {
             iOSIslandCircleLabel {
                 Image(systemSymbol: .plus)
@@ -301,6 +321,15 @@ extension PromptInputView {
             allowsMultipleSelection: true
         ) { result in
             handleImagePickerResult(result)
+        }
+        .sheet(isPresented: $isIOSCameraPickerPresented) {
+            AIChatCameraImagePicker { image in
+                handleIOSCameraImage(image)
+            }
+            .ignoresSafeArea()
+        }
+        .watch(value: iOSSelectedPhotoPickerItems.map(\.itemIdentifier)) { _ in
+            handleIOSPhotoPickerItems(iOSSelectedPhotoPickerItems)
         }
     }
 
@@ -406,8 +435,8 @@ extension PromptInputView {
             }
         }
         .buttonStyle(.plain)
-        .help(String(localizable: .aiChatTitle))
-        .accessibilityLabel(Text(localizable: .aiChatTitle))
+        .help(.localizable(.aiChatButtonFullscreen))
+        .accessibilityLabel(Text(localizable: .aiChatButtonFullscreen))
     }
 
     @ViewBuilder
@@ -463,25 +492,28 @@ extension PromptInputView {
     @ViewBuilder
     var iOSIslandSettingsMenu: some View {
         Menu {
-            Button {
-                compactCurrentContext()
-            } label: {
-                if #available(iOS 18.0, *) {
-                    Label(.localizable(.aiChatContextUsageTitle), systemSymbol: .arrowTrianglehead2ClockwiseRotate90)
-                } else {
-                    Label(.localizable(.aiChatContextUsageTitle), systemSymbol: .arrowTriangle2Circlepath)
+            if showsIOSCompactContextMenuItem {
+                Button {
+                    compactCurrentContext()
+                } label: {
+                    if #available(iOS 18.0, *) {
+                        Label(.localizable(.aiChatButtonCompactContext), systemSymbol: .arrowTrianglehead2ClockwiseRotate90)
+                    } else {
+                        Label(.localizable(.aiChatButtonCompactContext), systemSymbol: .arrowTriangle2Circlepath)
+                    }
                 }
+                .disabled(isCompactingContext)
             }
-            .disabled(conversationID == nil || isCompactingContext)
 
             Button {
                 toggleAIFileAccess()
             } label: {
                 Label(
-                    fileAccessHelpText,
+                    .localizable(.aiChatButtonAIVisibility),
                     systemSymbol: activeFileAccessAllowsAI ? .eye : .eyeSlash
                 )
             }
+            .help(fileAccessHelpText)
             .disabled(!hasActiveFileForAIAccessControl || !canToggleAIFileAccess)
 
             Menu {
@@ -494,7 +526,7 @@ extension PromptInputView {
                 Button {
                     enterIOSIslandFullChat()
                 } label: {
-                    Label(.localizable(.aiChatTitle), systemSymbol: .rectangleExpandVertical)
+                    Label(.localizable(.aiChatButtonFullscreen), systemSymbol: .rectangleExpandVertical)
                 }
             }
 
@@ -514,6 +546,52 @@ extension PromptInputView {
         .labelStyle(.iconOnly)
         .menuIndicator(.hidden)
         .buttonStyle(.plain)
+    }
+
+    @MainActor
+    private var showsIOSCompactContextMenuItem: Bool {
+        guard let conversationID,
+              let cap = activeModel.maxContextTokens,
+              cap > 0
+        else { return false }
+        let used = llmState.estimatedTokenUsage(in: conversationID)
+        return Double(used) / Double(cap) > 0.5
+    }
+
+    @MainActor
+    private func handleIOSPhotoPickerItems(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        guard canInsertImages, upgradeModelForImageInputIfNeeded() else {
+            iOSSelectedPhotoPickerItems = []
+            alertToast(AIChatInputCapabilityError.noModelCanReadImages)
+            return
+        }
+
+        Task {
+            let images = await AIChatAttachmentImageImporter.pendingImages(from: items)
+            await MainActor.run {
+                aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
+                iOSSelectedPhotoPickerItems = []
+            }
+        }
+    }
+
+    @MainActor
+    private func handleIOSCameraImage(_ image: UIImage?) {
+        guard let image else { return }
+        appendIOSAttachmentImages([
+            AIChatAttachmentImageImporter.pendingImage(from: image)
+        ])
+    }
+
+    @MainActor
+    private func appendIOSAttachmentImages(_ images: [PendingPastedImage]) {
+        guard !images.isEmpty else { return }
+        guard canInsertImages, upgradeModelForImageInputIfNeeded() else {
+            alertToast(AIChatInputCapabilityError.noModelCanReadImages)
+            return
+        }
+        aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
     }
 }
 

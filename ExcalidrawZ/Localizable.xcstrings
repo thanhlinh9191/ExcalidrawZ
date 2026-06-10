@@ -1470,6 +1470,39 @@
         }
       }
     },
+    "aiChatButtonAIVisibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI Visibility"
+          }
+        }
+      }
+    },
+    "aiChatButtonCompactContext": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compact Context"
+          }
+        }
+      }
+    },
+    "aiChatButtonFullscreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fullscreen"
+          }
+        }
+      }
+    },
     "aiChatButtonShowWelcome": {
       "extractionState": "manual",
       "localizations": {
@@ -5313,6 +5346,28 @@
         }
       }
     },
+    "aiChatInputAttachmentMenuButtonAdd": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "aiChatInputAttachmentMenuItemCamera": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera"
+          }
+        }
+      }
+    },
     "aiChatInputAttachmentMenuItemImage": {
       "extractionState": "manual",
       "localizations": {
@@ -5422,6 +5477,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "圖片"
+          }
+        }
+      }
+    },
+    "aiChatInputAttachmentMenuItemPhotoLibrary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo Library"
           }
         }
       }

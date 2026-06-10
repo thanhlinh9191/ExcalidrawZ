@@ -8,6 +8,7 @@
 #if os(iOS)
 import SwiftUI
 import UniformTypeIdentifiers
+import PhotosUI
 
 import ChocofordUI
 import LLMKit
@@ -635,6 +636,8 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
     @EnvironmentObject private var aiChatState: AIChatState
 
     @State private var isImagePickerPresented = false
+    @State private var selectedPhotoPickerItems: [PhotosPickerItem] = []
+    @State private var isCameraPickerPresented = false
 
     let onAttachImages: () -> Void
 
@@ -650,10 +653,24 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
             Button {
                 isImagePickerPresented = true
             } label: {
-                Label(.localizable(.aiChatInputAttachmentMenuItemImage), systemSymbol: .photo)
+                Label(.localizable(.exportSheetButtonFile), systemSymbol: .doc)
             }
+
+            PhotosPicker(
+                selection: $selectedPhotoPickerItems,
+                matching: .images
+            ) {
+                Label(.localizable(.aiChatInputAttachmentMenuItemPhotoLibrary), systemSymbol: .photoOnRectangle)
+            }
+
+            Button {
+                isCameraPickerPresented = true
+            } label: {
+                Label(.localizable(.aiChatInputAttachmentMenuItemCamera), systemSymbol: .camera)
+            }
+            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
         } label: {
-            Label(.localizable(.aiChatInputAttachmentMenuItemImage), systemSymbol: .plus)
+            Label(.localizable(.aiChatInputAttachmentMenuButtonAdd), systemSymbol: .plus)
                 .labelStyle(.iconOnly)
                 .font(.system(size: 17, weight: .semibold))
                 .frame(width: 28, height: 28)
@@ -669,26 +686,49 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
         ) { result in
             handleImagePickerResult(result)
         }
+        .sheet(isPresented: $isCameraPickerPresented) {
+            AIChatCameraImagePicker { image in
+                handleCameraImage(image)
+            }
+            .ignoresSafeArea()
+        }
+        .watch(value: selectedPhotoPickerItems.map(\.itemIdentifier)) { _ in
+            handlePhotoPickerItems(selectedPhotoPickerItems)
+        }
     }
 
     @MainActor
     private func handleImagePickerResult(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result else { return }
-        let images = urls.compactMap { pendingImage(from: $0) }
+        let images = urls.compactMap { AIChatAttachmentImageImporter.pendingImage(from: $0) }
+        appendImages(images)
+    }
+
+    @MainActor
+    private func handlePhotoPickerItems(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        Task {
+            let images = await AIChatAttachmentImageImporter.pendingImages(from: items)
+            await MainActor.run {
+                selectedPhotoPickerItems = []
+                appendImages(images)
+            }
+        }
+    }
+
+    @MainActor
+    private func handleCameraImage(_ image: UIImage?) {
+        guard let image else { return }
+        appendImages([
+            AIChatAttachmentImageImporter.pendingImage(from: image)
+        ])
+    }
+
+    @MainActor
+    private func appendImages(_ images: [PendingPastedImage]) {
         guard !images.isEmpty else { return }
         aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
         onAttachImages()
-    }
-
-    private func pendingImage(from url: URL) -> PendingPastedImage? {
-        let didStart = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStart { url.stopAccessingSecurityScopedResource() }
-        }
-        guard let data = try? Data(contentsOf: url),
-              let image = UIImage(data: data)
-        else { return nil }
-        return PendingPastedImage(id: UUID(), image: image)
     }
 }
 #endif

@@ -259,6 +259,9 @@ extension AIChatView {
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
                 let model = try await retryModel(conversationID: id)
                 attemptedModel = model
+                let imageAttachments = AIChatImageAttachmentReference.makeReferences(
+                    from: retryContent?.files ?? []
+                )
                 let canIncludeActiveFileContext = await activeFileAllowsAIContext()
                 let invocationPlan = AIChatInvocationPlan.make(
                     fileState: fileState,
@@ -275,7 +278,8 @@ extension AIChatView {
                     guard AIChatAvailability.canUseAI else { throw CancellationError() }
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
-                        model: model
+                        model: model,
+                        imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
                         conversationID: id,
@@ -329,6 +333,9 @@ extension AIChatView {
                     preferredModel: modelOverride
                 )
                 attemptedModel = model
+                let imageAttachments = AIChatImageAttachmentReference.makeReferences(
+                    from: retryContent?.files ?? []
+                )
                 let canIncludeActiveFileContext = await activeFileAllowsAIContext()
                 let invocationPlan = AIChatInvocationPlan.make(
                     fileState: fileState,
@@ -345,7 +352,8 @@ extension AIChatView {
                     guard AIChatAvailability.canUseAI else { throw CancellationError() }
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
-                        model: model
+                        model: model,
+                        imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
                         conversationID: id,

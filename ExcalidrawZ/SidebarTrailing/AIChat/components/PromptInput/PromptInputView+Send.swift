@@ -200,6 +200,7 @@ extension PromptInputView {
                 let model = await MainActor.run { modelForSend(files: files) }
                 attemptedModel = model
                 let isNewConversation = self.conversation == nil
+                let imageAttachments = AIChatImageAttachmentReference.makeReferences(from: files)
                 let canIncludeActiveFileContext = await activeFileAllowsAIContext()
                 let invocationPlan = AIChatInvocationPlan.make(
                     fileState: fileState,
@@ -218,7 +219,8 @@ extension PromptInputView {
                     guard AIChatAvailability.canUseAI else { throw CancellationError() }
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
-                        model: model
+                        model: model,
+                        imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
                         conversationID: conversationIDForSession,

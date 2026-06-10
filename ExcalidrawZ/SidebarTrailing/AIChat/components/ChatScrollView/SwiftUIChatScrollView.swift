@@ -28,17 +28,23 @@ struct SwiftUIChatScrollView<Content: View>: View {
     /// Streaming flag from the caller. While true (and the user hasn't scrolled
     /// off the bottom), the container runs an internal scroll-follow loop.
     private let isStreaming: Bool
+    private let bottomContentPadding: CGFloat
+    private let onUserDragStart: (() -> Void)?
     private let content: Content
 
     init(
         isPinnedToBottom: Binding<Bool>,
         scrollToBottomRequest: Binding<ScrollToBottomRequest>,
         isStreaming: Bool = false,
+        bottomContentPadding: CGFloat = 0,
+        onUserDragStart: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         _isPinnedToBottom = isPinnedToBottom
         _scrollToBottomRequest = scrollToBottomRequest
         self.isStreaming = isStreaming
+        self.bottomContentPadding = bottomContentPadding
+        self.onUserDragStart = onUserDragStart
         self.content = content()
     }
 
@@ -46,7 +52,9 @@ struct SwiftUIChatScrollView<Content: View>: View {
         ChatScrollContainer(
             isPinnedToBottom: $isPinnedToBottom,
             scrollToBottomRequest: $scrollToBottomRequest,
-            isStreaming: isStreaming
+            isStreaming: isStreaming,
+            bottomContentPadding: bottomContentPadding,
+            onUserDragStart: onUserDragStart
         ) {
             content
         }
@@ -57,6 +65,8 @@ private struct ChatScrollContainer<Content: View>: View {
     @Binding var isPinnedToBottom: Bool
     @Binding var scrollToBottomRequest: ScrollToBottomRequest
     private let isStreaming: Bool
+    private let bottomContentPadding: CGFloat
+    private let onUserDragStart: (() -> Void)?
     private let content: Content
 
     private let bottomAnchorID = "chat-scroll-bottom-anchor"
@@ -80,11 +90,15 @@ private struct ChatScrollContainer<Content: View>: View {
         isPinnedToBottom: Binding<Bool>,
         scrollToBottomRequest: Binding<ScrollToBottomRequest>,
         isStreaming: Bool,
+        bottomContentPadding: CGFloat,
+        onUserDragStart: (() -> Void)?,
         @ViewBuilder content: () -> Content
     ) {
         _isPinnedToBottom = isPinnedToBottom
         _scrollToBottomRequest = scrollToBottomRequest
         self.isStreaming = isStreaming
+        self.bottomContentPadding = bottomContentPadding
+        self.onUserDragStart = onUserDragStart
         self.content = content()
     }
 
@@ -96,6 +110,8 @@ private struct ChatScrollContainer<Content: View>: View {
 
                     Color.clear.frame(height: 20)
 
+                    Color.clear.frame(height: bottomContentPadding)
+
                     Color.clear
                         .frame(height: 20)
                         .id(bottomAnchorID)
@@ -104,6 +120,8 @@ private struct ChatScrollContainer<Content: View>: View {
                 }
                 .padding(.horizontal, 10)
             }
+            .chatScrollDismissesKeyboardInteractively()
+            .dismissKeyboardOnChatScrollDrag(onUserDragStart)
             .watch(value: scrollToBottomRequest.token) {
                 scrollToBottom(proxy, animated: scrollToBottomRequest.animated)
             }
@@ -166,5 +184,30 @@ private struct ChatScrollContainer<Content: View>: View {
         } else {
             action()
         }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func chatScrollDismissesKeyboardInteractively() -> some View {
+#if os(iOS)
+        self.scrollDismissesKeyboard(.interactively)
+#else
+        self
+#endif
+    }
+
+    @ViewBuilder
+    func dismissKeyboardOnChatScrollDrag(_ onUserDragStart: (() -> Void)?) -> some View {
+#if os(iOS)
+        self.simultaneousGesture(
+            DragGesture(minimumDistance: 6)
+                .onChanged { _ in
+                    onUserDragStart?()
+                }
+        )
+#else
+        self
+#endif
     }
 }

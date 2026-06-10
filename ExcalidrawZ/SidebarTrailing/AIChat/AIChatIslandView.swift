@@ -512,6 +512,7 @@ struct AIChatReplyTickerHost<Content: View>: View {
     @EnvironmentObject private var llmState: LLMStateObject
 
     @State private var displayedReplyText: String?
+    @State private var displayedReplyTextIsToolStatus = false
     @State private var autoHideTask: Task<Void, Never>?
     @State private var toolCallSwitchTask: Task<Void, Never>?
     @State private var lastSeenAssistantMessageID: String?
@@ -605,6 +606,7 @@ struct AIChatReplyTickerHost<Content: View>: View {
                 autoHideTask?.cancel()
                 toolCallSwitchTask?.cancel()
                 displayedReplyText = label
+                displayedReplyTextIsToolStatus = true
             }
             .watch(value: latestAssistantMessageID) { _, newID in
                 if tickerTrackingConversationID != fileState.aiChatConversationID {
@@ -630,6 +632,7 @@ struct AIChatReplyTickerHost<Content: View>: View {
             .onDisappear {
                 autoHideTask?.cancel()
                 toolCallSwitchTask?.cancel()
+                displayedReplyTextIsToolStatus = false
                 onReplyTextChange(nil)
             }
     }
@@ -645,6 +648,7 @@ struct AIChatReplyTickerHost<Content: View>: View {
             updateGenerationTicker(hasActiveGeneration: true)
         } else {
             displayedReplyText = nil
+            displayedReplyTextIsToolStatus = false
         }
     }
 
@@ -654,11 +658,15 @@ struct AIChatReplyTickerHost<Content: View>: View {
             toolCallSwitchTask?.cancel()
             if displayedReplyText == nil {
                 displayedReplyText = String(localizable: .aiChatThinking)
+                displayedReplyTextIsToolStatus = false
             }
         } else if displayedReplyText == String(localizable: .aiChatThinking) {
             autoHideTask?.cancel()
             toolCallSwitchTask?.cancel()
             displayedReplyText = nil
+            displayedReplyTextIsToolStatus = false
+        } else if displayedReplyTextIsToolStatus {
+            scheduleAutoHide()
         }
     }
 
@@ -677,12 +685,17 @@ struct AIChatReplyTickerHost<Content: View>: View {
             let alreadyOnToolLabel = displayedReplyText == toolLabel
             if content.isEmpty || alreadyOnToolLabel {
                 displayedReplyText = toolLabel
+                displayedReplyTextIsToolStatus = true
+                scheduleToolStatusAutoHideIfInactive()
             } else {
                 displayedReplyText = content
+                displayedReplyTextIsToolStatus = false
                 toolCallSwitchTask = Task { @MainActor in
                     try? await Task.sleep(for: toolCallSwitchDelay)
                     guard !Task.isCancelled else { return }
                     displayedReplyText = toolLabel
+                    displayedReplyTextIsToolStatus = true
+                    scheduleToolStatusAutoHideIfInactive()
                 }
             }
             return
@@ -690,6 +703,13 @@ struct AIChatReplyTickerHost<Content: View>: View {
 
         guard !content.isEmpty else { return }
         displayedReplyText = content
+        displayedReplyTextIsToolStatus = false
+        scheduleAutoHide()
+    }
+
+    @MainActor
+    private func scheduleToolStatusAutoHideIfInactive() {
+        guard !hasActiveGeneration else { return }
         scheduleAutoHide()
     }
 
@@ -699,6 +719,7 @@ struct AIChatReplyTickerHost<Content: View>: View {
             try? await Task.sleep(for: tickerDuration)
             guard !Task.isCancelled else { return }
             displayedReplyText = nil
+            displayedReplyTextIsToolStatus = false
         }
     }
 

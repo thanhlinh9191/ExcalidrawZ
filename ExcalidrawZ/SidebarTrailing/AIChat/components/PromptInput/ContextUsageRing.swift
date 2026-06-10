@@ -69,7 +69,11 @@ struct ContextUsageRing: View {
                 }
                 .frame(width: 18, height: 18)
                 .help(helpText)
-                .accessibilityLabel(String(localizable: .aiChatContextUsageTitle))
+                .accessibilityLabel(
+                    onTap == nil
+                        ? String(localizable: .aiChatContextUsageTitle)
+                        : String(localizable: .aiChatButtonCompactContext)
+                )
                 .accessibilityValue(Text(helpText))
             }
         }

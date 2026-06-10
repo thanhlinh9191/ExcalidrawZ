@@ -38,7 +38,7 @@ extension PromptInputView {
                 onTap: conversationID != nil && !isCompactingContext
                     ? { compactCurrentContext() }
                     : nil,
-                usedTokens: nil
+                usedTokens: activeConversationEstimatedTokenUsage
             )
 
             fileAccessToggleButton
@@ -101,6 +101,12 @@ extension PromptInputView {
         } else {
             return String(localizable: .aiChatFileAccessHelpAccessDenied)
         }
+    }
+
+    @MainActor
+    private var activeConversationEstimatedTokenUsage: Int? {
+        guard let conversationID else { return nil }
+        return llmState.estimatedTokenUsage(in: conversationID)
     }
 
     /// Bottom-left attachment menu. Currently has only "Image" — clicking

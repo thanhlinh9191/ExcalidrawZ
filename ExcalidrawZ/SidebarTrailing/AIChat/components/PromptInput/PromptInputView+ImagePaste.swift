@@ -40,11 +40,16 @@ import SwiftUI
 import ChocofordUI
 import LLMCore
 import SFSafeSymbols
+import UniformTypeIdentifiers
 
 #if canImport(AppKit)
 import AppKit
 #elseif canImport(UIKit)
 import UIKit
+#endif
+
+#if os(iOS)
+import PhotosUI
 #endif
 
 // MARK: - Side-state record
@@ -135,6 +140,80 @@ enum PastedImageHelpers {
     }
 }
 
+#if os(iOS)
+enum AIChatAttachmentImageImporter {
+    static func pendingImage(from url: URL) -> PendingPastedImage? {
+        let didStart = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStart { url.stopAccessingSecurityScopedResource() }
+        }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return pendingImage(from: data)
+    }
+
+    static func pendingImage(from data: Data) -> PendingPastedImage? {
+        guard let image = UIImage(data: data) else { return nil }
+        return PendingPastedImage(id: UUID(), image: image)
+    }
+
+    static func pendingImage(from image: UIImage) -> PendingPastedImage {
+        PendingPastedImage(id: UUID(), image: image)
+    }
+
+    static func pendingImages(from items: [PhotosPickerItem]) async -> [PendingPastedImage] {
+        var images: [PendingPastedImage] = []
+        for item in items {
+            guard let data = try? await item.loadTransferable(type: Data.self),
+                  let image = pendingImage(from: data)
+            else { continue }
+            images.append(image)
+        }
+        return images
+    }
+}
+
+struct AIChatCameraImagePicker: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+
+    let onImagePicked: (UIImage?) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let parent: AIChatCameraImagePicker
+
+        init(parent: AIChatCameraImagePicker) {
+            self.parent = parent
+        }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            let image = (info[.editedImage] as? UIImage) ?? (info[.originalImage] as? UIImage)
+            parent.onImagePicked(image)
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.onImagePicked(nil)
+            parent.dismiss()
+        }
+    }
+}
+#endif
+
 extension ChatMessageContent.File {
     var isImageInput: Bool {
         switch self {
@@ -148,6 +227,77 @@ extension Array where Element == ChatMessageContent.File {
     var containsImageInput: Bool {
         contains { $0.isImageInput }
     }
+}
+
+struct AIChatImageAttachmentReference: Codable, Hashable, Sendable {
+    let id: String
+    let mimeType: String
+    let dataURL: String
+
+    static func makeReferences(
+        from files: [ChatMessageContent.File]
+    ) -> [AIChatImageAttachmentReference] {
+        files.enumerated().compactMap { index, file in
+            guard let payload = imagePayload(from: file) else { return nil }
+            return AIChatImageAttachmentReference(
+                id: "input_image_\(index + 1)",
+                mimeType: payload.mimeType,
+                dataURL: payload.dataURL
+            )
+        }
+    }
+
+    static func parseDataURL(_ value: String) -> (mimeType: String, data: Data)? {
+        guard let commaIndex = value.firstIndex(of: ",") else { return nil }
+        let header = String(value[..<commaIndex])
+        guard header.lowercased().hasPrefix("data:") else { return nil }
+        let metadata = String(header.dropFirst("data:".count))
+        let parts = metadata.split(separator: ";").map(String.init)
+        let mimeType = parts.first(where: { !$0.isEmpty && !$0.caseInsensitiveCompare("base64").isSame }) ?? "image/png"
+        guard parts.contains(where: { $0.caseInsensitiveCompare("base64").isSame }) else { return nil }
+        let payload = String(value[value.index(after: commaIndex)...])
+        guard let data = Data(base64Encoded: payload, options: .ignoreUnknownCharacters) else { return nil }
+        return (mimeType, data)
+    }
+
+    static func makeDataURL(data: Data, mimeType: String) -> String {
+        "data:\(mimeType);base64,\(data.base64EncodedString())"
+    }
+
+    private static func imagePayload(
+        from file: ChatMessageContent.File
+    ) -> (mimeType: String, dataURL: String)? {
+        switch file {
+            case .base64EncodedImage(let dataURL):
+                guard let parsed = parseDataURL(dataURL) else { return nil }
+                return (parsed.mimeType, dataURL)
+
+            case .image(let url):
+                guard url.isFileURL else { return nil }
+                let didStart = url.startAccessingSecurityScopedResource()
+                defer {
+                    if didStart { url.stopAccessingSecurityScopedResource() }
+                }
+                guard let data = try? Data(contentsOf: url) else { return nil }
+                let mimeType = mimeType(for: url)
+                return (mimeType, makeDataURL(data: data, mimeType: mimeType))
+        }
+    }
+
+    private static func mimeType(for url: URL) -> String {
+        guard !url.pathExtension.isEmpty,
+              let type = UTType(filenameExtension: url.pathExtension),
+              let mimeType = type.preferredMIMEType,
+              mimeType.lowercased().hasPrefix("image/")
+        else {
+            return "image/png"
+        }
+        return mimeType
+    }
+}
+
+private extension ComparisonResult {
+    var isSame: Bool { self == .orderedSame }
 }
 
 // MARK: - Thumbnail strip

@@ -170,6 +170,9 @@ struct ExcalidrawEditor: View {
         .overlay(alignment: .bottom) {
             CompactAIChatGeneratingOverlay()
         }
+        .overlay(alignment: .bottom) {
+            CompactAIChatProposalOverlay()
+        }
 #endif
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatToolbarPresented)

@@ -14,6 +14,7 @@ struct AdjustElementsTool: Tool {
         var currentFileData: Data?
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
         var currentFileID: UUID? = nil
+        var imageAttachments: [AIChatImageAttachmentReference] = []
     }
 
     var name: String { "adjust_elements" }
@@ -21,7 +22,10 @@ struct AdjustElementsTool: Tool {
     var displayName: String { String(localizable: .aiChatToolAdjustElementName) }
 
     var description: String {
-        return Self.descriptionText
+        return [
+            Self.imageSkeletonAttachmentDescription,
+            Self.descriptionText
+        ].joined(separator: "\n\n")
     }
 
     /// Schema lives in a JSON file shipped with the bundle. The shape uses
@@ -38,6 +42,16 @@ struct AdjustElementsTool: Tool {
         }
         return text
     }()
+
+    private static let imageSkeletonAttachmentDescription = """
+    Important image insertion rule: if the user attached an image in the current chat turn, \
+    do not invent an Excalidraw fileId and do not ask the user for a fileId. In an `add` \
+    image skeleton, use `source: { "kind": "attachment", "id": "input_image_1" }`; attachment \
+    ids follow user-message image order (`input_image_1`, `input_image_2`, ...). The tool \
+    preprocesses that source into a real Excalidraw `fileId` plus `add.files` entry before \
+    inserting. Inline `dataURL`, raw `base64`, and public HTTPS image `url` sources are also \
+    accepted when real image bytes are available. Do not use local file paths.
+    """
 
     var inputSchema: ToolInputSchema {
         .bundleResource(name: "AdjustElementsToolSchema")
@@ -91,10 +105,13 @@ struct AdjustElementsTool: Tool {
             throw ToolError.executionFailed("Invalid Excalidraw file data.")
         }
 
-        let middleware = AdjustElementsMiddleware(file: currentFile)
+        let middleware = AdjustElementsMiddleware(
+            file: currentFile,
+            imageAttachments: adjustContext.imageAttachments
+        )
         let result: AdjustmentResult
         do {
-            result = try middleware.apply(payload)
+            result = try await middleware.apply(payload)
         } catch {
             throw ToolError.executionFailed(Self.describeExecutionError(error))
         }
@@ -780,12 +797,17 @@ struct AddLabeledShapeOpResult {
 
 struct AdjustElementsMiddleware {
     private let file: ExcalidrawFile
+    let imageAttachments: [AIChatImageAttachmentReference]
 
-    init(file: ExcalidrawFile) {
+    init(
+        file: ExcalidrawFile,
+        imageAttachments: [AIChatImageAttachmentReference] = []
+    ) {
         self.file = file
+        self.imageAttachments = imageAttachments
     }
 
-    func apply(_ payload: ToolInput) throws -> AdjustmentResult {
+    func apply(_ payload: ToolInput) async throws -> AdjustmentResult {
         var elements = file.elements
         var createdElementIds: [String] = []
         var updatedElementIds: [String] = []
@@ -800,7 +822,7 @@ struct AdjustElementsMiddleware {
         for op in payload.ops {
             switch op {
                 case .add(let addOp):
-                    try applyAddOp(
+                    try await applyAddOp(
                         addOp,
                         elements: &elements,
                         canvasActions: &canvasActions

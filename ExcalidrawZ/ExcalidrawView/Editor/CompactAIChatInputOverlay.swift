@@ -8,6 +8,7 @@
 #if os(iOS)
 import SwiftUI
 import UIKit
+import LLMCore
 import LLMKit
 
 private enum CompactAIChatOverlayMetrics {
@@ -113,6 +114,7 @@ struct CompactAIChatGeneratingOverlay: View {
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var llmState: LLMStateObject
+    @EnvironmentObject private var aiChatState: AIChatState
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
     @State private var renderedReplyText: String?
     @State private var isTickerPresented = false
@@ -143,6 +145,22 @@ struct CompactAIChatGeneratingOverlay: View {
 
     private var compactAIChatShouldReserveStopSpace: Bool {
         compactAIChatIsGenerating || layoutState.isCompactAIChatReplyStartPending
+    }
+
+    private var pendingReplyFailureID: UUID? {
+        guard layoutState.isCompactAIChatReplyStartPending,
+              !compactAIChatIsGenerating,
+              let transientError = aiChatState.transientError
+        else {
+            return nil
+        }
+
+        if let conversationID = fileState.aiChatConversationID,
+           transientError.conversationID != conversationID {
+            return nil
+        }
+
+        return transientError.id
     }
 
     var body: some View {
@@ -182,6 +200,10 @@ struct CompactAIChatGeneratingOverlay: View {
                 .allowsHitTesting(isTickerPresented)
             }
         }
+        .watch(value: pendingReplyFailureID) { _, failureID in
+            guard failureID != nil else { return }
+            dismissPendingReplyTicker()
+        }
     }
 
     private func updateReplyTickerVisibility(_ replyText: String?) {
@@ -216,6 +238,10 @@ struct CompactAIChatGeneratingOverlay: View {
         }
 
         if layoutState.isCompactAIChatReplyStartPending {
+            if pendingReplyFailureID != nil {
+                dismissPendingReplyTicker()
+                return
+            }
             isTickerCollapsing = false
             guard !isTickerPresented else { return }
             tickerPresentationTask = Task { @MainActor in
@@ -245,6 +271,18 @@ struct CompactAIChatGeneratingOverlay: View {
         }
     }
 
+    @MainActor
+    private func dismissPendingReplyTicker() {
+        tickerPresentationTask?.cancel()
+        renderedReplyText = nil
+        isTickerCollapsing = false
+        withAnimation(.smooth(duration: 0.18)) {
+            isTickerPresented = false
+            layoutState.isCompactAIChatReplyTickerVisible = false
+            layoutState.isCompactAIChatReplyStartPending = false
+        }
+    }
+
     private var tickerScaleX: CGFloat {
         guard !isTickerPresented else { return 1 }
         return isTickerCollapsing ? 0.18 : 0.01
@@ -259,6 +297,64 @@ struct CompactAIChatGeneratingOverlay: View {
         isTickerCollapsing ? .center : .leading
     }
 
+}
+
+struct CompactAIChatProposalOverlay: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+
+    @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var layoutState: LayoutState
+    @EnvironmentObject private var llmState: LLMStateObject
+    @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
+
+    private var isCompactIOS: Bool {
+        containerHorizontalSizeClass == .compact
+    }
+
+    private var canShowProposalSurface: Bool {
+        isCompactIOS &&
+            layoutState.isCompactAIChatToolbarPresented &&
+            AIChatAvailability.isAvailable &&
+            aiChatPreferences.isAIEnabled &&
+            !fileState.currentActiveFileIsInTrash
+    }
+
+    private var conversation: Conversation? {
+        llmState.conversations.value?
+            .first { $0.id == fileState.aiChatConversationID }
+    }
+
+    private var conversationMessageCount: Int {
+        conversation?.messages.count ?? 0
+    }
+
+    var body: some View {
+        if canShowProposalSurface {
+            proposalStack
+                .padding(.horizontal, CompactAIChatOverlayMetrics.horizontalPadding)
+                .padding(.bottom, CompactAIChatOverlayMetrics.toolbarBottomPadding)
+                .safeAreaPadding(.bottom)
+                .opacity(layoutState.isCompactAIChatInputEditing ? 0 : 1)
+                .allowsHitTesting(!layoutState.isCompactAIChatInputEditing)
+                .animation(
+                    .easeInOut(duration: 0.18),
+                    value: layoutState.isCompactAIChatInputEditing
+                )
+        }
+    }
+
+    private var proposalStack: some View {
+        Color.clear
+            .frame(height: CompactAIChatOverlayMetrics.tickerHeight)
+            .allowsHitTesting(false)
+            .modifier(AIChatIslandProposalModifier(
+                conversationID: fileState.aiChatConversationID,
+                conversation: conversation,
+                conversationMessageCount: conversationMessageCount,
+                islandWidth: nil
+            ))
+            .frame(maxWidth: 360)
+    }
 }
 
 private struct CompactAIChatReplyTickerView: View {

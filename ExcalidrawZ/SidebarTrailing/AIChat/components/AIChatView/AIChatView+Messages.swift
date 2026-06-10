@@ -11,7 +11,10 @@ import SwiftUI
 
 extension AIChatView {
     @ViewBuilder
-    func messageList(messages: [ChatMessage]) -> some View {
+    func messageList(
+        messages: [ChatMessage],
+        bottomContentPadding: CGFloat = 0
+    ) -> some View {
         let _ = AIChatRenderDebug.hit("AIChatView.messageList")
 
         let transientError = currentTransientError
@@ -89,6 +92,7 @@ extension AIChatView {
                 scrollToBottomRequest: $scrollToBottomRequest,
                 isStreaming: isScrollStreaming,
                 configuration: scrollConfiguration,
+                bottomContentPadding: bottomContentPadding,
                 rowRenderKey: { row in
                     chatScrollRowRenderKey(
                         row,
@@ -101,6 +105,9 @@ extension AIChatView {
                 onReachTop: {
                     guard scrollConfiguration.usesMessageWindowing else { return }
                     loadMoreMessageGroups(from: allGroups)
+                },
+                onUserDragStart: {
+                    promptTextAreaProxy.dismissKeyboard()
                 },
                 onScrollAnimationComplete: { token in
                     handleScrollAnimationComplete(token: token)
@@ -132,6 +139,7 @@ extension AIChatView {
                 .modernButtonStyle(style: .glass, shape: .circle)
                 .transition(.opacity)
                 .padding()
+                .padding(.bottom, bottomContentPadding)
             }
         }
         .onAppear {

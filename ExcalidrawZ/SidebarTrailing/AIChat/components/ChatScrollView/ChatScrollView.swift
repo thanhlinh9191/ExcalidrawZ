@@ -25,7 +25,9 @@ struct ChatScrollView<RowContent: View>: View {
     private let rowRenderKey: (ChatScrollRowModel) -> String
     private let isStreaming: Bool
     private let configuration: ChatScrollConfiguration
+    private let bottomContentPadding: CGFloat
     private let onReachTop: (() -> Void)?
+    private let onUserDragStart: (() -> Void)?
     private let onScrollAnimationComplete: ((Int) -> Void)?
     private let rowContent: (ChatScrollRowModel) -> RowContent
 
@@ -35,8 +37,10 @@ struct ChatScrollView<RowContent: View>: View {
         scrollToBottomRequest: Binding<ScrollToBottomRequest>,
         isStreaming: Bool = false,
         configuration: ChatScrollConfiguration = .automatic,
+        bottomContentPadding: CGFloat = 0,
         rowRenderKey: @escaping (ChatScrollRowModel) -> String = { $0.id },
         onReachTop: (() -> Void)? = nil,
+        onUserDragStart: (() -> Void)? = nil,
         onScrollAnimationComplete: ((Int) -> Void)? = nil,
         @ViewBuilder rowContent: @escaping (ChatScrollRowModel) -> RowContent
     ) {
@@ -46,7 +50,9 @@ struct ChatScrollView<RowContent: View>: View {
         _scrollToBottomRequest = scrollToBottomRequest
         self.isStreaming = isStreaming
         self.configuration = configuration
+        self.bottomContentPadding = bottomContentPadding
         self.onReachTop = onReachTop
+        self.onUserDragStart = onUserDragStart
         self.onScrollAnimationComplete = onScrollAnimationComplete
         self.rowContent = rowContent
     }
@@ -57,7 +63,9 @@ struct ChatScrollView<RowContent: View>: View {
                 SwiftUIChatScrollView(
                     isPinnedToBottom: $isPinnedToBottom,
                     scrollToBottomRequest: $scrollToBottomRequest,
-                    isStreaming: isStreaming
+                    isStreaming: isStreaming,
+                    bottomContentPadding: bottomContentPadding,
+                    onUserDragStart: onUserDragStart
                 ) {
                     rowsContent
                 }
@@ -90,7 +98,9 @@ struct ChatScrollView<RowContent: View>: View {
                 SwiftUIChatScrollView(
                     isPinnedToBottom: $isPinnedToBottom,
                     scrollToBottomRequest: $scrollToBottomRequest,
-                    isStreaming: isStreaming
+                    isStreaming: isStreaming,
+                    bottomContentPadding: bottomContentPadding,
+                    onUserDragStart: onUserDragStart
                 ) {
                     rowsContent
                 }
@@ -102,7 +112,9 @@ struct ChatScrollView<RowContent: View>: View {
                     scrollToBottomRequest: $scrollToBottomRequest,
                     isStreaming: isStreaming,
                     contentRevision: contentRevision,
+                    bottomContentPadding: bottomContentPadding,
                     onReachTop: onReachTop,
+                    onUserDragStart: onUserDragStart,
                     onScrollAnimationComplete: onScrollAnimationComplete
                 ) {
                     rowsContent
@@ -111,9 +123,11 @@ struct ChatScrollView<RowContent: View>: View {
     }
 
     private var contentRevision: String {
-        nativeRows
-            .map { "\($0.id):\($0.renderKey)" }
-            .joined(separator: "|")
+        (
+            nativeRows.map { "\($0.id):\($0.renderKey)" }
+            + ["bottom:\(bottomContentPadding)"]
+        )
+        .joined(separator: "|")
     }
 
     private var nativeRows: [NativeChatRowSnapshot] {

@@ -30,6 +30,10 @@ import ChocofordUI
 import LLMKit
 import LLMCore
 
+#if os(iOS)
+import PhotosUI
+#endif
+
 struct ExcalidrawChatInvocationContext: ChatInvocationContext, Sendable {
     var currentFileData: Data?
     var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
@@ -39,6 +43,7 @@ struct ExcalidrawChatInvocationContext: ChatInvocationContext, Sendable {
     var hasActiveFile: Bool = false
     var currentModelSupportsImageInput: Bool = true
     var isCurrentFileContextProtected: Bool = false
+    var imageAttachments: [AIChatImageAttachmentReference] = []
 }
 
 struct AIChatInvocationPlan: Sendable {
@@ -124,7 +129,8 @@ struct AIChatInvocationPlan: Sendable {
     @MainActor
     func makeContext(
         fileState: FileState,
-        model: SupportedModel
+        model: SupportedModel,
+        imageAttachments: [AIChatImageAttachmentReference] = []
     ) async throws -> ExcalidrawChatInvocationContext {
         if requiresFreshToolCanvas {
             await AIProposalSandbox.resetCanvasIfAvailable()
@@ -147,7 +153,8 @@ struct AIChatInvocationPlan: Sendable {
             currentFileID: includesCurrentFileContext ? currentFileID : nil,
             hasActiveFile: hasActiveFile,
             currentModelSupportsImageInput: model.supportsExcalidrawImageInput,
-            isCurrentFileContextProtected: isCurrentFileContextProtected
+            isCurrentFileContextProtected: isCurrentFileContextProtected,
+            imageAttachments: imageAttachments
         )
     }
 }
@@ -238,6 +245,10 @@ struct PromptInputView<Background: View, Header: View>: View {
     @State var iOSIslandTextAreaIsOverflowing: Bool = false
     @State var isIOSIslandFullscreenInputPresented: Bool = false
     @State var isIOSIslandFullChatPresented: Bool = false
+#if os(iOS)
+    @State var iOSSelectedPhotoPickerItems: [PhotosPickerItem] = []
+    @State var isIOSCameraPickerPresented: Bool = false
+#endif
     @Namespace var iOSIslandInputNamespace
 #if DEBUG
     @State var debugContextText: String = ""

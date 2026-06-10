@@ -321,49 +321,99 @@ struct ExportImageView: View {
     
     @ViewBuilder
     private func exportImageSettingItems() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Picker(.localizable(.exportImagePickerColorSchemeLabel), selection: $exportColorScheme) {
-                    Text(.localizable(.generalColorSchemeLight)).tag(ColorScheme.light)
-                    Text(.localizable(.generalColorSchemeDark)).tag(ColorScheme.dark)
-                }
-                .disabled(exportType != .png)
+        if containerHorizontalSizeClass == .compact {
+            exportColorSchemeSettingRow
+            exportWithBackgroundSettingRow
+            exportEditableSettingRow
+            exportScaleSettingRow
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    exportColorSchemePicker
 
-#if os(macOS)
-                Toggle(.localizable(.exportImageToggleWithBackground), isOn: $exportWithBackground)
-                    .toggleStyle(.checkboxStyle)
-#elseif os(iOS)
-                Toggle(.localizable(.exportImageToggleWithBackground), isOn: $exportWithBackground)
-                    .toggleStyle(.switch)
-#endif
-            
-#if os(macOS)
-                Toggle(.localizable(.exportImageToggleEditable), isOn: $keepEditable)
-                    .toggleStyle(.checkboxStyle)
-#elseif os(iOS)
-                Toggle(.localizable(.exportImageToggleEditable), isOn: $keepEditable)
-                    .toggleStyle(.switch)
-#endif
+                    exportWithBackgroundToggle
+
+                    exportEditableToggle
+                }
+
+                exportScaleSettingRow
             }
+        }
+    }
 
-            HStack {
-                Text(localizable: .exportImageScaleTitle)
+    @ViewBuilder
+    private var exportColorSchemeSettingRow: some View {
+        HStack {
+            Text(localizable: .exportImagePickerColorSchemeLabel)
 
-                Spacer(minLength: 0)
+            Spacer(minLength: 0)
 
-                Picker(
-                    .localizable(.exportImageScaleTitle),
-                    selection: $exportScale
-                ) {
-                    Text("1x").tag(1)
-                    Text("2x").tag(2)
-                    Text("3x").tag(3)
-                }
+            exportColorSchemePicker
                 .labelsHidden()
-                .pickerStyle(.segmented)
-                .modernButtonStyle(style: .glass, shape: .capsule)
-                .disabled(exportType != .png)
+        }
+    }
+
+    @ViewBuilder
+    private var exportWithBackgroundSettingRow: some View {
+        exportWithBackgroundToggle
+    }
+
+    @ViewBuilder
+    private var exportEditableSettingRow: some View {
+        exportEditableToggle
+    }
+
+    @ViewBuilder
+    private var exportColorSchemePicker: some View {
+        Picker(.localizable(.exportImagePickerColorSchemeLabel), selection: $exportColorScheme) {
+            Text(.localizable(.generalColorSchemeLight)).tag(ColorScheme.light)
+            Text(.localizable(.generalColorSchemeDark)).tag(ColorScheme.dark)
+        }
+        .disabled(exportType != .png)
+    }
+
+    @ViewBuilder
+    private var exportWithBackgroundToggle: some View {
+#if os(macOS)
+        Toggle(.localizable(.exportImageToggleWithBackground), isOn: $exportWithBackground)
+            .toggleStyle(.checkboxStyle)
+#elseif os(iOS)
+        Toggle(.localizable(.exportImageToggleWithBackground), isOn: $exportWithBackground)
+            .toggleStyle(.switch)
+#endif
+    }
+
+    @ViewBuilder
+    private var exportEditableToggle: some View {
+#if os(macOS)
+        Toggle(.localizable(.exportImageToggleEditable), isOn: $keepEditable)
+            .toggleStyle(.checkboxStyle)
+#elseif os(iOS)
+        Toggle(.localizable(.exportImageToggleEditable), isOn: $keepEditable)
+            .toggleStyle(.switch)
+#endif
+    }
+
+    @ViewBuilder
+    private var exportScaleSettingRow: some View {
+        HStack {
+            Text(localizable: .exportImageScaleTitle)
+
+            Spacer(minLength: 0)
+
+            Picker(
+                .localizable(.exportImageScaleTitle),
+                selection: $exportScale
+            ) {
+                Text("1x").tag(1)
+                Text("2x").tag(2)
+                Text("3x").tag(3)
             }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .modernButtonStyle(style: .glass, shape: .capsule)
+            .frame(maxWidth: containerHorizontalSizeClass == .compact ? 180 : nil)
+            .disabled(exportType != .png)
         }
     }
     
