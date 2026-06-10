@@ -41,14 +41,6 @@ struct FileEnumerator {
             let resourceValues = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard resourceValues.isRegularFile == true else { continue }
 
-            // Extract fileID from filename
-            let filename = fileURL.lastPathComponent
-            let components = filename.split(separator: ".")
-            guard let fileIDSubstring = components.first else {
-                continue
-            }
-            let fileID = String(fileIDSubstring)
-
             // Get metadata
             let attributes = try fileManager.attributesOfItem(atPath: fileURL.filePath)
             let modifiedAt = attributes[.modificationDate] as? Date ?? Date()
@@ -66,6 +58,11 @@ struct FileEnumerator {
             // Determine content type from file extension
             guard let contentType = FileStorageContentType.from(relativePath: relativePath) else {
                 // Skip files with unknown extensions
+                continue
+            }
+
+            guard let fileID = extractFileID(from: relativePath, contentType: contentType) else {
+                logger.warning("Skipping file with invalid storage path: \(relativePath)")
                 continue
             }
 
@@ -101,14 +98,6 @@ struct FileEnumerator {
             let resourceValues = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard resourceValues.isRegularFile == true else { continue }
 
-            // Extract fileID from filename
-            let filename = fileURL.lastPathComponent
-            let components = filename.split(separator: ".")
-            guard let fileIDSubstring = components.first else {
-                continue
-            }
-            let fileID = String(fileIDSubstring)
-
             #if os(iOS)
             // iOS: Force refresh metadata from iCloud
             // On iOS, placeholder files may have cached timestamps that don't reflect
@@ -141,6 +130,11 @@ struct FileEnumerator {
             // Determine content type from file extension
             guard let contentType = FileStorageContentType.from(relativePath: relativePath) else {
                 // Skip files with unknown extensions
+                continue
+            }
+
+            guard let fileID = extractFileID(from: relativePath, contentType: contentType) else {
+                logger.warning("Skipping iCloud file with invalid storage path: \(relativePath)")
                 continue
             }
 
@@ -186,6 +180,25 @@ struct FileEnumerator {
         }
     }
     #endif
+
+    private func extractFileID(
+        from relativePath: String,
+        contentType: FileStorageContentType
+    ) -> String? {
+        let normalizedPath = relativePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        if case .aiChatAttachment = contentType {
+            let prefix = "AIChatAttachments/"
+            guard normalizedPath.hasPrefix(prefix) else { return nil }
+            let attachmentPath = String(normalizedPath.dropFirst(prefix.count))
+            let fileID = (attachmentPath as NSString).deletingPathExtension
+            return fileID.isEmpty ? nil : fileID
+        }
+
+        let filename = (normalizedPath as NSString).lastPathComponent
+        let fileID = (filename as NSString).deletingPathExtension
+        return fileID.isEmpty ? nil : fileID
+    }
 
     /// Enumerate all files that should exist based on CoreData entities
     func enumerateExpectedFiles() async -> [SyncFileState] {
@@ -283,6 +296,45 @@ struct FileEnumerator {
                 }
             } catch {
                 self.logger.error("Failed to fetch MediaItem entities: \(error.localizedDescription)")
+            }
+
+            // Fetch AI chat attachments referenced by message filesData. These do not
+            // have their own Core Data entity, but they are still first-class files
+            // under FileStorage and need DiffScan coverage.
+            do {
+                let messageRequest = NSFetchRequest<AIConversationMessage>(entityName: "AIConversationMessage")
+                messageRequest.predicate = NSPredicate(format: "filesData != nil")
+                messageRequest.propertiesToFetch = ["filesData", "timeStamp"]
+
+                let messages = try context.fetch(messageRequest)
+                let decoder = JSONDecoder()
+                var seenAttachmentIDs = Set<String>()
+
+                for message in messages {
+                    guard let filesData = message.filesData,
+                          let persistedFiles = try? decoder.decode([PersistedFile].self, from: filesData)
+                    else { continue }
+
+                    let timestamp = message.timeStamp ?? Date()
+                    for file in persistedFiles where file.kind == .local {
+                        guard let fileID = file.fileID,
+                              let ext = file.ext,
+                              seenAttachmentIDs.insert(fileID).inserted
+                        else { continue }
+
+                        let contentType = FileStorageContentType.aiChatAttachment(extension: ext)
+                        let relativePath = contentType.generateRelativePath(fileID: fileID)
+                        expectedFiles.append(SyncFileState(
+                            fileID: fileID,
+                            relativePath: relativePath,
+                            contentType: contentType,
+                            modifiedAt: timestamp,
+                            size: 0
+                        ))
+                    }
+                }
+            } catch {
+                self.logger.error("Failed to fetch AI chat attachment records: \(error.localizedDescription)")
             }
 
             return expectedFiles

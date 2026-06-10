@@ -313,12 +313,13 @@ struct LLMPersistenceProvider: PersistenceProvider {
                 // them here, only the .insert path would carry them
                 // and a re-emitted update could effectively drop them.
                 //
-                // `clearToolCalls` / `clearFiles` are keyed on the
-                // *encoded* result being nil rather than on the input
-                // being nil, so that an explicit empty array (`[]`,
-                // which the model can transiently emit) wipes any
-                // previously persisted data rather than leaving it
-                // stale.
+                // `clearFiles` must be keyed on an explicit empty
+                // `files` payload, not on a missing one. LLMKit update
+                // events often patch unrelated fields (streaming
+                // content, usage, compact flags) without re-emitting
+                // attachments; treating nil as "clear" drops user
+                // images from restored chat history and lets the
+                // launch-time attachment GC delete their bytes.
                 let encodedToolCalls = encodeToolCalls(content.toolCalls)
                 let encodedFiles = await persistFiles(content.files, conversationID: conversationID)
                 try await repository.updateMessage(
@@ -331,7 +332,7 @@ struct LLMPersistenceProvider: PersistenceProvider {
                     toolCallId: content.toolCallId,
                     clearToolCallId: content.toolCallId == nil,
                     filesData: encodedFiles,
-                    clearFiles: encodedFiles == nil,
+                    clearFiles: content.files?.isEmpty == true,
                     // Always write the latest compact flags. LLMKit's
                     // `compactConversation` flips `isCompactedOut` on
                     // older rows and emits `.update` events; without

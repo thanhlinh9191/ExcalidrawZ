@@ -86,6 +86,7 @@ struct NativeChatScrollView<Content: View>: View {
             isStreaming: isStreaming,
             contentRevision: contentRevision,
             onReachTop: onReachTop,
+            onUserDragStart: onUserDragStart,
             onScrollAnimationComplete: onScrollAnimationComplete,
             content: wrappedContent
         )
@@ -402,6 +403,7 @@ private struct AppKitChatScrollHost<Content: View>: NSViewRepresentable {
             scrollToBottomRequest: $scrollToBottomRequest,
             isStreaming: isStreaming,
             onReachTop: onReachTop,
+            onUserDragStart: onUserDragStart,
             onScrollAnimationComplete: onScrollAnimationComplete
         )
     }
@@ -500,6 +502,7 @@ private struct AppKitChatScrollHost<Content: View>: NSViewRepresentable {
         context.coordinator.scrollToBottomRequest = $scrollToBottomRequest
         context.coordinator.isStreaming = isStreaming
         context.coordinator.onReachTop = onReachTop
+        context.coordinator.onUserDragStart = onUserDragStart
         context.coordinator.onScrollAnimationComplete = onScrollAnimationComplete
         if context.coordinator.lastContentRevision != contentRevision {
             context.coordinator.hostingView?.rootView = content

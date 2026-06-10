@@ -34,7 +34,7 @@ extension AdjustElementsMiddleware {
         )))
     }
 
-    func hydrateImageSkeletonSources(_ op: AddOp) async throws -> HydratedImageSkeletons {
+    fileprivate func hydrateImageSkeletonSources(_ op: AddOp) async throws -> HydratedImageSkeletons {
         var files = op.files ?? [:]
         let elements = try await op.elements.hydratingImageSkeletonSources(
             attachments: imageAttachments,
@@ -453,22 +453,22 @@ private struct ImageSkeletonSource {
 private enum ImageURLResourceLoader {
     private static let maxBytes = 12 * 1024 * 1024
     private static let acceptHeader = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
-    private static var rangeHeader: String { "bytes=0-\(maxBytes)" }
+    private static let acceptLanguageHeader = "en-US,en;q=0.9"
+    private static let userAgentHeader = """
+    Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
+    AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15
+    """
 
     static func load(_ rawURL: String) async throws -> (mimeType: String, dataURL: String) {
         let url = try validatedURL(rawURL)
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 15
-        request.setValue(acceptHeader, forHTTPHeaderField: "Accept")
-        request.setValue(rangeHeader, forHTTPHeaderField: "Range")
+        let request = makeRequest(url: url, referer: sameOriginReferer(for: url))
 
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 15
         configuration.timeoutIntervalForResource = 30
         configuration.waitsForConnectivity = false
         configuration.httpMaximumConnectionsPerHost = 2
-        let redirectDelegate = RedirectValidator()
+        let redirectDelegate = RedirectValidator(referer: sameOriginReferer(for: url))
         let session = URLSession(
             configuration: configuration,
             delegate: redirectDelegate,
@@ -502,8 +502,9 @@ private enum ImageURLResourceLoader {
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw AdjustElementsMiddleware.AdjustmentError(
                 message: """
-                Image URL returned HTTP \(httpResponse.statusCode). Use a reachable HTTPS image URL, \
-                or attach the image and reference input_image_1.
+                Image URL returned HTTP \(httpResponse.statusCode). Some websites block direct image \
+                downloads or hotlinking. Use a direct public HTTPS image URL, or attach the image \
+                and reference input_image_1.
                 """
             )
         }
@@ -568,6 +569,34 @@ private enum ImageURLResourceLoader {
         )
     }
 
+    private static func makeRequest(url: URL, referer: String?) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 15
+        request.setValue(acceptHeader, forHTTPHeaderField: "Accept")
+        request.setValue(acceptLanguageHeader, forHTTPHeaderField: "Accept-Language")
+        request.setValue(userAgentHeader, forHTTPHeaderField: "User-Agent")
+        if let referer {
+            request.setValue(referer, forHTTPHeaderField: "Referer")
+        }
+        return request
+    }
+
+    private static func sameOriginReferer(for url: URL) -> String? {
+        guard let scheme = url.scheme,
+              let host = url.host else {
+            return nil
+        }
+
+        let port: String
+        if let urlPort = url.port {
+            port = ":\(urlPort)"
+        } else {
+            port = ""
+        }
+        return "\(scheme)://\(host)\(port)/"
+    }
+
     private static func validatedURL(_ rawURL: String) throws -> URL {
         guard let components = URLComponents(string: rawURL),
               components.scheme?.lowercased() == "https",
@@ -599,7 +628,12 @@ private enum ImageURLResourceLoader {
     }
 
     private final class RedirectValidator: NSObject, URLSessionTaskDelegate {
+        let referer: String?
         var redirectError: Error?
+
+        init(referer: String?) {
+            self.referer = referer
+        }
 
         func urlSession(
             _ session: URLSession,
@@ -618,9 +652,8 @@ private enum ImageURLResourceLoader {
 
             do {
                 _ = try validatedURL(url.absoluteString)
-                var allowedRequest = request
-                allowedRequest.setValue(acceptHeader, forHTTPHeaderField: "Accept")
-                allowedRequest.setValue(rangeHeader, forHTTPHeaderField: "Range")
+                var allowedRequest = makeRequest(url: url, referer: referer)
+                allowedRequest.httpMethod = request.httpMethod
                 completionHandler(allowedRequest)
             } catch {
                 redirectError = error

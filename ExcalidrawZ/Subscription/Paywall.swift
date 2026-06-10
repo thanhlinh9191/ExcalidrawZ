@@ -189,11 +189,15 @@ struct Paywall: View {
     
     @ViewBuilder
     private func content() -> some View {
+#if os(iOS)
         if isCompactIOSPaywall {
             compactIOSContent()
         } else {
             regularContent()
         }
+#else
+        regularContent()
+#endif
     }
     
     @available(macOS 14.0, iOS 17.0, *)

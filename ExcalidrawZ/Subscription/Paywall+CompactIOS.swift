@@ -12,6 +12,8 @@ import LLMKit
 import Shimmer
 import SFSafeSymbols
 
+#if os(iOS)
+
 extension Paywall {
     @ViewBuilder
     func compactIOSContent() -> some View {
@@ -218,3 +220,5 @@ extension Paywall {
         .buttonStyle(.borderless)
     }
 }
+
+#endif

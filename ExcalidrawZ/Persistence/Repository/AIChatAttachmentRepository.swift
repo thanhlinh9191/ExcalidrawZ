@@ -168,13 +168,14 @@ actor AIChatAttachmentRepository {
     // MARK: - Resolve
 
     /// Reverse of `persist`: rebuild an LLMCore `File` value from a
-    /// stored record, pointing at whatever URL the UI should load.
+    /// stored record.
     ///
     /// Returns nil only when the record is malformed (missing fields
-    /// for its kind, invalid URL string, etc.). For local files that
-    /// have not yet been synced down from iCloud, we still return a
-    /// valid `.image(URL)` — `AsyncImage` and friends will render a
-    /// placeholder until iCloud delivers the bytes.
+    /// for its kind, invalid URL string, etc.) or the local attachment
+    /// bytes are unavailable. Local attachments are restored as data URLs
+    /// rather than file URLs because LLMKit may immediately re-inline active
+    /// context images before a provider request; handing it a missing local
+    /// URL turns a stale attachment into a hard send failure.
     func resolve(_ persisted: PersistedFile) async -> ChatMessageContent.File? {
         switch persisted.kind {
             case .remote:
@@ -189,14 +190,15 @@ actor AIChatAttachmentRepository {
                     logger.warning("Skipping malformed local file record: \(String(describing: persisted))")
                     return nil
                 }
-                let relativePath = FileStorageContentType
-                    .aiChatAttachment(extension: ext)
-                    .generateRelativePath(fileID: fileID)
+                let contentType = FileStorageContentType.aiChatAttachment(extension: ext)
+                let relativePath = contentType.generateRelativePath(fileID: fileID)
                 do {
-                    let url = try await storage.getFileURL(relativePath: relativePath)
-                    return .image(url)
+                    let data = try await storage.loadContent(relativePath: relativePath, fileID: fileID)
+                    let mimeType = persisted.mimeType ?? FileStorageContentType.mimeType(for: ext)
+                    let dataURI = "data:\(mimeType);base64,\(data.base64EncodedString())"
+                    return .base64EncodedImage(dataURI)
                 } catch {
-                    logger.warning("Failed to resolve local attachment URL: \(error.localizedDescription)")
+                    logger.warning("Failed to resolve local attachment bytes: \(error.localizedDescription)")
                     return nil
                 }
         }
@@ -305,4 +307,3 @@ actor AIChatAttachmentRepository {
         return (mime, data)
     }
 }
-

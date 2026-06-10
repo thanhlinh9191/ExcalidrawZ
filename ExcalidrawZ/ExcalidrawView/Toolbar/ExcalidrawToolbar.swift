@@ -770,6 +770,7 @@ enum ExcalidrawToolbarToolSizeClass {
 }
 
 struct ExcalidrawToolbarToolContainer<Content: View>: View {
+    @Environment(\.containerSize) private var containerSize
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
     
@@ -785,27 +786,26 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
     
     var body: some View {
         content(sizeClass)
-            .background {
-                WithContainerSize { containerSize in
-                    Color.clear
-                        .watch(value: containerSize) { _, newValue in
-                            let newSizeClass = getSizeClass(containerSize.width)
-                            if newSizeClass != sizeClass {
-                                self.sizeClass = newSizeClass
-                            }
-                        }
-                        .watch(value: layoutState.isInspectorPresented) { _ in
-                            DispatchQueue.main.async {
-                                self.sizeClass = getSizeClass(containerSize.width)
-                            }
-                        }
-                        .watch(value: layoutState.isSidebarPresented) { _ in
-                            DispatchQueue.main.async {
-                                self.sizeClass = getSizeClass(containerSize.width)
-                            }
-                        }
+            .watch(value: containerSize, initial: true) { _, newValue in
+                syncSizeClass(width: newValue.width)
+            }
+            .watch(value: layoutState.isInspectorPresented) { _ in
+                DispatchQueue.main.async {
+                    syncSizeClass(width: containerSize.width)
                 }
             }
+            .watch(value: layoutState.isSidebarPresented) { _ in
+                DispatchQueue.main.async {
+                    syncSizeClass(width: containerSize.width)
+                }
+            }
+    }
+
+    private func syncSizeClass(width: CGFloat) {
+        guard width > 0 else { return }
+        let newSizeClass = getSizeClass(width)
+        guard newSizeClass != sizeClass else { return }
+        sizeClass = newSizeClass
     }
     
     private func getSizeClass(_ width: CGFloat) -> ExcalidrawToolbarToolSizeClass {
