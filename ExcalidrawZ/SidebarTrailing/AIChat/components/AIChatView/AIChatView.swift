@@ -49,6 +49,7 @@ struct AIChatView: View {
     @State var revertRequiredUserMessageIDs: Set<String> = []
     @State var messageWindow = ChatMessageWindowState(pageSize: 20)
     @State var aiActionTask: Task<Void, Never>?
+    @State var regularChatInputOverlayHeight: CGFloat = 0
     @State var compactChatInputOverlayHeight: CGFloat = 0
     @StateObject var promptTextAreaProxy = TextAreaProxy()
     /// Confirmation dialog for the "Clear chat" toolbar action — destructive,
@@ -295,11 +296,23 @@ struct AIChatView: View {
 
     @ViewBuilder
     var regularChatBody: some View {
-        VStack(spacing: 0) {
-            chatMessageStage(bottomContentPadding: 0)
+        ZStack(alignment: .bottom) {
+            chatMessageStage(bottomContentPadding: regularChatInputOverlayHeight)
+
             chatInputControls
+                .padding(.bottom, 10)
+                .readHeight($regularChatInputOverlayHeight)
         }
-        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .watch(value: regularChatInputOverlayHeight) { oldHeight, newHeight in
+            guard oldHeight != newHeight,
+                  newHeight > 0,
+                  isPinnedToBottom
+            else {
+                return
+            }
+            requestScrollToBottom(animated: false)
+        }
     }
 
 #if os(iOS)

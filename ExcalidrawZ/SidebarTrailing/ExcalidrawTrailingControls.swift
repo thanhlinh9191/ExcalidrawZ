@@ -9,13 +9,18 @@ import SwiftUI
 
 import ChocofordUI
 import SFSafeSymbols
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ExcalidrawTrailingControls: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
 
+    @EnvironmentObject private var appPreference: AppPreference
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
+    @AppStorage(FloatingInspectorMetrics.widthStorageKey) private var floatingInspectorWidth = FloatingInspectorMetrics.defaultWidth
 
     private var historyDisabled: Bool {
         fileState.currentActiveFile == nil
@@ -45,7 +50,10 @@ struct ExcalidrawTrailingControls: View {
 
     private var topPadding: CGFloat {
 #if os(iOS)
-        containerHorizontalSizeClass == .compact ? 116 : 16
+        if containerHorizontalSizeClass == .compact {
+            return 116
+        }
+        return shouldReserveFloatingInspectorSpace ? FloatingInspectorMetrics.controlsTopPadding : 16
 #else
         16
 #endif
@@ -53,9 +61,38 @@ struct ExcalidrawTrailingControls: View {
 
     private var trailingPadding: CGFloat {
 #if os(iOS)
-        containerHorizontalSizeClass == .compact ? 12 : 8
+        (containerHorizontalSizeClass == .compact ? 12 : 8) + floatingInspectorControlsTrailingInset
 #else
         8
+#endif
+    }
+
+    private var floatingInspectorControlsTrailingInset: CGFloat {
+#if os(iOS)
+        shouldReserveFloatingInspectorSpace
+        ? FloatingInspectorMetrics.controlsInset(for: CGFloat(floatingInspectorWidth))
+        : 0
+#else
+        0
+#endif
+    }
+
+    private var shouldReserveFloatingInspectorSpace: Bool {
+#if os(iOS)
+        guard layoutState.isInspectorPresented,
+              containerHorizontalSizeClass != .compact else {
+            return false
+        }
+        if appPreference.inspectorLayout == .floatingBar {
+            return true
+        }
+        if #available(iOS 26.0, *),
+           UIDevice.current.userInterfaceIdiom == .pad {
+            return true
+        }
+        return false
+#else
+        false
 #endif
     }
 
@@ -145,6 +182,7 @@ struct ExcalidrawTrailingControls: View {
             }
             .padding(.top, topPadding)
             .padding(.trailing, trailingPadding)
+            .animation(.easeOut, value: shouldReserveFloatingInspectorSpace)
         }
     }
 }
@@ -171,6 +209,14 @@ private struct InspectorTabButton: View {
         containerHorizontalSizeClass == .compact
 #else
         false
+#endif
+    }
+
+    private var buttonStyleSize: ModernButtonStyleModifier.Size {
+#if os(iOS)
+        .regular
+#else
+        .large
 #endif
     }
 
@@ -202,7 +248,7 @@ private struct InspectorTabButton: View {
         .labelStyle(.iconOnly)
         .modernButtonStyle(
             style: isActive ? .glassProminent : .glass,
-            size: isCompactIOS ? .regular : .large,
+            size: buttonStyleSize,
             shape: .circle
         )
         .help(title)

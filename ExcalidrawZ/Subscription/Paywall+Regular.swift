@@ -95,12 +95,12 @@ extension Paywall {
                 .scaleEffect(1.1)
             }
         }
-        .onAppear {
-            isPresented = true
-        }
         .task {
             guard AIChatPreferences.shared.isAIEnabled else { return }
             await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .paywallAppear)
+        }
+        .onAppear {
+            isPresented = true
         }
         .onDisappear {
             isPresented = false

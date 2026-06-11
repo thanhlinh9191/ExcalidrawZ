@@ -25,9 +25,6 @@ struct ContentViewDetail: View {
     var body: some View {
         splitViewsContent()
             .modifier(ExcalidrawEditorToolbarModifier())
-#if os(iOS)
-            .modifier(ApplePencilToolbarModifier())
-#endif
             .environmentObject(toolState)
     }
     

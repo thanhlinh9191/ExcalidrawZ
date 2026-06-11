@@ -75,6 +75,11 @@ struct ContextUsageRing: View {
                         : String(localizable: .aiChatButtonCompactContext)
                 )
                 .accessibilityValue(Text(helpText))
+#if os(iOS)
+                .frame(minWidth: 32, minHeight: 32)
+                .contentShape(Rectangle())
+                .hoverEffect()
+#endif
             }
         }
         .animation(.smooth, value: fraction < 0.5)

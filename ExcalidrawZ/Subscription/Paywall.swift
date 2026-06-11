@@ -13,6 +13,8 @@ import LLMKit
 import SFSafeSymbols
 
 struct Paywall: View {
+    private static let minimumRegularIOSWidth: CGFloat = 760
+
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -140,6 +142,15 @@ struct Paywall: View {
 #endif
     }
 
+    private func shouldUseCompactIOSPaywall(availableWidth: CGFloat) -> Bool {
+#if os(iOS)
+        isCompactIOSPaywall ||
+        (availableWidth > 0 && availableWidth < Self.minimumRegularIOSWidth)
+#else
+        false
+#endif
+    }
+
     var compactSelectedFeatureLines: [Feature] {
         guard let selectedSubscriptionItem else { return baseFeatureLines }
         return baseFeatureLines + featureLines(
@@ -190,10 +201,12 @@ struct Paywall: View {
     @ViewBuilder
     private func content() -> some View {
 #if os(iOS)
-        if isCompactIOSPaywall {
-            compactIOSContent()
-        } else {
-            regularContent()
+        ViewSizeReader { size in
+            if shouldUseCompactIOSPaywall(availableWidth: size.width) {
+                compactIOSContent()
+            } else {
+                regularContent()
+            }
         }
 #else
         regularContent()

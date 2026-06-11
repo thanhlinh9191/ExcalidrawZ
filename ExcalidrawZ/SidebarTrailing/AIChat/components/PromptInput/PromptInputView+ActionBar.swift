@@ -21,6 +21,14 @@ import SFSafeSymbols
 
 extension PromptInputView {
     private var actionBarIconFrameLength: CGFloat { 18 }
+    private var actionBarLeadingControlSpacing: CGFloat { 4 }
+    private var primaryActionButtonSize: ModernButtonStyleModifier.Size? {
+#if os(iOS)
+        .regular
+#else
+        nil
+#endif
+    }
 
     /// Left half of the action row: attachment menu, context-usage ring,
     /// model picker. Wrapped in an HStack so the whole group can take a
@@ -30,7 +38,7 @@ extension PromptInputView {
     func actionBarLeading() -> some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.actionBarLeading")
 
-        HStack(spacing: 0) {
+        HStack(spacing: actionBarLeadingControlSpacing) {
             attachmentMenu
 
             ContextUsageRing(
@@ -67,6 +75,7 @@ extension PromptInputView {
                     .frame(width: actionBarIconFrameLength, height: actionBarIconFrameLength)
             }
         }
+        .promptActionBarHoverEffect()
         .foregroundStyle(activeFileAccessAllowsAI ? .primary : .secondary)
         .tint(activeFileAccessAllowsAI ? .accentColor : .secondary.opacity(0.75))
         .disabled(!hasActiveFileForAIAccessControl || !canToggleAIFileAccess)
@@ -135,6 +144,7 @@ extension PromptInputView {
         }
         .labelStyle(.iconOnly)
         .menuIndicator(.hidden)
+        .promptActionBarHoverEffect()
         .fileImporter(
             isPresented: $isImagePickerPresented,
             allowedContentTypes: [.image],
@@ -194,6 +204,7 @@ extension PromptInputView {
             .contentShape(Rectangle())
         }
         .menuIndicator(.hidden)
+        .promptActionBarHoverEffect()
         .disabled(modelPickerTiers.isEmpty)
     }
 
@@ -324,8 +335,22 @@ extension PromptInputView {
                     .frame(width: 16, height: 16)
             }
         }
-        .modernButtonStyle(style: .glass, shape: .circle)
+        .modernButtonStyle(style: .glass, size: primaryActionButtonSize, shape: .circle)
         // Stop is always enabled while generating. Send needs text.
         .disabled(!primaryActionIsStop && !hasInputText)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func promptActionBarHoverEffect() -> some View {
+#if os(iOS)
+        self
+            .frame(minWidth: 32, minHeight: 32)
+            .contentShape(Rectangle())
+            .hoverEffect()
+#else
+        self
+#endif
     }
 }

@@ -34,9 +34,6 @@ struct CompactExcalidrawHomeView: View {
                 .ignoresSafeArea()
                 .opacity(disableInteration || !fileHomeItemTransitionState.canShowExcalidrawCanvas ? 0 : 1)
                 .modifier(ExcalidrawEditorToolbarModifier())
-#if os(iOS)
-                .modifier(ApplePencilToolbarModifier())
-#endif
                 .modifier(InspectorPresentationModifier())
                 .environmentObject(toolState)
             }

@@ -26,6 +26,11 @@ extension PromptInputView {
         }
         .disabled(isGeneratingDebugContext)
         .help(String(localizable: .debugChatContextHelp))
+#if os(iOS)
+        .frame(minWidth: 32, minHeight: 32)
+        .contentShape(Rectangle())
+        .hoverEffect()
+#endif
     }
 
     var debugChatContextSheet: some View {
