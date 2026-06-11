@@ -23,15 +23,36 @@ extension AISettingsView {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            HStack(alignment: .top, spacing: 22) {
-                leading()
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 22) {
+                    leading()
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
 
-                if prefs.isAIEnabled {
-                    VStack(alignment: .trailing, spacing: 12) {
-                        tabPicker
-                        accessory()
+                    if prefs.isAIEnabled {
+                        VStack(alignment: .trailing, spacing: 12) {
+                            tabPicker
+                            accessory()
+                        }
+                    }
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    leading()
+
+                    if prefs.isAIEnabled {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(alignment: .center, spacing: 12) {
+                                tabPicker
+                                accessory()
+                            }
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                tabPicker
+                                accessory()
+                            }
+                        }
                     }
                 }
             }

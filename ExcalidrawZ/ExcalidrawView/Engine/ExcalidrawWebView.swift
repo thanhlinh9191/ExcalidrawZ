@@ -11,9 +11,15 @@ import Combine
 import Logging
 import QuartzCore
 import UniformTypeIdentifiers
+#if os(iOS)
+import UIKit
+#endif
 
 class ExcalidrawWebView: WKWebView {
     var shouldHandleInput = true
+#if os(iOS)
+    private var indirectScrollForwarder: ExcalidrawIndirectScrollForwarder?
+#endif
     
     enum ToolbarActionKey {
         case number(Int)
@@ -32,6 +38,9 @@ class ExcalidrawWebView: WKWebView {
 #if canImport(UIKit)
         self.scrollView.isScrollEnabled = false
         self.scrollView.backgroundColor = .clear
+#if os(iOS)
+        self.indirectScrollForwarder = ExcalidrawIndirectScrollForwarder(webView: self)
+#endif
 #endif
     }
     
@@ -63,6 +72,122 @@ class ExcalidrawWebView: WKWebView {
     }
 #endif
 }
+
+#if os(iOS)
+private final class ExcalidrawIndirectScrollForwarder: NSObject, UIGestureRecognizerDelegate {
+    private weak var webView: WKWebView?
+
+    init(webView: WKWebView) {
+        self.webView = webView
+        super.init()
+
+        let recognizer = UIPanGestureRecognizer(
+            target: self,
+            action: #selector(handleIndirectScroll(_:))
+        )
+        recognizer.allowedScrollTypesMask = .all
+        recognizer.cancelsTouchesInView = false
+        recognizer.delaysTouchesBegan = false
+        recognizer.delaysTouchesEnded = false
+        recognizer.delegate = self
+        webView.addGestureRecognizer(recognizer)
+    }
+
+    @objc private func handleIndirectScroll(_ recognizer: UIPanGestureRecognizer) {
+        guard recognizer.state == .began || recognizer.state == .changed,
+              let webView else {
+            return
+        }
+
+        let translation = recognizer.translation(in: webView)
+        recognizer.setTranslation(.zero, in: webView)
+
+        guard abs(translation.x) > 0.01 || abs(translation.y) > 0.01 else {
+            return
+        }
+
+        let location = recognizer.location(in: webView)
+        dispatchWheelEvent(
+            deltaX: -translation.x,
+            deltaY: -translation.y,
+            location: location,
+            in: webView
+        )
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive event: UIEvent
+    ) -> Bool {
+        event.type == .scroll
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive touch: UITouch
+    ) -> Bool {
+        false
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive press: UIPress
+    ) -> Bool {
+        false
+    }
+
+    private func dispatchWheelEvent(
+        deltaX: CGFloat,
+        deltaY: CGFloat,
+        location: CGPoint,
+        in webView: WKWebView
+    ) {
+        let script = """
+        (() => {
+            const clientX = Math.max(0, Math.min(window.innerWidth, \(Self.javascriptNumber(location.x))));
+            const clientY = Math.max(0, Math.min(window.innerHeight, \(Self.javascriptNumber(location.y))));
+            const target = document.elementFromPoint(clientX, clientY)
+                || document.querySelector(".excalidraw-container")
+                || document.body;
+
+            if (!target) {
+                return false;
+            }
+
+            const event = new WheelEvent("wheel", {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                clientX,
+                clientY,
+                screenX: clientX,
+                screenY: clientY,
+                deltaX: \(Self.javascriptNumber(deltaX)),
+                deltaY: \(Self.javascriptNumber(deltaY)),
+                deltaZ: 0,
+                deltaMode: 0
+            });
+
+            return target.dispatchEvent(event);
+        })();
+        """
+
+        webView.evaluateJavaScript(script, completionHandler: nil)
+    }
+
+    private static func javascriptNumber(_ value: CGFloat) -> String {
+        let number = Double(value)
+        return number.isFinite ? String(number) : "0"
+    }
+}
+#endif
 
 extension Notification.Name {
     static let forceReloadExcalidrawFile = Notification.Name("ForceReloadExcalidrawFile")

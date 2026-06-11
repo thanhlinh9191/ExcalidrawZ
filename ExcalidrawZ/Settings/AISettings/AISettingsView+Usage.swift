@@ -39,10 +39,19 @@ extension AISettingsView {
                 usagePlanText
             }
         } else {
-            HStack(alignment: .center, spacing: 16) {
-                usageGauge
-                usagePlanText
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 16) {
+                    usageGauge
+                    usagePlanText
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    usageGauge
+                    usagePlanText
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -86,15 +95,27 @@ extension AISettingsView {
                 activityGroupingControl
             }
         } else {
-            HStack(alignment: .center) {
-                Label(.localizable(.settingsAIUsageActivityTitle), systemSymbol: .chartLineUptrendXyaxis)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center) {
+                    Label(.localizable(.settingsAIUsageActivityTitle), systemSymbol: .chartLineUptrendXyaxis)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
 
-                Spacer()
+                    Spacer(minLength: 16)
 
-                activityGroupingControl
+                    activityGroupingControl
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Label(.localizable(.settingsAIUsageActivityTitle), systemSymbol: .chartLineUptrendXyaxis)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    activityGroupingControl
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

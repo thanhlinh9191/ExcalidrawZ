@@ -21,6 +21,9 @@ struct ExcalidrawTrailingControls: View {
     @EnvironmentObject private var fileState: FileState
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
     @AppStorage(FloatingInspectorMetrics.widthStorageKey) private var floatingInspectorWidth = FloatingInspectorMetrics.defaultWidth
+    @State private var displayedHorizontalOffset: CGFloat = 0
+    @State private var hasInitializedHorizontalOffset = false
+    @State private var pendingHorizontalOffsetTask: Task<Void, Never>?
 
     private var historyDisabled: Bool {
         fileState.currentActiveFile == nil
@@ -61,10 +64,22 @@ struct ExcalidrawTrailingControls: View {
 
     private var trailingPadding: CGFloat {
 #if os(iOS)
-        (containerHorizontalSizeClass == .compact ? 12 : 8) + floatingInspectorControlsTrailingInset
+        containerHorizontalSizeClass == .compact ? 12 : 8
 #else
         8
 #endif
+    }
+
+    private var horizontalOffset: CGFloat {
+#if os(iOS)
+        floatingInspectorControlsTrailingInset
+#else
+        0
+#endif
+    }
+
+    private var effectiveHorizontalOffset: CGFloat {
+        hasInitializedHorizontalOffset ? displayedHorizontalOffset : horizontalOffset
     }
 
     private var floatingInspectorControlsTrailingInset: CGFloat {
@@ -181,8 +196,47 @@ struct ExcalidrawTrailingControls: View {
 #endif
             }
             .padding(.top, topPadding)
-            .padding(.trailing, trailingPadding)
-            .animation(.easeOut, value: shouldReserveFloatingInspectorSpace)
+            .padding(.trailing, trailingPadding + effectiveHorizontalOffset)
+            .onAppear {
+                syncDisplayedHorizontalOffsetWithoutAnimation()
+            }
+            .onDisappear {
+                pendingHorizontalOffsetTask?.cancel()
+                pendingHorizontalOffsetTask = nil
+                hasInitializedHorizontalOffset = false
+            }
+            .watch(value: shouldReserveFloatingInspectorSpace) { _, _ in
+                scheduleAnimatedDisplayedHorizontalOffsetUpdate()
+            }
+            .watch(value: floatingInspectorWidth) { _, _ in
+                guard shouldReserveFloatingInspectorSpace else { return }
+                syncDisplayedHorizontalOffsetWithoutAnimation()
+            }
+            .animation(.easeOut, value: topPadding)
+        }
+    }
+
+    private func scheduleAnimatedDisplayedHorizontalOffsetUpdate() {
+        pendingHorizontalOffsetTask?.cancel()
+        pendingHorizontalOffsetTask = Task { @MainActor in
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut) {
+                displayedHorizontalOffset = horizontalOffset
+                hasInitializedHorizontalOffset = true
+            }
+        }
+    }
+
+    private func syncDisplayedHorizontalOffsetWithoutAnimation() {
+        pendingHorizontalOffsetTask?.cancel()
+        pendingHorizontalOffsetTask = nil
+
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            displayedHorizontalOffset = horizontalOffset
+            hasInitializedHorizontalOffset = true
         }
     }
 }

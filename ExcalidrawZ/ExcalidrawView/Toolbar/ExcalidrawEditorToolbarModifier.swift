@@ -11,6 +11,9 @@ import SwiftUI
 import ChocofordUI
 import LLMKit
 import SFSafeSymbols
+#if os(iOS)
+import UIKit
+#endif
 
 struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
@@ -31,6 +34,20 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @State private var lockedFileAccessRequest: LockedFileAccessRequest?
     @State private var existingRecoveryKeyLockRequest: LockedFileAccessRequest?
     @State private var isLockingFile = false
+
+    private var shouldFloatNavigationToolbarOverCanvas: Bool {
+#if os(iOS)
+        guard containerHorizontalSizeClass != .compact else { return false }
+        return UIDevice.current.userInterfaceIdiom == .pad
+#else
+        false
+#endif
+    }
+
+    private var shouldHideNavigationToolbarBackground: Bool {
+        shouldFloatNavigationToolbarOverCanvas ||
+        (fileState.currentActiveGroup == .collaboration && fileState.currentActiveFile == nil)
+    }
     
     func body(content: Content) -> some View {
         ZStack {
@@ -97,7 +114,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         .animation(.default, value: lockedContentState.activeFileLockState)
         .toolbarBackground(containerHorizontalSizeClass == .regular ? .automatic : .visible, for: .bottomBar)
         .toolbarBackground(
-            fileState.currentActiveGroup == .collaboration && fileState.currentActiveFile == nil ? .hidden : .visible,
+            shouldHideNavigationToolbarBackground ? .hidden : .visible,
             for: .navigationBar
         )
         .navigationBarTitleDisplayMode(.inline) // <- fix principal toolbar

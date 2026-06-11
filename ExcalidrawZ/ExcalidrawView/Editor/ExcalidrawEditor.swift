@@ -105,6 +105,19 @@ struct ExcalidrawEditor: View {
         false
 #endif
     }
+
+    private var shouldFloatNavigationToolbarOverCanvas: Bool {
+#if os(iOS)
+        guard containerHorizontalSizeClass != .compact else { return false }
+        return UIDevice.current.userInterfaceIdiom == .pad
+#else
+        false
+#endif
+    }
+
+    private var canvasIgnoredSafeAreaEdges: Edge.Set {
+        shouldFloatNavigationToolbarOverCanvas ? .top : []
+    }
     
     
     @State private var canvasLoadingState: ExcalidrawCanvasView.LoadingState = .loading
@@ -145,6 +158,7 @@ struct ExcalidrawEditor: View {
                     .allowsHitTesting(isInCollaborationSpace && !isLoadingFile)
             }
             .allowsHitTesting(!isLoadingFile)
+            .ignoresSafeArea(.container, edges: canvasIgnoredSafeAreaEdges)
 #if os(iOS)
             .dismissKeyboardOnCanvasTap()
 #endif
