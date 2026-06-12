@@ -909,7 +909,6 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
     var body: some View {
         content(sizeClass)
             .watch(value: containerSize, initial: true) { _, newValue in
-                print("[DEBUG] containerSize", newValue.width)
                 syncSizeClass(width: newValue.width)
             }
             .watch(value: layoutState.isInspectorPresented) { _ in
