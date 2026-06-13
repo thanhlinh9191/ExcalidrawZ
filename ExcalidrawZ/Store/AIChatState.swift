@@ -153,7 +153,7 @@ final class AIChatState: ObservableObject {
         let message: String
         let retryPrompt: String
         let retryFiles: [ChatMessageContent.File]
-        let retryModel: SupportedModel?
+        let retryModelProfileID: String?
 
         init(
             id: UUID = UUID(),
@@ -162,7 +162,7 @@ final class AIChatState: ObservableObject {
             message: String,
             retryPrompt: String,
             retryFiles: [ChatMessageContent.File],
-            retryModel: SupportedModel? = nil
+            retryModelProfileID: String? = nil
         ) {
             self.id = id
             self.conversationID = conversationID
@@ -170,7 +170,7 @@ final class AIChatState: ObservableObject {
             self.message = message
             self.retryPrompt = retryPrompt
             self.retryFiles = retryFiles
-            self.retryModel = retryModel
+            self.retryModelProfileID = retryModelProfileID
         }
     }
 
@@ -294,7 +294,7 @@ final class AIChatState: ObservableObject {
         userMessageID: String,
         retryPrompt: String,
         retryFiles: [ChatMessageContent.File],
-        retryModel: SupportedModel? = nil
+        retryModelProfileID: String? = nil
     ) {
         guard !(error is CancellationError) else { return }
         transientError = TransientError(
@@ -303,7 +303,7 @@ final class AIChatState: ObservableObject {
             message: error.localizedDescription,
             retryPrompt: retryPrompt,
             retryFiles: retryFiles,
-            retryModel: retryModel
+            retryModelProfileID: retryModelProfileID
         )
     }
 

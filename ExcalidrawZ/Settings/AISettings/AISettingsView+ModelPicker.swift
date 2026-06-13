@@ -12,7 +12,7 @@ import LLMCore
 
 extension AISettingsView {
     /// Picker for `prefs.defaultTier`. The concrete model is resolved at
-    /// send time from the current backend-allowed model list, so backend
+    /// send time from the current backend-defined profile list, so backend
     /// model rotation does not rewrite the user's preferred capability tier.
     @ViewBuilder
     var defaultModelPicker: some View {
@@ -21,13 +21,13 @@ extension AISettingsView {
         }
         .help(.localizable(.settingsAIEnableFeatureHelp))
 
-        let visibleModels = availableModels.filter { canShowModelInPicker($0) }
-        let selectableModels = visibleModels.filter { canSelectModel($0) }
+        let visibleOptions = availableModelOptions.filter { canShowModelInPicker($0) }
+        let selectableOptions = visibleOptions.filter { canSelectModel($0) }
         let visibleTiers = ExcalidrawModelTier.pickerOrder.filter { tier in
-            visibleModels.contains { $0.excalidrawTier == tier }
+            visibleOptions.contains { $0.tier == tier }
         }
         let selectableTiers = ExcalidrawModelTier.pickerOrder.filter { tier in
-            selectableModels.contains { $0.excalidrawTier == tier }
+            selectableOptions.contains { $0.tier == tier }
         }
         let current = fallbackTierIfNeeded(prefs.defaultTier, from: selectableTiers)
         let mergedTiers: [ExcalidrawModelTier] = {
@@ -44,7 +44,7 @@ extension AISettingsView {
             get: { current.rawValue },
             set: { rawValue in
                 guard let tier = ExcalidrawModelTier(rawValue: rawValue),
-                      canSelectTier(tier, from: selectableModels)
+                      canSelectTier(tier, from: selectableOptions)
                 else { return }
                 prefs.defaultTier = tier
             }
@@ -52,7 +52,7 @@ extension AISettingsView {
             ForEach(mergedTiers) { tier in
                 Text(tier.name)
                     .tag(tier.rawValue)
-                    .disabled(!canSelectTier(tier, from: selectableModels))
+                    .disabled(!canSelectTier(tier, from: selectableOptions))
             }
         }
         .help(.localizable(.settingsAIDefaultModelHelp))
@@ -60,23 +60,23 @@ extension AISettingsView {
     }
 
     @MainActor
-    func canShowModelInPicker(_ model: SupportedModel) -> Bool {
-        model.isVisibleInExcalidrawModelPicker
+    func canShowModelInPicker(_ option: ExcalidrawModelProfileOption) -> Bool {
+        option.isVisible
     }
 
     @MainActor
-    func canSelectModel(_ model: SupportedModel) -> Bool {
-        canShowModelInPicker(model)
-            && (!model.requiresMaxAIPlan || store.canUseExtraHighAIModel)
+    func canSelectModel(_ option: ExcalidrawModelProfileOption) -> Bool {
+        canShowModelInPicker(option)
+            && (!option.requiresMaxAIPlan || store.canUseExtraHighAIModel)
     }
 
     @MainActor
     func canSelectTier(
         _ tier: ExcalidrawModelTier,
-        from availableModels: [SupportedModel]
+        from availableOptions: [ExcalidrawModelProfileOption]
     ) -> Bool {
-        availableModels.contains { model in
-            model.excalidrawTier == tier && canSelectModel(model)
+        availableOptions.contains { option in
+            option.tier == tier && canSelectModel(option)
         }
     }
 
@@ -86,14 +86,8 @@ extension AISettingsView {
         from availableTiers: [ExcalidrawModelTier]
     ) -> ExcalidrawModelTier {
         guard !availableTiers.isEmpty else { return tier }
-        guard !tier.requiresMaxAIPlan || store.canUseExtraHighAIModel else {
-            return availableTiers.first(where: { $0 == .high })
-            ?? availableTiers.first(where: { $0 == .medium })
-            ?? availableTiers[0]
-        }
         guard availableTiers.contains(tier) else {
-            return availableTiers.first(where: { $0 == .medium })
-            ?? availableTiers[0]
+            return availableTiers[0]
         }
 
         return tier
@@ -101,12 +95,12 @@ extension AISettingsView {
 
     func loadAvailableModelsIfNeeded() async {
         guard AIChatAvailability.canUseAI else { return }
-        guard availableModels.isEmpty else { return }
+        guard availableModelOptions.isEmpty else { return }
         do {
             guard AIChatAvailability.canUseAI else { throw CancellationError() }
             let config = try await LLMClient.shared.getDomainAgentConfig(agentID: agentID)
             await MainActor.run {
-                self.availableModels = config.allowedModels
+                self.availableModelOptions = config.excalidrawModelOptions
             }
         } catch is CancellationError {
         } catch {

@@ -254,11 +254,12 @@ extension AIChatView {
         aiActionTask?.cancel()
         let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
-            var attemptedModel: SupportedModel?
+            var attemptedModelProfileID: String?
             do {
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let model = try await retryModel(conversationID: id)
-                attemptedModel = model
+                let modelSelection = try await retryModel(conversationID: id)
+                let model = modelSelection.model
+                attemptedModelProfileID = modelSelection.profileID
                 let imageAttachments = AIChatImageAttachmentReference.makeReferences(
                     from: retryContent?.files ?? []
                 )
@@ -270,7 +271,7 @@ extension AIChatView {
                 )
                 try await refreshConversationToolsIfNeeded(
                     conversationID: id,
-                    model: model,
+                    supportsImageInput: modelSelection.supportsImageInput,
                     mode: invocationPlan.interactionMode,
                     includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                 )
@@ -279,6 +280,7 @@ extension AIChatView {
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
                         model: model,
+                        supportsImageInput: modelSelection.supportsImageInput,
                         imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
@@ -286,6 +288,7 @@ extension AIChatView {
                         userMessageID: retryContent?.id ?? messageID,
                         requestKind: .regenerateMessage,
                         model: model,
+                        modelProfileID: modelSelection.profileID,
                         invocationPlan: invocationPlan,
                         attachmentCount: retryContent?.files?.count ?? 0,
                         hasCurrentFileData: context.currentFileData != nil
@@ -308,14 +311,16 @@ extension AIChatView {
                         userMessageID: retryContent?.id ?? messageID,
                         retryPrompt: retryContent?.content ?? "",
                         retryFiles: retryContent?.files ?? [],
-                        retryModel: attemptedModel
+                        retryModelProfileID: attemptedModelProfileID
                     )
                 }
             }
         }
     }
 
-    func resumeGeneration(modelOverride: SupportedModel? = nil) {
+    func resumeGeneration(
+        modelProfileID: String? = nil
+    ) {
         guard AIChatAvailability.canUseAI else { return }
         guard let id = fileState.aiChatConversationID else { return }
         let retryContent = lastUserContent()
@@ -325,14 +330,15 @@ extension AIChatView {
         aiActionTask?.cancel()
         let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
-            var attemptedModel: SupportedModel?
+            var attemptedModelProfileID: String?
             do {
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let model = try await retryModel(
+                let modelSelection = try await retryModel(
                     conversationID: id,
-                    preferredModel: modelOverride
+                    preferredProfileID: modelProfileID
                 )
-                attemptedModel = model
+                let model = modelSelection.model
+                attemptedModelProfileID = modelSelection.profileID
                 let imageAttachments = AIChatImageAttachmentReference.makeReferences(
                     from: retryContent?.files ?? []
                 )
@@ -344,7 +350,7 @@ extension AIChatView {
                 )
                 try await refreshConversationToolsIfNeeded(
                     conversationID: id,
-                    model: model,
+                    supportsImageInput: modelSelection.supportsImageInput,
                     mode: invocationPlan.interactionMode,
                     includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                 )
@@ -353,6 +359,7 @@ extension AIChatView {
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
                         model: model,
+                        supportsImageInput: modelSelection.supportsImageInput,
                         imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
@@ -360,6 +367,7 @@ extension AIChatView {
                         userMessageID: retryContent?.id ?? "",
                         requestKind: .resumeGeneration,
                         model: model,
+                        modelProfileID: modelSelection.profileID,
                         invocationPlan: invocationPlan,
                         attachmentCount: retryContent?.files?.count ?? 0,
                         hasCurrentFileData: context.currentFileData != nil
@@ -381,7 +389,7 @@ extension AIChatView {
                         userMessageID: retryContent?.id ?? "",
                         retryPrompt: retryContent?.content ?? "",
                         retryFiles: retryContent?.files ?? [],
-                        retryModel: attemptedModel
+                        retryModelProfileID: attemptedModelProfileID
                     )
                 }
             }
@@ -393,6 +401,7 @@ extension AIChatView {
         userMessageID: String,
         requestKind: ExcalidrawAITransactionRequestKind,
         model: SupportedModel,
+        modelProfileID: String?,
         invocationPlan: AIChatInvocationPlan,
         attachmentCount: Int,
         hasCurrentFileData: Bool
@@ -411,6 +420,7 @@ extension AIChatView {
             requestKind: requestKind,
             agentID: ExcalidrawAgentConfig.agentID,
             model: model.rawValue,
+            modelProfileID: modelProfileID,
             canvasTarget: invocationPlan.toolCanvasTarget.rawValue,
             fileID: fileContext.id,
             fileName: fileContext.name,
@@ -448,8 +458,8 @@ extension AIChatView {
 
     private func retryModel(
         conversationID: String,
-        preferredModel: SupportedModel? = nil
-    ) async throws -> SupportedModel {
+        preferredProfileID: String? = nil
+    ) async throws -> AIChatRetryModelSelection {
         guard AIChatAvailability.canUseAI else { throw CancellationError() }
         let agentConfig = try await LLMClient.shared.getDomainAgentConfig(agentID: "excalidraw-canvas")
         return try await MainActor.run {
@@ -457,25 +467,26 @@ extension AIChatView {
                 message.files?.containsImageInput == true
             } ?? false
             let preferences = AIChatPreferences.shared
-            let canUse: (SupportedModel) -> Bool = { model in
-                model.isVisibleInExcalidrawModelPicker
-                    && agentConfig.allowedModels.contains(model)
-                    && (!model.requiresMaxAIPlan || Store.shared.canUseExtraHighAIModel)
-                    && (!requiresImageInput || model.supportsExcalidrawImageInput)
+            let options = agentConfig.excalidrawModelOptions
+            let canUse: (ExcalidrawModelProfileOption) -> Bool = { option in
+                option.isVisible
+                    && (!option.requiresMaxAIPlan || Store.shared.canUseExtraHighAIModel)
+                    && (!requiresImageInput || option.supportsImageInput)
             }
-            let selected: SupportedModel
-            if let preferredModel {
-                selected = preferredModel
-            } else {
-                let tier = preferences.tier(for: conversationID) ?? preferences.defaultTier
-                selected = SupportedModel.nearestExcalidrawFallback(
-                    to: tier,
-                    from: agentConfig.allowedModels.filter(canUse)
-                ) ?? tier.canonicalModel
+
+            let selectedProfileID = preferredProfileID
+                ?? (preferences.tier(for: conversationID) ?? preferences.defaultTier).rawValue
+            if let preferred = options.first(where: { $0.profileID == selectedProfileID }),
+               canUse(preferred) {
+                return AIChatRetryModelSelection(option: preferred)
             }
-            guard !canUse(selected) else { return selected }
-            throw AIChatRetryModelUnavailableError(
-                model: selected,
+
+            if let fallback = options.first(where: canUse) {
+                return AIChatRetryModelSelection(option: fallback)
+            }
+
+            throw AIChatRetryModelProfileUnavailableError(
+                profileID: selectedProfileID,
                 requiresImageInput: requiresImageInput
             )
         }
@@ -509,13 +520,13 @@ extension AIChatView {
 
     private func refreshConversationToolsIfNeeded(
         conversationID: String,
-        model: SupportedModel,
+        supportsImageInput: Bool,
         mode: AIChatInteractionMode,
         includesCurrentFileContext: Bool
     ) async throws {
         let tools = ExcalidrawAgentConfig.toolNames(
             mode: mode,
-            supportsImageInput: model.supportsExcalidrawImageInput,
+            supportsImageInput: supportsImageInput,
             includesCurrentFileContext: includesCurrentFileContext
         )
         let currentTools = await MainActor.run {
@@ -546,7 +557,9 @@ extension AIChatView {
         aiChatState.clearTransientError(for: id)
 
         if hasUserMessage {
-            resumeGeneration(modelOverride: error.retryModel)
+            resumeGeneration(
+                modelProfileID: error.retryModelProfileID
+            )
         } else {
             aiChatState.requestDraft(
                 error.retryPrompt,
@@ -601,14 +614,22 @@ extension AIChatView {
     }
 }
 
-private struct AIChatRetryModelUnavailableError: LocalizedError {
-    let model: SupportedModel
+private struct AIChatRetryModelProfileUnavailableError: LocalizedError {
+    let profileID: String
     let requiresImageInput: Bool
 
     var errorDescription: String? {
-        if requiresImageInput, !model.supportsExcalidrawImageInput {
-            return "The original model for this retry cannot read image input."
+        if requiresImageInput {
+            return "The selected model profile cannot read image input."
         }
-        return "The original model for this retry is no longer available."
+        return "The selected model profile is no longer available."
     }
+}
+
+private struct AIChatRetryModelSelection {
+    let option: ExcalidrawModelProfileOption
+
+    var model: SupportedModel { option.model }
+    var profileID: String { option.profileID }
+    var supportsImageInput: Bool { option.supportsImageInput }
 }

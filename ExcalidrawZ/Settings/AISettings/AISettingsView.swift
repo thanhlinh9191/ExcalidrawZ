@@ -34,10 +34,9 @@ struct AISettingsView: View {
     @State var didCopyAIAccountID: Bool = false
     @State var isPresentingAIEnableConsent: Bool = false
     
-    /// Model list for the Default Model picker, sourced from the agent's
-    /// `allowedModels`. Loaded lazily on first appearance so opening
-    /// Settings doesn't pay a network cost up-front.
-    @State var availableModels: [SupportedModel] = []
+    /// Model profile list for the Default Model picker, sourced from the
+    /// agent's server-defined `modelProfiles`.
+    @State var availableModelOptions: [ExcalidrawModelProfileOption] = []
     
     let pageSize: Int = 20
     let aggregatePageSize: Int = 100

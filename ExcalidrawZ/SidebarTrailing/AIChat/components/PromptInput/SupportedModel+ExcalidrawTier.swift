@@ -18,8 +18,9 @@
 //  identifiers, server-bound config) keeps using the upstream
 //  `displayName` / `rawValue`.
 //
-//  Adding a new tier or remapping is safe: this is the only place
-//  that the chat picker's labels live.
+//  Server-defined `DomainModelProfile.id` is the source of truth for
+//  current model selection. The upstream-model mapping below only exists
+//  for legacy preference migration and usage-history display.
 //
 
 import Foundation
@@ -37,15 +38,6 @@ enum ExcalidrawModelTier: String, Codable, CaseIterable, Identifiable, Sendable 
 
     var id: String { rawValue }
 
-    var rank: Int {
-        switch self {
-            case .low: 0
-            case .medium: 1
-            case .high: 2
-            case .extraHigh: 3
-        }
-    }
-
     var name: String {
         switch self {
             case .low:
@@ -59,22 +51,6 @@ enum ExcalidrawModelTier: String, Codable, CaseIterable, Identifiable, Sendable 
         }
     }
 
-    var requiresMaxAIPlan: Bool {
-        self == .extraHigh
-    }
-
-    var canonicalModel: SupportedModel {
-        switch self {
-            case .low:
-                return .hy3Preview
-            case .medium:
-                return .qwen3_6Plus
-            case .high:
-                return .claudeSonnet4_6
-            case .extraHigh:
-                return .claudeOpus4_7
-        }
-    }
 }
 
 extension SupportedModel {
@@ -112,81 +88,4 @@ extension SupportedModel {
         supportsImageInput
     }
 
-    /// Extra High is a Max-plan capability. Other tiers are only gated by
-    /// credits/server-side availability.
-    var requiresMaxAIPlan: Bool {
-        switch self {
-            case .claudeOpus4_7, .claudeOpus4_6:
-                return true
-            default:
-                return false
-        }
-    }
-
-    /// Internal ordering used for automatic capability fallback.
-    ///
-    /// Only models with an explicit Excalidraw tier get a rank. Models
-    /// that fall through to provider names / "Experimental" are left
-    /// unranked so they do not influence tier-based fallback.
-    var excalidrawSelectionRank: Int? {
-        excalidrawTier?.rank
-    }
-
-    /// Model picker visibility. Release builds only expose models that
-    /// have an explicit Excalidraw tier mapping; DEBUG builds keep
-    /// unmapped upstream models visible so new backend options are easy
-    /// to notice during development.
-    var isVisibleInExcalidrawModelPicker: Bool {
-#if DEBUG
-        return true
-#else
-        return excalidrawSelectionRank != nil
-#endif
-    }
-
-    static func nearestExcalidrawFallback(
-        to selected: SupportedModel,
-        from candidates: [SupportedModel]
-    ) -> SupportedModel? {
-        guard let selectedTier = selected.excalidrawTier else {
-            return candidates.first
-        }
-        return nearestExcalidrawFallback(to: selectedTier, from: candidates)
-    }
-
-    static func nearestExcalidrawFallback(
-        to selectedTier: ExcalidrawModelTier,
-        from candidates: [SupportedModel]
-    ) -> SupportedModel? {
-        guard !candidates.isEmpty else { return nil }
-
-        let rankedCandidates = candidates.enumerated().compactMap { index, model in
-            model.excalidrawTier.map { tier in
-                (index: index, model: model, tier: tier)
-            }
-        }
-        guard !rankedCandidates.isEmpty else {
-            return candidates.first
-        }
-
-        return rankedCandidates.min { lhs, rhs in
-            let lhsDistance = abs(lhs.tier.rank - selectedTier.rank)
-            let rhsDistance = abs(rhs.tier.rank - selectedTier.rank)
-            if lhsDistance != rhsDistance {
-                return lhsDistance < rhsDistance
-            }
-
-            // When two candidates are equally far away, prefer a same-or-
-            // higher capability move over a downgrade. This keeps "missing
-            // image input" as an upgrade path while still allowing downgrade
-            // fallback when Extra High is unavailable on the current plan.
-            let lhsIsDowngrade = lhs.tier.rank < selectedTier.rank
-            let rhsIsDowngrade = rhs.tier.rank < selectedTier.rank
-            if lhsIsDowngrade != rhsIsDowngrade {
-                return !lhsIsDowngrade
-            }
-
-            return lhs.index < rhs.index
-        }?.model
-    }
 }

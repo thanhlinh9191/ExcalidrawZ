@@ -23,6 +23,12 @@ import LLMCore
 
 private let promptInputSendLogger = Logger(label: "PromptInputSend")
 
+struct AIChatModelProfileUnavailableError: LocalizedError {
+    var errorDescription: String? {
+        "The selected AI model profile is not available."
+    }
+}
+
 extension PromptInputView {
     /// Pre-send threshold (fraction of the active model's context window).
     /// At/above this we run a compact before firing the send so the round
@@ -45,8 +51,9 @@ extension PromptInputView {
         guard AIChatAvailability.canUseAI else { return false }
         let files = PastedImageHelpers.buildFiles(from: pastedImages)
         guard !trimmedText.isEmpty || !files.isEmpty else { return false }
-        let model = modelForSend(files: files)
-        guard !files.containsImageInput || model.supportsExcalidrawImageInput else {
+        if let modelOption = modelProfileOptionForSend(files: files),
+           files.containsImageInput,
+           !modelOption.supportsImageInput {
             alertToast(AIChatInputCapabilityError.noModelCanReadImages)
             return false
         }
@@ -151,7 +158,7 @@ extension PromptInputView {
     private func shouldAutoCompactBeforeSend() -> Bool {
         guard let conversationID else { return false }
         let used = llmState.estimatedTokenUsage(in: conversationID)
-        guard let cap = activeModel.maxContextTokens else { return false }
+        guard let cap = activeModelContextWindowTokens else { return false }
         guard cap > 0 else { return false }
         return Double(used) >= Double(cap) * Self.autoCompactThreshold
     }
@@ -185,20 +192,22 @@ extension PromptInputView {
             // cancel).
             var sessionOpened = false
             var streamSucceeded = false
-            var attemptedModel: SupportedModel?
+            var attemptedModelProfileID: String?
 
             do {
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
                 await MainActor.run {
                     aiChatState.clearTransientError(for: conversationIDForSession)
                 }
-                // Make sure agent config is loaded so `activeModel` resolves to the
-                // server-blessed default (or the user's picker selection) rather
-                // than the hard-coded fallback.
+                // Make sure agent config is loaded so the selected tier resolves
+                // through the server-defined model profile.
                 await loadAgentConfigIfNeeded()
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let model = await MainActor.run { modelForSend(files: files) }
-                attemptedModel = model
+                guard let modelOption = await MainActor.run(body: { modelProfileOptionForSend(files: files) }) else {
+                    throw AIChatModelProfileUnavailableError()
+                }
+                let model = modelOption.model
+                attemptedModelProfileID = modelOption.profileID
                 let isNewConversation = self.conversation == nil
                 let imageAttachments = AIChatImageAttachmentReference.makeReferences(from: files)
                 let canIncludeActiveFileContext = await activeFileAllowsAIContext()
@@ -210,7 +219,7 @@ extension PromptInputView {
                 if !isNewConversation {
                     try await refreshExistingConversationToolsIfNeeded(
                         conversationID: conversationIDForSession,
-                        model: model,
+                        supportsImageInput: modelOption.supportsImageInput,
                         mode: invocationPlan.interactionMode,
                         includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                     )
@@ -220,6 +229,7 @@ extension PromptInputView {
                     let context = try await invocationPlan.makeContext(
                         fileState: fileState,
                         model: model,
+                        supportsImageInput: modelOption.supportsImageInput,
                         imageAttachments: imageAttachments
                     )
                     let metadata = await makeTransactionMetadata(
@@ -227,6 +237,7 @@ extension PromptInputView {
                         userMessageID: userMessageID,
                         requestKind: isNewConversation ? .createConversation : .sendMessage,
                         model: model,
+                        modelProfileID: modelOption.profileID,
                         invocationPlan: invocationPlan,
                         attachmentCount: files.count,
                         hasCurrentFileData: context.currentFileData != nil,
@@ -268,7 +279,7 @@ extension PromptInputView {
                             // restore path uses the exact same wiring.
                             agentConfig: ExcalidrawAgentConfig.defaultConfig(
                                 mode: invocationPlan.interactionMode,
-                                supportsImageInput: model.supportsExcalidrawImageInput,
+                                supportsImageInput: modelOption.supportsImageInput,
                                 includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                             ),
                             messages: [.content(userMessage)],
@@ -323,7 +334,7 @@ extension PromptInputView {
                         userMessageID: userMessageID,
                         retryPrompt: prompt,
                         retryFiles: files,
-                        retryModel: attemptedModel
+                        retryModelProfileID: attemptedModelProfileID
                     )
                 }
             }
@@ -377,13 +388,13 @@ extension PromptInputView {
 
     func refreshExistingConversationToolsIfNeeded(
         conversationID: String,
-        model: SupportedModel,
+        supportsImageInput: Bool,
         mode: AIChatInteractionMode,
         includesCurrentFileContext: Bool
     ) async throws {
         let tools = ExcalidrawAgentConfig.toolNames(
             mode: mode,
-            supportsImageInput: model.supportsExcalidrawImageInput,
+            supportsImageInput: supportsImageInput,
             includesCurrentFileContext: includesCurrentFileContext
         )
         let currentTools = await MainActor.run {
@@ -403,6 +414,7 @@ extension PromptInputView {
         userMessageID: String,
         requestKind: ExcalidrawAITransactionRequestKind,
         model: SupportedModel,
+        modelProfileID: String?,
         invocationPlan: AIChatInvocationPlan,
         attachmentCount: Int,
         hasCurrentFileData: Bool,
@@ -422,6 +434,7 @@ extension PromptInputView {
             requestKind: requestKind,
             agentID: agentID,
             model: model.rawValue,
+            modelProfileID: modelProfileID,
             canvasTarget: invocationPlan.toolCanvasTarget.rawValue,
             fileID: fileContext.id,
             fileName: fileContext.name,

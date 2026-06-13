@@ -202,6 +202,10 @@ extension AISettingsView {
         guard let metadata = tx.decodedUserMetadata(as: ExcalidrawAITransactionMetadata.self) else {
             return nil
         }
+        if let profileID = metadata.modelProfileID,
+           let tier = ExcalidrawModelTier(profileID: profileID) {
+            return tier.name
+        }
         return modelTierName(for: metadata.model)
     }
 

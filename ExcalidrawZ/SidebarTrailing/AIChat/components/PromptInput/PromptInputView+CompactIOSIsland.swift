@@ -383,7 +383,7 @@ extension PromptInputView {
             modelTierPickerButtons()
         } label: {
             iOSIslandCircleLabel(length: iOSIslandInlineControlLength) {
-                Text(activeTierForModelPicker.iOSIslandShortLabel)
+                Text(iOSIslandModelPickerTitle)
                     .font(.system(size: 11, weight: .semibold))
                     .monospaced()
             }
@@ -391,6 +391,11 @@ extension PromptInputView {
         .menuIndicator(.hidden)
         .buttonStyle(.plain)
         .disabled(modelPickerTiers.isEmpty)
+    }
+
+    @MainActor
+    var iOSIslandModelPickerTitle: String {
+        activeModelProfileOption?.tier.iOSIslandShortLabel ?? "..."
     }
 
     @ViewBuilder
@@ -488,7 +493,7 @@ extension PromptInputView {
             Menu {
                 modelTierPickerButtons()
             } label: {
-                Text(activeModel.excalidrawTierName)
+                Text(modelPickerTitle)
             }
 
             if showsCompactIOSFullChatButton {
@@ -520,7 +525,7 @@ extension PromptInputView {
     @MainActor
     private var showsIOSCompactContextMenuItem: Bool {
         guard let conversationID,
-              let cap = activeModel.maxContextTokens,
+              let cap = activeModelContextWindowTokens,
               cap > 0
         else { return false }
         let used = llmState.estimatedTokenUsage(in: conversationID)

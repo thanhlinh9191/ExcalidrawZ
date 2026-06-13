@@ -42,7 +42,7 @@ extension PromptInputView {
             attachmentMenu
 
             ContextUsageRing(
-                model: activeModel,
+                maxContextTokens: activeModelContextWindowTokens,
                 onTap: conversationID != nil && !isCompactingContext
                     ? { compactCurrentContext() }
                     : nil,
@@ -188,7 +188,7 @@ extension PromptInputView {
             modelTierPickerButtons()
         } label: {
             HStack(spacing: 4) {
-                Text(activeModel.excalidrawTierName)
+                Text(modelPickerTitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -201,19 +201,26 @@ extension PromptInputView {
     }
 
     @MainActor
+    var modelPickerTitle: String {
+        activeModelProfileOption?.title ?? "..."
+    }
+
+    @MainActor
     var modelPickerTiers: [ExcalidrawModelTier] {
-        let models = AIChatRenderDebug.measure("prompt.modelPicker.models") {
-            (agentConfig?.allowedModels ?? [])
-                .filter { canShowModelInPicker($0) }
+        guard agentConfig != nil else { return [] }
+        let options = AIChatRenderDebug.measure("prompt.modelPicker.options") {
+            availableModelOptions.filter {
+                canShowModelOption($0, requiresImageInput: requiresImageInputModel)
+            }
         }
         return ExcalidrawModelTier.pickerOrder.filter { tier in
-            models.contains { $0.excalidrawTier == tier }
+            options.contains { $0.tier == tier }
         }
     }
 
     @MainActor
     var activeTierForModelPicker: ExcalidrawModelTier {
-        activeModel.excalidrawTier ?? selectedTierBeforeFallback
+        activeModelProfileOption?.tier ?? selectedTierBeforeFallback
     }
 
     @MainActor
@@ -250,9 +257,8 @@ extension PromptInputView {
 
     @MainActor
     func canSelectTier(_ tier: ExcalidrawModelTier) -> Bool {
-        let models = agentConfig?.allowedModels ?? []
-        return models.contains { model in
-            model.excalidrawTier == tier && canSelectModel(model)
+        availableModelOptions.contains { option in
+            option.tier == tier && canSelectModelOption(option)
         }
     }
 

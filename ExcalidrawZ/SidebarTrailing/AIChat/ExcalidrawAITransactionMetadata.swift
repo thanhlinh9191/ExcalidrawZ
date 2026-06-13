@@ -27,6 +27,7 @@ struct ExcalidrawAITransactionMetadata: Codable, Equatable, Sendable {
     let requestKind: ExcalidrawAITransactionRequestKind
     let agentID: String
     let model: String
+    let modelProfileID: String?
     let canvasTarget: String
     let fileID: String?
     let fileName: String?
