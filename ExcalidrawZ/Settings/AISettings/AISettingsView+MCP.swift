@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SFSafeSymbols
 
 #if os(macOS)
 import AppKit
@@ -63,11 +64,68 @@ extension AISettingsView {
             }
         }
 
+        mcpServiceModeRow
+
         if usesCompactSettingsLayout {
             compactMCPStatusRow
         } else {
             regularMCPStatusRow
         }
+    }
+
+    @ViewBuilder
+    var mcpServiceModeRow: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 16) {
+                mcpServiceModeLabel
+
+                Spacer(minLength: 16)
+
+                mcpServiceModePicker
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                mcpServiceModeLabel
+                mcpServiceModePicker
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    var mcpServiceModeLabel: some View {
+        HStack(spacing: 4) {
+            Text(localizable: .settingsAIMCPServiceModeTitle)
+
+            Button {
+                isPresentingMCPServiceModeHelp = true
+            } label: {
+                Image(systemSymbol: .questionmarkCircle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(String(localizable: .settingsAIMCPServiceModeHelp))
+        }
+    }
+
+    @ViewBuilder
+    var mcpServiceModePicker: some View {
+        Picker(
+            String(localizable: .settingsAIMCPServiceModeTitle),
+            selection: mcpServiceModeBinding
+        ) {
+            ForEach(ExcalidrawMCPServiceMode.allCases) { mode in
+                Text(mcpServiceModeTitle(for: mode))
+                    .tag(mode)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.segmented)
+        .mcpServiceModePickerShape()
+        .fixedSize(horizontal: true, vertical: true)
     }
 
     @ViewBuilder
@@ -99,9 +157,9 @@ extension AISettingsView {
             isPresentingMCPConnectionGuide = true
         } label: {
             ViewThatFits(in: .horizontal) {
-                Label(.localizable(.settingsAIMCPHowToConnectButton), systemSymbol: .questionmarkCircle)
+                Label(.localizable(.settingsAIMCPHowToConnectButton), systemSymbol: .link)
 
-                Image(systemSymbol: .questionmarkCircle)
+                Image(systemSymbol: .link)
             }
             .font(.caption.weight(.semibold))
         }
@@ -136,6 +194,104 @@ extension AISettingsView {
     }
 
     @ViewBuilder
+    var mcpServiceModeHelpSheet: some View {
+        VStack(spacing: 0) {
+            mcpServiceModeHelpNavigationHeader
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text(localizable: .settingsAIMCPServiceModeHelp)
+                    .font(.callout)
+
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 12) {
+                        mcpServiceModeComparisonCard(
+                            mode: .basic,
+                            symbol: .serverRack,
+                            description: String(localizable: .settingsAIMCPServiceModeBasicHelp)
+                        )
+
+                        mcpServiceModeComparisonCard(
+                            mode: .optimized,
+                            symbol: .sparkles,
+                            description: String(localizable: .settingsAIMCPServiceModeOptimizedHelp)
+                        )
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        mcpServiceModeComparisonCard(
+                            mode: .basic,
+                            symbol: .serverRack,
+                            description: String(localizable: .settingsAIMCPServiceModeBasicHelp)
+                        )
+
+                        mcpServiceModeComparisonCard(
+                            mode: .optimized,
+                            symbol: .sparkles,
+                            description: String(localizable: .settingsAIMCPServiceModeOptimizedHelp)
+                        )
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 14)
+            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .mcpConnectionGuideSheetFrame()
+    }
+
+    @ViewBuilder
+    var mcpServiceModeHelpNavigationHeader: some View {
+        ZStack {
+            Text(localizable: .settingsAIMCPServiceModeTitle)
+                .font(.headline)
+                .lineLimit(1)
+
+            HStack {
+                mcpSheetCloseButton {
+                    isPresentingMCPServiceModeHelp = false
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 14)
+        .padding(.bottom, 8)
+    }
+
+    @ViewBuilder
+    func mcpServiceModeComparisonCard(
+        mode: ExcalidrawMCPServiceMode,
+        symbol: SFSymbol,
+        description: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemSymbol: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 24, height: 24)
+
+                Text(mcpServiceModeTitle(for: mode))
+                    .font(.callout.weight(.semibold))
+            }
+
+            Text(description)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.secondary.opacity(0.08))
+        }
+    }
+
+    @ViewBuilder
     var mcpConnectionGuideNavigationHeader: some View {
         ZStack {
             Text(localizable: .settingsAIMCPConnectionGuideTitle)
@@ -155,9 +311,14 @@ extension AISettingsView {
 
     @ViewBuilder
     var mcpConnectionGuideCloseButton: some View {
-        Button {
+        mcpSheetCloseButton {
             isPresentingMCPConnectionGuide = false
-        } label: {
+        }
+    }
+
+    @ViewBuilder
+    func mcpSheetCloseButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Image(systemSymbol: .xmark)
                 .labelStyle(.iconOnly)
                 .frame(width: 36, height: 36)
@@ -350,6 +511,43 @@ extension AISettingsView {
         )
     }
 
+    var displayedMCPServiceMode: ExcalidrawMCPServiceMode {
+        if mcpServerController.serviceMode == .optimized,
+           !store.canUseOptimizedMCPServices {
+            return .basic
+        }
+        return mcpServerController.serviceMode
+    }
+
+    var mcpServiceModeBinding: Binding<ExcalidrawMCPServiceMode> {
+        Binding(
+            get: { displayedMCPServiceMode },
+            set: { selectMCPServiceMode($0) }
+        )
+    }
+
+    func selectMCPServiceMode(_ mode: ExcalidrawMCPServiceMode) {
+        guard mode != displayedMCPServiceMode else { return }
+
+        if mode == .optimized,
+           !store.canUseOptimizedMCPServices {
+            mcpServerController.setServiceMode(.basic)
+            store.togglePaywall(reason: .optimizedMCPServices)
+            return
+        }
+
+        mcpServerController.setServiceMode(mode)
+    }
+
+    func mcpServiceModeTitle(for mode: ExcalidrawMCPServiceMode) -> String {
+        switch mode {
+            case .basic:
+                String(localizable: .settingsAIMCPServiceModeBasicTitle)
+            case .optimized:
+                String(localizable: .settingsAIMCPServiceModeOptimizedTitle)
+        }
+    }
+
     @MainActor
     func copyMCPClientConfig() {
         copyMCPText(mcpVSCodeClientConfig)
@@ -380,5 +578,16 @@ private extension View {
 #else
         self
 #endif
+    }
+
+    @ViewBuilder
+    func mcpServiceModePickerShape() -> some View {
+        if #available(macOS 14.0, *) {
+            self
+                .buttonBorderShape(.capsule)
+                .containerShape(.capsule)
+        } else {
+            self
+        }
     }
 }

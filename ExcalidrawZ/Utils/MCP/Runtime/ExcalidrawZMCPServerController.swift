@@ -8,6 +8,13 @@
 import Foundation
 import Combine
 
+enum ExcalidrawMCPServiceMode: String, CaseIterable, Identifiable {
+    case basic
+    case optimized
+
+    var id: Self { self }
+}
+
 @MainActor
 final class ExcalidrawZMCPServerController: ObservableObject {
     enum State: Equatable {
@@ -21,9 +28,11 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     static let shared = ExcalidrawZMCPServerController()
 
     private static let isEnabledDefaultsKey = "ExcalidrawZMCPServerEnabled"
+    private static let serviceModeDefaultsKey = "ExcalidrawZMCPServiceMode"
 
     @Published private(set) var state: State = .off
     @Published private(set) var isEnabled: Bool
+    @Published private(set) var serviceMode: ExcalidrawMCPServiceMode
 
     let port: UInt16
 
@@ -33,6 +42,7 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     private init(port: UInt16 = ExcalidrawZMCPServer.defaultPort) {
         self.port = port
         self.isEnabled = UserDefaults.standard.bool(forKey: Self.isEnabledDefaultsKey)
+        self.serviceMode = Self.loadServiceMode()
 
         if isEnabled {
             startServerIfNeeded()
@@ -49,6 +59,12 @@ final class ExcalidrawZMCPServerController: ObservableObject {
         } else {
             stopServerIfNeeded()
         }
+    }
+
+    func setServiceMode(_ mode: ExcalidrawMCPServiceMode) {
+        guard serviceMode != mode else { return }
+        serviceMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: Self.serviceModeDefaultsKey)
     }
 
     func startServerIfNeeded() {
@@ -125,5 +141,13 @@ final class ExcalidrawZMCPServerController: ObservableObject {
         } else {
             state = .off
         }
+    }
+
+    private static func loadServiceMode() -> ExcalidrawMCPServiceMode {
+        guard let rawValue = UserDefaults.standard.string(forKey: serviceModeDefaultsKey),
+              let mode = ExcalidrawMCPServiceMode(rawValue: rawValue) else {
+            return .basic
+        }
+        return mode
     }
 }

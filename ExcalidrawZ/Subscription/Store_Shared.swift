@@ -42,6 +42,7 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
             String(localizable: .paywallPlanGeneralFeaturesICloudSync),
             String(localizable: .paywallPlanGeneralFeaturesPDFExport),
             String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+            String(localizable: .paywallPlanGeneralFeaturesBasicMCPServices),
             String(localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount("1")),
         ],
         fallbackDisplayPrice: "Free",
@@ -60,6 +61,7 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
             String(localizable: .paywallPlanGeneralFeaturesICloudSync),
             String(localizable: .paywallPlanGeneralFeaturesPDFExport),
             String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
             String(
                 localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
                     String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
@@ -82,6 +84,7 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
             String(localizable: .paywallPlanGeneralFeaturesICloudSync),
             String(localizable: .paywallPlanGeneralFeaturesPDFExport),
             String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
             String(
                 localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
                     String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
@@ -104,6 +107,7 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
             String(localizable: .paywallPlanGeneralFeaturesICloudSync),
             String(localizable: .paywallPlanGeneralFeaturesPDFExport),
             String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
             String(
                 localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
                     String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
@@ -126,6 +130,7 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
             String(localizable: .paywallPlanGeneralFeaturesICloudSync),
             String(localizable: .paywallPlanGeneralFeaturesPDFExport),
             String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
             String(
                 localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
                     String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
@@ -175,6 +180,11 @@ extension Store {
         activeSubscriptionItem == .max || activeSubscriptionItem == .max10x
     }
 
+    var canUseOptimizedMCPServices: Bool {
+        guard let activeSubscriptionItem else { return false }
+        return activeSubscriptionItem >= .starter
+    }
+
     enum ReachPaywallReason {
         case manaully
         
@@ -183,6 +193,7 @@ extension Store {
         /// open from the chat error funnel so the user can top up without
         /// leaving the canvas.
         case aiInsufficientCredits
+        case optimizedMCPServices
 
         var description: String {
             switch self {
@@ -193,6 +204,8 @@ extension Store {
                 case .aiInsufficientCredits:
                     // TODO: add a localized key for this reason.
                     "Your AI credits have run out. Upgrade to keep chatting."
+                case .optimizedMCPServices:
+                    "Optimized MCP Services require Starter or higher."
             }
         }
     }

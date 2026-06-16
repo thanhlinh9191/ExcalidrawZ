@@ -45,12 +45,18 @@ extension Paywall {
             subtitle: String(localizable: .paywallFeatureSyncMessage)
         )
 
-        static let mcpServices = Feature(
-            id: "mcp-services",
+        static let basicMCPServices = Feature(
+            id: "basic-mcp-services",
             symbol: .serverRack,
             title: String(localizable: .paywallFeatureMCPTitle),
-            subtitle: String(localizable: .paywallFeatureMCPMessage),
-            badge: String(localizable: .generalComingSoon)
+            subtitle: String(localizable: .paywallFeatureMCPMessage)
+        )
+
+        static let optimizedMCPServices = Feature(
+            id: "optimized-mcp-services",
+            symbol: .sparkles,
+            title: String(localizable: .paywallFeatureOptimizedMCPTitle),
+            subtitle: String(localizable: .paywallFeatureOptimizedMCPMessage)
         )
 
         static let unlimitedCollaborationTools = Feature(

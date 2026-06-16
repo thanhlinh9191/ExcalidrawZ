@@ -64092,109 +64092,109 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "قم بربط الأدوات وتدفقات العمل الآلية مجانًا."
+            "value": "يدعم MCP الأساسي توصيلًا مع excalidraw-mcp، بحيث يمكن للتطبيقات الذكية المتوافقة الرسم في ExcalidrawZ بنفس تدفق الأدوات."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verbinden Sie Werkzeuge und Automatisierungs-Workflows kostenlos."
+            "value": "Die grundlegende MCP-Unterstützung spiegelt excalidraw-mcp wider, sodass kompatible KI-Apps mit demselben Werkzeugfluss in ExcalidrawZ zeichnen können."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connect tools and automation workflows for free."
+            "value": "Basic MCP support mirrors excalidraw-mcp, so compatible AI apps can draw into ExcalidrawZ with the same tool flow."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conecta herramientas y flujos de trabajo de automatización de forma gratuita."
+            "value": "El soporte básico de MCP refleja excalidraw-mcp, por lo que las aplicaciones de IA compatibles pueden dibujar en ExcalidrawZ con el mismo flujo de herramientas."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connectez des outils et des workflows d'automatisation gratuitement."
+            "value": "Le support de base de MCP reflète excalidraw-mcp, de sorte que les applications d'IA compatibles peuvent dessiner dans ExcalidrawZ avec le même flux d'outils."
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "सामान्यतः उपकरणों और स्वचालन वर्कफ़्लो को मुफ्त में जोड़ें।"
+            "value": "बुनियादी MCP समर्थन excalidraw-mcp को मिरर करता है, ताकि संगत AI ऐप्स एक ही उपकरण प्रवाह के साथ ExcalidrawZ में चित्र बना सकें।"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Collega strumenti e flussi di lavoro di automazione gratuitamente."
+            "value": "Il supporto MCP di base rispecchia excalidraw-mcp, quindi le app AI compatibili possono disegnare in ExcalidrawZ con lo stesso flusso di strumenti."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ツールと自動化ワークフローを無料で接続します。"
+            "value": "基本的なMCPサポートはexcalidraw-mcpを反映しているため、互換性のあるAIアプリは同じツールフローでExcalidrawZに描画できます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "무료로 도구 및 자동화 워크플로우 연결."
+            "value": "기본 MCP 지원은 excalidraw-mcp를 기반으로 하며, 호환 가능한 AI 앱이 동일한 도구 흐름으로 ExcalidrawZ에 그릴 수 있습니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verbind tools en automatiseringsworkflows gratis."
+            "value": "Basis MCP-ondersteuning weerspiegelt excalidraw-mcp, zodat compatibele AI-apps met dezelfde toolflow in ExcalidrawZ kunnen tekenen."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Łącz narzędzia i przepływy automatyzacji za darmo."
+            "value": "Podstawowe wsparcie MCP odwzorowuje excalidraw-mcp, dzięki czemu kompatybilne aplikacje AI mogą rysować w ExcalidrawZ z tym samym przepływem narzędzi."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conecte ferramentas e fluxos de trabalho de automação gratuitamente."
+            "value": "O suporte básico do MCP espelha o excalidraw-mcp, para que aplicativos de IA compatíveis possam desenhar no ExcalidrawZ com o mesmo fluxo de ferramenta."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключайте инструменты и автоматические рабочие процессы бесплатно."
+            "value": "Базовая поддержка MCP отражает excalidraw-mcp, так что совместимые AI приложения могут рисовать в ExcalidrawZ с тем же рабочим процессом инструментов."
           }
         },
         "th": {
           "stringUnit": {
             "state": "translated",
-            "value": "เชื่อมต่อเครื่องมือและกระบวนการอัตโนมัติได้ฟรี"
+            "value": "การสนับสนุน MCP เบื้องต้นสะท้อน excalidraw-mcp ดังนั้นแอป AI ที่เข้ากันได้สามารถวาดใน ExcalidrawZ ด้วยกระบวนการเครื่องมือเดียวกัน"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Araçları ve otomasyon iş akışlarını ücretsiz bağlayın."
+            "value": "Temel MCP desteği, uyumlu AI uygulamalarının aynı araç akışı ile ExcalidrawZ'ye çizim yapabilmesine olanak tanır."
           }
         },
         "vi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kết nối công cụ và quy trình làm việc tự động miễn phí."
+            "value": "Hỗ trợ MCP cơ bản giống như excalidraw-mcp, vì vậy các ứng dụng AI tương thích có thể vẽ vào ExcalidrawZ với cùng quy trình công cụ."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "免费连接工具和自动化工作流。"
+            "value": "基本的 MCP 支持与 excalidraw-mcp 一致，因此兼容的 AI 应用可以通过相同的工具流程在 ExcalidrawZ 中绘制。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "免費連接工具和自動化工作流程。"
+            "value": "基本的 MCP 支援與 excalidraw-mcp 鏈接，因此相容的 AI 應用可以使用相同的工具流程繪製到 ExcalidrawZ。"
           }
         }
       }
@@ -64205,109 +64205,335 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "خدمات MCP"
+            "value": "خدمات MCP الأساسية"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP-Dienste"
+            "value": "Grundlegende MCP-Dienste"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP services"
+            "value": "Basic MCP Services"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Servicios MCP"
+            "value": "Servicios MCP Básicos"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Services MCP"
+            "value": "Services MCP de base"
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP सेवाएँ"
+            "value": "बुनियादी MCP सेवाएँ"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Servizi MCP"
+            "value": "Servizi MCP di Base"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCPサービス"
+            "value": "基本的なMCPサービス"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP 서비스"
+            "value": "기본 MCP 서비스"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP-diensten"
+            "value": "Basis MCP-diensten"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usługi MCP"
+            "value": "Podstawowe usługi MCP"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Serviços MCP"
+            "value": "Serviços MCP Básicos"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Услуги MCP"
+            "value": "Базовые услуги MCP"
           }
         },
         "th": {
           "stringUnit": {
             "state": "translated",
-            "value": "บริการ MCP"
+            "value": "บริการ MCP เบื้องต้น"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP hizmetleri"
+            "value": "Temel MCP Hizmetleri"
           }
         },
         "vi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dịch vụ MCP"
+            "value": "Dịch vụ MCP cơ bản"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP 服务"
+            "value": "基本 MCP 服务"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "MCP 服務"
+            "value": "基本 MCP 服務"
+          }
+        }
+      }
+    },
+    "paywallFeatureOptimizedMCPMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter unlocks ExcalidrawZ-optimized MCP services for richer canvas control and native workflows."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يفتح البدء خدمات MCP المخصصة لـ ExcalidrawZ للحصول على تحكم أغنى في اللوحة وتدفقات العمل الأصلية."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter schaltet die für ExcalidrawZ optimierten MCP-Dienste für eine reichere Steuerung der Leinwand und native Workflows frei."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El paquete inicial desbloquea servicios MCP optimizados para ExcalidrawZ para un control de lienzo más rico y flujos de trabajo nativos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le plan Starter débloque les services MCP optimisés pour ExcalidrawZ pour un meilleur contrôle de la toile et des flux de travail natifs."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्टार्टर ExcalidrawZ-ऑप्टिमाइज़्ड MCP सेवाओं को समृद्ध कैनवास नियंत्रण और मूल कार्यप्रवाहों के लिए अनलॉक करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo Starter sblocca i servizi MCP ottimizzati per ExcalidrawZ per un controllo più ricco della tela e flussi di lavoro nativi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starterは、より豊かなキャンバス制御とネイティブワークフローのためにExcalidrawZに最適化されたMCPサービスを解除します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter는 더 풍부한 캔버스 제어 및 기본 워크플로우를 위한 ExcalidrawZ 최적화 MCP 서비스를 잠금 해제합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter ontgrendelt ExcalidrawZ-geoptimaliseerde MCP-diensten voor rijkere canvasbesturing en native workflows."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter odblokowuje zoptymalizowane usługi MCP dla ExcalidrawZ, oferując bogatszą kontrolę nad płótnem i natywne przepływy pracy."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O plano inicial desbloqueia serviços MCP otimizados para o ExcalidrawZ para um controle de canvas mais rico e fluxos de trabalho nativos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стартовая версия разблокирует оптимизированные для ExcalidrawZ услуги MCP для более богатого управления холстом и нативными рабочими процессами."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter ปลดล็อคบริการ MCP ที่ปรับให้เหมาะสมกับ ExcalidrawZ สำหรับการควบคุมผืนผ้าใบที่ดียิ่งขึ้นและกระบวนการทำงานแบบเนทีฟ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter, daha zengin tuval kontrolü ve yerel iş akışları için ExcalidrawZ optimize edilmiş MCP hizmetlerini açar."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gói khởi đầu mở khóa các dịch vụ MCP tối ưu hóa cho ExcalidrawZ để kiểm soát canvas phong phú hơn và quy trình làm việc tự nhiên."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入门版解锁了 ExcalidrawZ 优化的 MCP 服务，以实现更丰富的画布控制和本地工作流。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入門版解鎖 ExcalidrawZ 優化的 MCP 服務，提供更豐富的畫布控制和本地工作流程。"
+          }
+        }
+      }
+    },
+    "paywallFeatureOptimizedMCPTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimized MCP Services"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات MCP المخصصة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimierte MCP-Dienste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicios MCP Optimizados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Services MCP optimisés"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑप्टिमाइज्ड MCP सेवाएँ"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servizi MCP Ottimizzati"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最適化されたMCPサービス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최적화된 MCP 서비스"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geoptimaliseerde MCP-diensten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoptymalizowane usługi MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serviços MCP Otimizados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оптимизированные услуги MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "บริการ MCP ที่ปรับให้เหมาะสม"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimize Edilmiş MCP Hizmetleri"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dịch vụ MCP tối ưu hóa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "优化的 MCP 服务"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優化的 MCP 服務"
           }
         }
       }
@@ -65216,6 +65442,119 @@
         }
       }
     },
+    "paywallPlanGeneralFeaturesBasicMCPServices": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basic MCP Services"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات MCP الأساسية"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grundlegende MCP-Dienste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicios MCP Básicos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Services MCP de base"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बुनियादी MCP सेवाएँ"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servizi MCP di Base"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本的なMCPサービス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기본 MCP 서비스"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basis MCP-diensten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podstawowe usługi MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serviços MCP Básicos"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовые услуги MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "บริการ MCP เบื้องต้น"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temel MCP Hizmetleri"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dịch vụ MCP cơ bản"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本 MCP 服务"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本 MCP 服務"
+          }
+        }
+      }
+    },
     "paywallPlanGeneralFeaturesCollaborationRoomsCount": {
       "extractionState": "manual",
       "localizations": {
@@ -65551,6 +65890,119 @@
           "stringUnit": {
             "state": "translated",
             "value": "資料庫"
+          }
+        }
+      }
+    },
+    "paywallPlanGeneralFeaturesOptimizedMCPServices": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimized MCP Services"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات MCP المخصصة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimierte MCP-Dienste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicios MCP Optimizados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Services MCP optimisés"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑप्टिमाइज्ड MCP सेवाएँ"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servizi MCP Ottimizzati"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最適化されたMCPサービス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최적화된 MCP 서비스"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geoptimaliseerde MCP-diensten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoptymalizowane usługi MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serviços MCP Otimizados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оптимизированные услуги MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "บริการ MCP ที่ปรับให้เหมาะสม"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimize Edilmiş MCP Hizmetleri"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dịch vụ MCP tối ưu hóa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "优化的 MCP 服务"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優化的 MCP 服務"
           }
         }
       }
@@ -75270,6 +75722,684 @@
           "stringUnit": {
             "state": "translated",
             "value": "MCP 伺服器"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeBasicHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matches the upstream excalidraw-mcp tool flow for broad compatibility with MCP clients."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوافق مع تدفق الأدوات excalidraw-mcp القياسي للحصول على توافق واسع مع عملاء MCP."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entspricht dem upstream excalidraw-mcp Werkzeugfluss für breite Kompatibilität mit MCP-Clients."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coincide con el flujo de herramientas excalidraw-mcp de upstream para una amplia compatibilidad con clientes de MCP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S'adapte au flux d'outils standard d'excalidraw-mcp pour une large compatibilité avec les clients MCP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कई अनुकूलता के लिए अपस्ट्रीम excalidraw-mcp उपकरण प्रवाह से मेल खाता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrisponde al flusso di strumenti standard di excalidraw-mcp per una compatibilità ampia con i client MCP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "広範なMCPクライアントとの互換性のために、上流のexcalidraw-mcpツールフローに一致します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "광범위한 MCP 클라이언트와의 호환성을 위해 상류 excalidraw-mcp 도구 흐름과 일치합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Komt overeen met de upstream excalidraw-mcp toolflow voor brede compatibiliteit met MCP-clients."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopasowuje przepływ narzędzi excalidraw-mcp do ogólnej kompatybilności z klientami MCP."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correspondendo ao fluxo de ferramenta do excalidraw-mcp upstream para ampla compatibilidade com clientes MCP."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Совпадает с рабочим процессом инструмента excalidraw-mcp для широкой совместимости с клиентами MCP."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ตรงกับกระบวนการเครื่องมือ excalidraw-mcp ของต้นน้ำเพื่อความเข้ากันได้ที่กว้างขวางกับลูกค้า MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geniş uyumluluk için upstream excalidraw-mcp araç akışına eşleşir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Khớp với quy trình công cụ excalidraw-mcp phía am cho sự tương thích rộng rãi với các khách hàng MCP."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与上游的 excalidraw-mcp 工具流程一致，以实现与 MCP 客户端的广泛兼容性。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "與上游 excalidraw-mcp 工具流程相符，以廣泛相容於 MCP 客戶端。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeBasicTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basic"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أساسي"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grundlegend"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Básico"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basique"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बुनियादी"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기본"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basis"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podstawowy"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Básico"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовый"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เบื้องต้น"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temel"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cơ bản"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare the standard excalidraw-mcp-compatible flow with the ExcalidrawZ-native interaction path."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قارن التدفق المتوافق مع excalidraw-mcp القياسي مع مسار التفاعل المعتمد على ExcalidrawZ."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vergleichen Sie den standardmäßigen excalidraw-mcp-kompatiblen Fluss mit dem ExcalidrawZ-nativen Interaktionspfad."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compara el flujo estándar compatible con excalidraw-mcp con la ruta de interacción nativa de ExcalidrawZ."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparez le flux compatible avec excalidraw-mcp standard avec le chemin d'interaction natif d'ExcalidrawZ."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मानक excalidraw-mcp-संगत प्रवाह की तुलना ExcalidrawZ-नैटिव इंटरैक्शन पथ से करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confronta il flusso compatibile con excalidraw-mcp standard con il percorso di interazione nativo di ExcalidrawZ."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標準のexcalidraw-mcp互換フローとExcalidrawZネイティブのインタラクションパスを比較します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "표준 excalidraw-mcp 호환 흐름과 ExcalidrawZ 기본 상호작용 경로를 비교합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vergelijk de standaard excalidraw-mcp-compatibele flow met het ExcalidrawZ-native interactiepad."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porównaj standardowy przepływ kompatybilny z excalidraw-mcp z natywną ścieżką interakcji w ExcalidrawZ."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare o fluxo padrão compatível com excalidraw-mcp com o caminho de interação nativo do ExcalidrawZ."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сравните стандартный совместимый с excalidraw-mcp поток с нативным путем взаимодействия ExcalidrawZ."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เปรียบเทียบกระบวนการที่เข้ากันได้กับ excalidraw-mcp มาตรฐานกับเส้นทางการโต้ตอบแบบเนทีฟของ ExcalidrawZ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard excalidraw-mcp uyumlu akışı, ExcalidrawZ yerel etkileşim yoluyla karşılaştırın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "So sánh quy trình tương thích excalidraw-mcp tiêu chuẩn với con đường tương tác của ExcalidrawZ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将标准的 excalidraw-mcp 兼容流与 ExcalidrawZ 本地交互路径进行比较。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比較標準的 excalidraw-mcp 相容流程與 ExcalidrawZ 本地互動路徑。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeOptimizedHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses ExcalidrawZ-native MCP tools for deeper canvas control, file-aware context, and workflows built around this app."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يستخدم أدوات MCP الأصلية لـ ExcalidrawZ للحصول على تحكم أعمق في اللوحة، وسياق مستوعب للملفات، وتدفقات عمل مبنية على هذا التطبيق."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwendet ExcalidrawZ-native MCP-Tools für tiefere Steuerung der Leinwand, dateibewussten Kontext und workflows, die um diese App herum aufgebaut sind."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliza herramientas MCP nativas de ExcalidrawZ para un control más profundo del lienzo, contexto consciente de archivos y flujos de trabajo construidos en torno a esta aplicación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise des outils MCP natifs d'ExcalidrawZ pour un contrôle plus approfondi de la toile, un contexte conscient des fichiers et des flux de travail construits autour de cette application."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "गहरे कैनवास नियंत्रण, फ़ाइल-जानकारी संदर्भ, और इस ऐप के चारों ओर निर्मित कार्यप्रवाहों के लिए ExcalidrawZ-नैटिव MCP उपकरणों का उपयोग करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilizza strumenti MCP nativi di ExcalidrawZ per un controllo più profondo della tela, contesto consapevole dei file e flussi di lavoro costruiti attorno a questa app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZネイティブのMCPツールを使用して、より深いキャンバス制御、ファイル対応のコンテキスト、およびこのアプリに基づいて構築されたワークフローを実現します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ 기본 MCP 도구를 사용하여 더 깊은 캔버스 제어, 파일 인식 контекст 및 이 앱을 중심으로 구축된 워크플로를 제공합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maakt gebruik van ExcalidrawZ-native MCP-tools voor diepere canvasbesturing, context bewust van bestanden, en workflows die rond deze app zijn opgebouwd."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Używa natywnych narzędzi MCP ExcalidrawZ dla głębszej kontroli nad płótnem, kontekstu świadomego pliku oraz przepływów pracy zbudowanych wokół tej aplikacji."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa ferramentas MCP nativas do ExcalidrawZ para um controle mais profundo do canvas, contexto consciente de arquivos e fluxos de trabalho construídos em torno deste aplicativo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Использует нативные инструменты MCP ExcalidrawZ для более глубокого контроля холста, контекста, осведомленного о файлах, и рабочих процессов, построенных вокруг этого приложения."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ใช้เครื่องมือ MCP แบบเนทีฟของ ExcalidrawZ สำหรับการควบคุมผืนผ้าใบที่ลึกซึ้งยิ่งขึ้น บริบทที่รู้จักไฟล์ และกระบวนการทำงานที่สร้างขึ้นรอบแอปนี้"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derin tuval kontrolü, dosya bilgilendirilmiş bağlam ve bu uygulama etrafında kurulmuş iş akışları için ExcalidrawZ yerel MCP araçlarını kullanır."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sử dụng các công cụ MCP bản địa của ExcalidrawZ để kiểm soát canvas sâu hơn, ngữ cảnh dựa trên tệp và quy trình làm việc được xây dựng xung quanh ứng dụng này."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 ExcalidrawZ 本地 MCP 工具以更深层次的画布控制、文件感知上下文和围绕该应用构建的工作流。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 ExcalidrawZ 本地的 MCP 工具，提供更深入的畫布控制、檔案感知上下文和圍繞本應用構建的工作流程。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeOptimizedTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimized"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "محسن"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimiert"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimizado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimisé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑप्टिमाइज्ड"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ottimizzato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最適化"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최적화됨"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geoptimaliseerd"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoptymalizowany"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otimizados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оптимизированный"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ปรับให้เหมาะสม"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimize Edilmiş"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tối ưu hóa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "优化"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優化"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interaction Mode"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وضع التفاعل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interaktionsmodus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo de Interacción"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode d'interaction"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इंटरएक्शन मोड"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modalità di interazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インタラクションモード"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상호 작용 모드"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interactiemodus"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tryb interakcji"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo de Interação"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Режим взаимодействия"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "โหมดการโต้ตอบ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkileşim Modu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chế độ tương tác"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交互模式"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "互動模式"
           }
         }
       }

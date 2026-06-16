@@ -35,6 +35,7 @@ struct AISettingsView: View {
     @State var didCopyAIAccountID: Bool = false
     @State var didCopyMCPClientConfig: Bool = false
     @State var isPresentingMCPConnectionGuide: Bool = false
+    @State var isPresentingMCPServiceModeHelp: Bool = false
     @State var selectedMCPConnectionGuideTab: MCPConnectionGuideTab = .vscode
     @State var isPresentingAIEnableConsent: Bool = false
     @State var preferredSettingsSection: SettingsSection = .general
@@ -103,6 +104,9 @@ struct AISettingsView: View {
         }
         .sheet(isPresented: $isPresentingMCPConnectionGuide) {
             mcpConnectionGuideSheet
+        }
+        .sheet(isPresented: $isPresentingMCPServiceModeHelp) {
+            mcpServiceModeHelpSheet
         }
         .watch(value: router.pendingAISettingsRoute) {
             consumePendingAISettingsRoute()

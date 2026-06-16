@@ -98,8 +98,12 @@ struct Paywall: View {
         [
             .completeCanvasWorkspace,
             .cloudReadyLibrary,
-            .mcpServices
+            mcpServicesFeature(for: currentSubscriptionItemForComparison)
         ]
+    }
+
+    func mcpServicesFeature(for plan: SubscriptionItem) -> Feature {
+        plan >= .starter ? .optimizedMCPServices : .basicMCPServices
     }
     
     var baselinePlan: SubscriptionItem? {
@@ -124,9 +128,18 @@ struct Paywall: View {
             return []
         }
 
-        let baselineFeatureIDs = Set(baselinePlanFeatureLines.map(\.id))
-        return featureLines(for: supplementTargetPlan, maxCredits: maxCredits(for: supplementTargetPlan))
-            .filter { !baselineFeatureIDs.contains($0.id) }
+        let baselineFeatureIDs = Set(
+            planComparisonFeatureLines(
+                for: baselinePlan,
+                maxCredits: maxCredits(for: baselinePlan)
+            )
+            .map(\.id)
+        )
+        return planComparisonFeatureLines(
+            for: supplementTargetPlan,
+            maxCredits: maxCredits(for: supplementTargetPlan)
+        )
+        .filter { !baselineFeatureIDs.contains($0.id) }
     }
     
     var selectedPlanSupplementTitle: String {
@@ -153,7 +166,7 @@ struct Paywall: View {
 
     var compactSelectedFeatureLines: [Feature] {
         guard let selectedSubscriptionItem else { return baseFeatureLines }
-        return baseFeatureLines + featureLines(
+        return planComparisonFeatureLines(
             for: selectedSubscriptionItem,
             maxCredits: maxCredits(for: selectedSubscriptionItem)
         )
@@ -529,6 +542,14 @@ struct Paywall: View {
             default:
                 []
         }
+    }
+
+    func planComparisonFeatureLines(for plan: SubscriptionItem, maxCredits: Int? = nil) -> [Feature] {
+        [
+            .completeCanvasWorkspace,
+            .cloudReadyLibrary,
+            mcpServicesFeature(for: plan)
+        ] + featureLines(for: plan, maxCredits: maxCredits)
     }
     
     var starterFeatureLines: [Feature] {
