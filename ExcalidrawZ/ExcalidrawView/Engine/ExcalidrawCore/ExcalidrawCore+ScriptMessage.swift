@@ -165,6 +165,11 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                         self.parent?.canvasPreferencesState.apply(snapshot)
                     }
 
+                case .requestEditMathImage(let message):
+                    DispatchQueue.main.async {
+                        self.requestMathImageEdit(message.data)
+                    }
+
                 case .log(let logMessage):
                     _ = logMessage
                     // self.onWebLog(message: logMessage)
@@ -502,6 +507,9 @@ extension ExcalidrawCore {
         // Canvas Preferences
         case onCanvasPreferencesChanged
 
+        // Math
+        case requestEditMathImage
+
         case log
     }
     
@@ -542,6 +550,9 @@ extension ExcalidrawCore {
 
         // Canvas Preferences
         case onCanvasPreferencesChanged(CanvasPreferencesChangedMessage)
+
+        // Math
+        case requestEditMathImage(RequestEditMathImageMessage)
 
         case log(LogMessage)
         
@@ -635,6 +646,10 @@ extension ExcalidrawCore {
                 // Canvas Preferences
                 case .onCanvasPreferencesChanged:
                     self = .onCanvasPreferencesChanged(try CanvasPreferencesChangedMessage(from: decoder))
+
+                // Math
+                case .requestEditMathImage:
+                    self = .requestEditMathImage(try RequestEditMathImageMessage(from: decoder))
 
                 case .log:
                     self = .log(try LogMessage(from: decoder))
@@ -854,6 +869,11 @@ extension ExcalidrawCore {
     struct CanvasPreferencesChangedMessage: AnyExcalidrawZMessage {
         var event: String
         var data: CanvasPreferencesSnapshot
+    }
+
+    struct RequestEditMathImageMessage: AnyExcalidrawZMessage {
+        var event: String
+        var data: MathImageEditRequest
     }
 
     struct DidOpenLiveCollaborationMessage: AnyExcalidrawZMessage {

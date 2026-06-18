@@ -105,6 +105,7 @@ struct ExcalidrawCanvasView: View {
     var body: some View {
         ExcalidrawViewRepresentable()
             .modifier(MediaItemSyncModifier())
+            .modifier(MathImageEditSheetViewModifier(coordinator: excalidrawCore, onError: onError))
             .environmentObject(excalidrawCore)
 #if os(macOS)
             .onWindowEvent(.didBecomeKey) { _ in

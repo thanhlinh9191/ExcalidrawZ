@@ -190,6 +190,80 @@ struct MathInputSheetViewModifier: ViewModifier {
     }
 }
 
+struct MathImageEditSheetViewModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var appPreference: AppPreference
+
+    @ObservedObject var coordinator: ExcalidrawCore
+    var onError: (Error) -> Void
+
+    @State private var resolvedCanvasColorScheme: ColorScheme?
+
+    private var fallbackCanvasColorScheme: ColorScheme {
+        appPreference.excalidrawAppearance.colorScheme ?? colorScheme
+    }
+
+    private var canvasColorScheme: ColorScheme {
+        resolvedCanvasColorScheme ?? fallbackCanvasColorScheme
+    }
+
+    private var editRequest: Binding<ExcalidrawCore.MathImageEditRequest?> {
+        Binding {
+            coordinator.mathImageEditRequest
+        } set: { newValue in
+            if newValue == nil {
+                coordinator.clearMathImageEditRequest()
+            }
+        }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: editRequest) { request in
+                MathInputSheetView(
+                    canvasColorScheme: canvasColorScheme,
+                    mode: .edit,
+                    initialLatex: request.initialLatex,
+                    initialSVGColor: request.preferredSVGColor ?? "#1e1e1e"
+                ) { renderedSVG in
+                    LatexMathSVGRenderer.debugPrintSVGBeforeInsert(renderedSVG.svg, source: "edit_math")
+                    Task {
+                        do {
+                            try await coordinator.updateMathImage(
+                                elementId: request.elementId,
+                                params: renderedSVG.mathImageParams,
+                                options: .init(
+                                    focus: .enabled(true),
+                                    captureUpdate: .immediately
+                                )
+                            )
+                            coordinator.clearMathImageEditRequest()
+                        } catch {
+                            onError(error)
+                        }
+                    }
+                }
+                .swiftyAlert(logs: true)
+                .task {
+                    await refreshCanvasColorScheme()
+                }
+            }
+    }
+
+    private func refreshCanvasColorScheme() async {
+        guard let isDark = try? await coordinator.getIsDark() else {
+            resolvedCanvasColorScheme = fallbackCanvasColorScheme
+            return
+        }
+        resolvedCanvasColorScheme = isDark ? .dark : .light
+    }
+}
+
+enum MathInputSheetMode {
+    case insert
+    case edit
+}
+
 struct MathInputSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.alertToast) private var alertToast
@@ -197,15 +271,30 @@ struct MathInputSheetView: View {
     let logger = Logger(label: "MathInputSheetView")
 
     var canvasColorScheme: ColorScheme
-    var onInsert: (_ renderedSVG: LatexMathSVGRenderer.RenderedSVG) -> Void
+    var mode: MathInputSheetMode
+    var onCommit: (_ renderedSVG: LatexMathSVGRenderer.RenderedSVG) -> Void
     
-    @State private var inputText = ""
-    @State private var selectedSVGColor = "#1e1e1e"
+    @State private var inputText: String
+    @State private var selectedSVGColor: String
     
     @State private var svgContent: LatexMathSVGRenderer.RenderedSVG?
     @State private var previewSVGURL: URL?
     
     @State private var error: Error?
+
+    init(
+        canvasColorScheme: ColorScheme,
+        mode: MathInputSheetMode = .insert,
+        initialLatex: String = "",
+        initialSVGColor: String = "#1e1e1e",
+        onCommit: @escaping (_ renderedSVG: LatexMathSVGRenderer.RenderedSVG) -> Void
+    ) {
+        self.canvasColorScheme = canvasColorScheme
+        self.mode = mode
+        self.onCommit = onCommit
+        self._inputText = State(initialValue: initialLatex)
+        self._selectedSVGColor = State(initialValue: initialSVGColor)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -247,11 +336,11 @@ struct MathInputSheetView: View {
                 }
                 Button {
                     if let svgContent {
-                        onInsert(svgContent)
+                        onCommit(svgContent)
                         dismiss()
                     }
                 } label: {
-                    Text(.localizable(.toolbarLatexMathButtonInsert))
+                    commitButtonLabel
                 }
                 .modernButtonStyle(style: .borderedProminent)
                 .disabled(svgContent == nil)
@@ -265,6 +354,9 @@ struct MathInputSheetView: View {
         .onChange(of: inputText, debounce: 0.2) { newValue in
             generatePreview(input: newValue)
         }
+        .onAppear {
+            generatePreview(input: inputText)
+        }
         .watch(value: canvasColorScheme) { _ in
             generatePreview(input: inputText)
         }
@@ -273,9 +365,29 @@ struct MathInputSheetView: View {
     @ViewBuilder
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
-            Text(.localizable(.toolbarLatexMathInsertSheetTitle))
+            titleLabel
                 .font(.title2.weight(.semibold))
             Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var titleLabel: some View {
+        switch mode {
+            case .insert:
+                Text(.localizable(.toolbarLatexMathInsertSheetTitle))
+            case .edit:
+                Text(.localizable(.toolbarEdit)) + Text(" ") + Text(.localizable(.toolbarLatexMath))
+        }
+    }
+
+    @ViewBuilder
+    private var commitButtonLabel: some View {
+        switch mode {
+            case .insert:
+                Text(.localizable(.toolbarLatexMathButtonInsert))
+            case .edit:
+                Text(.localizable(.generalButtonSave))
         }
     }
 

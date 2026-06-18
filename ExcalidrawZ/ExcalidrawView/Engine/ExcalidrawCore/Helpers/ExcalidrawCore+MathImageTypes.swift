@@ -34,4 +34,95 @@ extension ExcalidrawCore {
         var height: Double?
         var usedLegacyFallback: Bool?
     }
+
+    struct MathImageEditRequest: Codable, Hashable, Identifiable {
+        var id: String { elementId }
+
+        var elementId: String
+        var fileId: String?
+        var latex: String?
+        var renderer: String?
+        var version: JSONValue?
+        var mathData: JSONValue?
+        var customData: JSONValue?
+        var bounds: JSONValue?
+        var angle: JSONValue?
+        var fileData: JSONValue?
+
+        var initialLatex: String {
+            latex?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+                ?? mathData?.firstString(forKeys: Self.latexKeys)
+                ?? customData?.firstString(forKeys: Self.latexKeys)
+                ?? fileData?.firstString(forKeys: Self.latexKeys)
+                ?? ""
+        }
+
+        var preferredSVGColor: String? {
+            mathData?.firstString(forKeys: Self.colorKeys)?.hexColorString
+                ?? customData?.firstString(forKeys: Self.colorKeys)?.hexColorString
+                ?? fileData?.firstString(forKeys: Self.colorKeys)?.hexColorString
+        }
+
+        private static let latexKeys = ["latex", "tex", "expression"]
+        private static let colorKeys = ["color", "foregroundColor", "strokeColor", "fill", "stroke"]
+    }
+}
+
+private extension ExcalidrawCore.JSONValue {
+    func firstString(forKeys targetKeys: [String]) -> String? {
+        firstString(forKeys: targetKeys, acceptsStringValue: false)
+    }
+
+    private func firstString(
+        forKeys targetKeys: [String],
+        acceptsStringValue: Bool
+    ) -> String? {
+        switch self {
+            case .string(let value):
+                guard acceptsStringValue else { return nil }
+                return value.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            case .number, .bool, .null:
+                return nil
+            case .array(let values):
+                for value in values {
+                    if let string = value.firstString(
+                        forKeys: targetKeys,
+                        acceptsStringValue: acceptsStringValue
+                    ) {
+                        return string
+                    }
+                }
+                return nil
+            case .object(let object):
+                for key in targetKeys {
+                    if let value = object.first(where: { $0.key.caseInsensitiveCompare(key) == .orderedSame })?.value,
+                       let string = value.firstString(forKeys: targetKeys, acceptsStringValue: true) {
+                        return string
+                    }
+                }
+                for value in object.values {
+                    if let string = value.firstString(forKeys: targetKeys, acceptsStringValue: false) {
+                        return string
+                    }
+                }
+                return nil
+        }
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
+
+    var hexColorString: String? {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.hasPrefix("#") else { return nil }
+        let hex = String(value.dropFirst())
+        guard [3, 6, 8].contains(hex.count),
+              hex.allSatisfy(\.isHexDigit) else {
+            return nil
+        }
+        return value
+    }
 }

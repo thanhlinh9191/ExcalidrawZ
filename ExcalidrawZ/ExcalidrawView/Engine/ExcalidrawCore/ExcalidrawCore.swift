@@ -52,6 +52,7 @@ class ExcalidrawCore: NSObject, ObservableObject {
     @Published var canUndo = false
     @Published var canRedo = false
     @Published private(set) var aiCameraSession = AICameraSessionInfo()
+    @Published private(set) var mathImageEditRequest: MathImageEditRequest?
     
     let documentSyncController = ExcalidrawDocumentSyncController()
     private var lastVersion: Int = 0
@@ -216,6 +217,14 @@ extension ExcalidrawCore {
 
     func loadedMediaItemIDSnapshot() -> Set<String> {
         loadedMediaItemIDs
+    }
+
+    func requestMathImageEdit(_ request: MathImageEditRequest) {
+        mathImageEditRequest = request
+    }
+
+    func clearMathImageEditRequest() {
+        mathImageEditRequest = nil
     }
 
     /// Loads a file into the web view and returns once Excalidraw has actually applied
