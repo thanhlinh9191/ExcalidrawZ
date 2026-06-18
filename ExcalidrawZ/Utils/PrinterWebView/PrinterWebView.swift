@@ -22,6 +22,7 @@ class PrinterWebView: WKWebView {
     public func print(fileURL: URL) async {}
     
     func exportPDF(fileURL: URL) async -> URL? { nil }
+    func exportPDFData(fileURL: URL) async throws -> Data { Data() }
 }
 #else
 
@@ -46,6 +47,7 @@ class PrinterWebView: WKWebView {
     typealias PlatformRect = CGRect
 #endif
 
+    fileprivate var pdfDataRequests: [URL : (Result<Data, Error>) -> Void] = [:]
     
     init(filename: String) {
         self.filename = filename
@@ -102,10 +104,34 @@ class PrinterWebView: WKWebView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    func exportPDFData(fileURL: URL) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            pdfDataRequests[fileURL] = { result in
+                self.pdfDataRequests.removeValue(forKey: fileURL)
+                continuation.resume(with: result)
+            }
+            self.load(URLRequest(url: fileURL))
+        }
+    }
 }
 
 extension PrinterWebView: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if let url = webView.url,
+           let pdfDataRequest = pdfDataRequests[url] {
+            Task { @MainActor in
+                do {
+                    let data = try await generatePDF(from: webView)
+                    pdfDataRequest(.success(data))
+                } catch {
+                    logger.error("generatePDF failed: \(error)")
+                    pdfDataRequest(.failure(error))
+                }
+            }
+            return
+        }
+
 #if canImport(AppKit)
         let printOperation = webView.printOperation(with: printInfo)
         printOperation.view?.frame = webView.frame // important
@@ -134,39 +160,67 @@ extension PrinterWebView: WKNavigationDelegate {
             self.printRequests[url]?()
         }
 #elseif canImport(UIKit)
-        Task.detached {
-            let pdfURL = FileManager.default.temporaryDirectory.appendingPathComponent(
-                "\(await self.filename).pdf"
-            )
+        Task { @MainActor in
+            let pdfURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("\(filename).pdf")
             do {
                 let data = try await self.generatePDF(from: webView)
                 try data.write(to: pdfURL)
-                if let url = await webView.url {
-                    await self.printRequests[url]?(pdfURL)
+                if let url = webView.url {
+                    self.printRequests[url]?(pdfURL)
                 }
             } catch {
                 self.logger.error("generatePDF failed: \(error)")
-                if let url = await webView.url {
-                    await self.printRequests[url]?(nil)
+                if let url = webView.url {
+                    self.printRequests[url]?(nil)
                 }
             }
 
         }
 #endif
     }
+
+    func webView(
+        _ webView: WKWebView,
+        didFail navigation: WKNavigation!,
+        withError error: Error
+    ) {
+        failPDFDataRequest(for: webView.url, error: error)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        didFailProvisionalNavigation navigation: WKNavigation!,
+        withError error: Error
+    ) {
+        failPDFDataRequest(for: webView.url, error: error)
+    }
     
+    @MainActor
     func generatePDF(from webView: WKWebView) async throws -> Data {
-        if #available(iOS 14.0, *) {
+        if #available(macOS 11.0, iOS 14.0, *) {
             let pdfConfig = WKPDFConfiguration()
-            return try await webView.pdf(configuration: pdfConfig)
+            return try await withCheckedThrowingContinuation { continuation in
+                webView.createPDF(configuration: pdfConfig) { result in
+                    continuation.resume(with: result)
+                }
+            }
         } else {
             struct NotSupportError: LocalizedError {
                 var errorDescription: String? {
-                    "PDF generation is not supported on iOS versions below 14."
+                    "PDF generation is not supported on this OS version."
                 }
             }
             throw NotSupportError()
         }
+    }
+
+    private func failPDFDataRequest(for url: URL?, error: Error) {
+        guard let url,
+              let pdfDataRequest = pdfDataRequests[url] else {
+            return
+        }
+        pdfDataRequest(.failure(error))
     }
 }
 #endif

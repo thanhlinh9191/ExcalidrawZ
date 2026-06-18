@@ -16,9 +16,34 @@ extension AdjustElementsMiddleware {
         canvasActions.append(.insertMermaid(op))
     }
 
+    func applyLatexOp(
+        _ op: LatexOp,
+        canvasActions: inout [CanvasAction]
+    ) throws {
+        let latex = op.latex.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !latex.isEmpty else {
+            throw AdjustmentError(message: "latex requires a non-empty LaTeX expression.")
+        }
+        let color = try normalizedMathColor(op.color)
+        canvasActions.append(.insertLatex(LatexOp(op: op.op, latex: latex, color: color)))
+    }
+
+    private func normalizedMathColor(_ color: String?) throws -> String? {
+        guard let color else { return nil }
+        let trimmed = color.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let pattern = #"^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"#
+        guard trimmed.range(of: pattern, options: .regularExpression) != nil else {
+            throw AdjustmentError(message: "latex.color must be a hex color such as #1e1e1e or #fff.")
+        }
+        return trimmed
+    }
+
     func applyConnectOp(
         _ op: ConnectOp,
         elements: [ExcalidrawElement],
+        pendingElementIds: Set<String> = [],
         canvasActions: inout [CanvasAction]
     ) throws {
         let from = op.from.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -26,10 +51,12 @@ extension AdjustElementsMiddleware {
         guard !from.isEmpty, !to.isEmpty else {
             throw AdjustmentError(message: "connect requires non-empty `from` and `to` element ids.")
         }
-        guard elements.contains(where: { $0.id == from && !$0.isDeleted }) else {
+        let availableElementIds = Set(elements.lazy.filter { !$0.isDeleted }.map(\.id))
+            .union(pendingElementIds)
+        guard availableElementIds.contains(from) else {
             throw AdjustmentError(message: "connect.from element \(from) not found or deleted.")
         }
-        guard elements.contains(where: { $0.id == to && !$0.isDeleted }) else {
+        guard availableElementIds.contains(to) else {
             throw AdjustmentError(message: "connect.to element \(to) not found or deleted.")
         }
         if let arrow = op.arrow, case .object = arrow {

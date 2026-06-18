@@ -5,6 +5,7 @@
 
 import Foundation
 import ImageIO
+import SwiftUI
 import UniformTypeIdentifiers
 import LLMCore
 
@@ -73,11 +74,18 @@ struct ReadCanvasImageTool: Tool {
             return .text("Canvas is empty — nothing to capture.")
         }
 
+        let preferences = try? await coordinator.fetchCanvasPreferences()
+        let colorScheme = Self.colorScheme(from: preferences?.theme)
         let rawPNG: Data
         do {
-            guard let data = try await coordinator.exportPNGData() else {
+            guard let file = await coordinator.parent?.file else {
                 throw ToolError.executionFailed("No active file to export.")
             }
+            let data = try await coordinator.exportElementsToPNGData(
+                elements: file.elements,
+                files: file.files,
+                colorScheme: colorScheme
+            )
             rawPNG = data
         } catch let error as ToolError {
             throw error
@@ -86,11 +94,24 @@ struct ReadCanvasImageTool: Tool {
         }
 
         let pngData = Self.boundedPNG(rawPNG)
-        let caption = "Canvas snapshot (\(elementCount) element\(elementCount == 1 ? "" : "s"))."
+        let caption = [
+            "Canvas snapshot (\(elementCount) element\(elementCount == 1 ? "" : "s")).",
+            "renderedTheme=\(colorScheme == .dark ? "dark" : "light").",
+            "viewBackgroundColor=\(preferences?.viewBackgroundColor ?? "unknown")."
+        ].joined(separator: " ")
         return .parts([
             .text(caption),
             .image(.data(pngData, mediaType: "image/png"))
         ])
+    }
+
+    private static func colorScheme(from theme: CanvasPreferencesState.Theme?) -> ColorScheme {
+        switch theme {
+            case .dark:
+                return .dark
+            case .light, nil:
+                return .light
+        }
     }
 
     /// Anthropic's documented "best efficiency" longest edge — anything bigger

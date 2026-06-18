@@ -108,12 +108,16 @@ extension AdjustElementsMiddleware {
                 newElements[targetIndex] = .text(item)
 
             case .generic(var item):
-                if patch.text != nil || patch.label != nil {
-                    throw AdjustmentError(message: "Text patch is only supported for text elements.")
+                if patch.text != nil {
+                    throw AdjustmentError(message: "Text patch is only supported for text elements. Use `label` to update a shape's bound label.")
                 }
                 if patch.containerId != nil {
                     throw AdjustmentError(message: "containerId only applies to text elements.")
                 }
+                let previousX = item.x
+                let previousY = item.y
+                let previousWidth = item.width
+                let previousHeight = item.height
                 applyBoundsPatch(&item.x, &item.y, &item.width, &item.height, patch.bounds)
                 applyCommonStylePatch(
                     strokeColor: &item.strokeColor,
@@ -131,6 +135,32 @@ extension AdjustElementsMiddleware {
                 }
                 bump(&item.version, &item.versionNonce, &item.updated)
                 newElements[targetIndex] = .generic(item)
+                if let label = patch.label {
+                    let labelID = try patchBoundLabel(
+                        label,
+                        container: item,
+                        elements: &newElements
+                    )
+                    touchedParents.append(labelID)
+                } else if patch.bounds != nil {
+                    if item.width != previousWidth || item.height != previousHeight {
+                        touchedParents.append(
+                            contentsOf: recenterBoundLabels(
+                                for: item,
+                                elements: &newElements
+                            )
+                        )
+                    } else if item.x != previousX || item.y != previousY {
+                        touchedParents.append(
+                            contentsOf: moveBoundLabels(
+                                for: item,
+                                dx: item.x - previousX,
+                                dy: item.y - previousY,
+                                elements: &newElements
+                            )
+                        )
+                    }
+                }
 
             case .linear(var item):
                 if patch.text != nil || patch.label != nil || patch.containerId != nil {
@@ -181,6 +211,101 @@ extension AdjustElementsMiddleware {
         }
 
         return PatchResult(elements: newElements, touchedParentIDs: touchedParents)
+    }
+
+    private func patchBoundLabel(
+        _ label: String,
+        container: ExcalidrawGenericElement,
+        elements: inout [ExcalidrawElement]
+    ) throws -> String {
+        guard let labelIndex = boundLabelTextIndices(
+            for: container,
+            in: elements
+        ).first else {
+            throw AdjustmentError(
+                message: "Element \(container.id) has no bound text label. Patch the text element directly or create a label first."
+            )
+        }
+        guard case .text(var textElement) = elements[labelIndex] else {
+            throw AdjustmentError(message: "Bound label for \(container.id) is not a text element.")
+        }
+
+        textElement.text = label
+        textElement.originalText = label
+        textElement.width = defaultTextWidth(text: label, fontSize: textElement.fontSize)
+        textElement.height = defaultTextHeight(text: label, fontSize: textElement.fontSize)
+        textElement.x = container.x + (container.width - textElement.width) / 2
+        textElement.y = container.y + (container.height - textElement.height) / 2
+        textElement.containerId = container.id
+        bump(&textElement.version, &textElement.versionNonce, &textElement.updated)
+        elements[labelIndex] = .text(textElement)
+        return textElement.id
+    }
+
+    func boundLabelTextIndices(
+        for container: ExcalidrawGenericElement,
+        in elements: [ExcalidrawElement]
+    ) -> [Int] {
+        let boundTextIDs = Set(
+            (container.boundElements ?? [])
+                .filter { $0.type == .text }
+                .map(\.id)
+        )
+        guard !boundTextIDs.isEmpty || elements.contains(where: {
+            guard case .text(let text) = $0, !text.isDeleted else { return false }
+            return text.containerId == container.id
+        }) else {
+            return []
+        }
+
+        return elements.indices.filter { index in
+            guard case .text(let text) = elements[index], !text.isDeleted else {
+                return false
+            }
+            return boundTextIDs.contains(text.id) || text.containerId == container.id
+        }
+    }
+
+    func moveBoundLabels(
+        for container: ExcalidrawGenericElement,
+        dx: Double,
+        dy: Double,
+        elements: inout [ExcalidrawElement]
+    ) -> [String] {
+        var updatedIDs: [String] = []
+        for index in boundLabelTextIndices(for: container, in: elements) {
+            guard case .text(var textElement) = elements[index] else { continue }
+            textElement.x += dx
+            textElement.y += dy
+            textElement.containerId = container.id
+            bump(&textElement.version, &textElement.versionNonce, &textElement.updated)
+            elements[index] = .text(textElement)
+            appendUpdatedElementID(textElement.id, to: &updatedIDs)
+        }
+        return updatedIDs
+    }
+
+    func recenterBoundLabels(
+        for container: ExcalidrawGenericElement,
+        elements: inout [ExcalidrawElement]
+    ) -> [String] {
+        var updatedIDs: [String] = []
+        for index in boundLabelTextIndices(for: container, in: elements) {
+            guard case .text(var textElement) = elements[index] else { continue }
+            textElement.x = container.x + (container.width - textElement.width) / 2
+            textElement.y = container.y + (container.height - textElement.height) / 2
+            textElement.containerId = container.id
+            bump(&textElement.version, &textElement.versionNonce, &textElement.updated)
+            elements[index] = .text(textElement)
+            appendUpdatedElementID(textElement.id, to: &updatedIDs)
+        }
+        return updatedIDs
+    }
+
+    func appendUpdatedElementID(_ id: String, to ids: inout [String]) {
+        if !ids.contains(id) {
+            ids.append(id)
+        }
     }
 
 }

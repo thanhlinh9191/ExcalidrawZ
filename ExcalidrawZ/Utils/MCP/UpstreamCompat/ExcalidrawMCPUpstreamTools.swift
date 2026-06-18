@@ -53,13 +53,50 @@ struct ExcalidrawMCPTool: Sendable {
 struct ExcalidrawMCPToolResult: Sendable {
     struct Content: Sendable {
         let type: String
-        let text: String
+        let text: String?
+        let data: String?
+        let mimeType: String?
+        let resource: MCPJSONValue?
+
+        static func text(_ text: String) -> Content {
+            Content(type: "text", text: text, data: nil, mimeType: nil, resource: nil)
+        }
+
+        static func image(data: String, mimeType: String) -> Content {
+            Content(type: "image", text: nil, data: data, mimeType: mimeType, resource: nil)
+        }
+
+        static func resource(uri: String, mimeType: String, blob: String) -> Content {
+            Content(
+                type: "resource",
+                text: nil,
+                data: nil,
+                mimeType: nil,
+                resource: .object([
+                    "uri": .string(uri),
+                    "mimeType": .string(mimeType),
+                    "blob": .string(blob)
+                ])
+            )
+        }
 
         var jsonValue: MCPJSONValue {
-            .object([
-                "type": .string(type),
-                "text": .string(text)
-            ])
+            var object: [String: MCPJSONValue] = [
+                "type": .string(type)
+            ]
+            if let text {
+                object["text"] = .string(text)
+            }
+            if let data {
+                object["data"] = .string(data)
+            }
+            if let mimeType {
+                object["mimeType"] = .string(mimeType)
+            }
+            if let resource {
+                object["resource"] = resource
+            }
+            return .object(object)
         }
     }
 
@@ -72,7 +109,17 @@ struct ExcalidrawMCPToolResult: Sendable {
         isError: Bool = false,
         structuredContent: MCPJSONValue? = nil
     ) {
-        self.content = [Content(type: "text", text: text)]
+        self.content = [.text(text)]
+        self.isError = isError
+        self.structuredContent = structuredContent
+    }
+
+    init(
+        content: [Content],
+        isError: Bool = false,
+        structuredContent: MCPJSONValue? = nil
+    ) {
+        self.content = content
         self.isError = isError
         self.structuredContent = structuredContent
     }

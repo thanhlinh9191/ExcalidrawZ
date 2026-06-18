@@ -37,6 +37,7 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     let port: UInt16
 
     private var server: ExcalidrawZMCPServer?
+    private var router: ExcalidrawMCPToolRouter?
     private var serverTask: Task<Void, Never>?
 
     private init(port: UInt16 = ExcalidrawZMCPServer.defaultPort) {
@@ -65,14 +66,20 @@ final class ExcalidrawZMCPServerController: ObservableObject {
         guard serviceMode != mode else { return }
         serviceMode = mode
         UserDefaults.standard.set(mode.rawValue, forKey: Self.serviceModeDefaultsKey)
+
+        let router = router
+        Task {
+            await router?.setServiceMode(mode)
+        }
     }
 
     func startServerIfNeeded() {
         guard serverTask == nil else { return }
 
-        let router = ExcalidrawMCPToolRouter()
+        let router = ExcalidrawMCPToolRouter(serviceMode: serviceMode)
         let server = ExcalidrawZMCPServer(port: port, router: router)
         self.server = server
+        self.router = router
         state = .starting
 
         serverTask = Task { [weak self, server, router] in
@@ -131,6 +138,7 @@ final class ExcalidrawZMCPServerController: ObservableObject {
         let shouldRestart = isEnabled && wasStopping
         serverTask = nil
         server = nil
+        router = nil
 
         if shouldRestart {
             startServerIfNeeded()

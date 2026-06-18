@@ -15,7 +15,8 @@ struct ExcalidrawMCPUpstreamToolHandler {
     typealias ElementConverter = @Sendable ([MCPJSONValue]) async throws -> [MCPJSONValue]
     typealias PublishDiagram = @Sendable (
         _ elements: [MCPJSONValue],
-        _ sourceElementCount: Int
+        _ sourceElementCount: Int,
+        _ viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
     ) async throws -> PublishedDiagram
     typealias SaveCheckpoint = @Sendable (_ id: String, _ data: MCPJSONValue) async throws -> Void
     typealias ReadCheckpointData = @Sendable (_ id: String) async -> MCPJSONValue?
@@ -77,7 +78,8 @@ struct ExcalidrawMCPUpstreamToolHandler {
         let convertedElements = try await convertRawElements(resolved.elements)
         let published = try await publishDiagram(
             convertedElements,
-            parsedElements.count
+            parsedElements.count,
+            resolved.viewportUpdate
         )
 
         return ExcalidrawMCPToolResult(

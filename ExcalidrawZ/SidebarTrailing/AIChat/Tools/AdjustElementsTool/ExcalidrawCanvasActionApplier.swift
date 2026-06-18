@@ -91,8 +91,10 @@ enum ExcalidrawCanvasActionApplier {
         cameraDirector: AICameraDirector
     ) async throws -> CanvasApplyResult {
         var mermaidResults: [ExcalidrawCore.MermaidInsertResult] = []
+        var latexResults: [LatexInsertResult] = []
         var skeletonResults: [ExcalidrawCore.SkeletonInsertResult] = []
         var connectResults: [ExcalidrawCore.ConnectElementsResult] = []
+        var elementIdAliases: [String: String] = [:]
 
         for (index, action) in actions.enumerated() {
             do {
@@ -112,6 +114,26 @@ enum ExcalidrawCanvasActionApplier {
                         mermaidResults.append(insertResult)
                         try await cameraDirector.submitInsertedContentBounds(makeRect(from: insertResult.bounds))
 
+                    case .insertLatex(let op):
+                        let svg = try LatexMathSVGRenderer.renderSVG(
+                            from: op.latex,
+                            foregroundColor: op.color
+                        )
+                        LatexMathSVGRenderer.debugPrintSVGBeforeInsert(svg, source: "adjust_elements")
+                        guard let data = svg.data(using: .utf8) else {
+                            throw ToolError.executionFailed("Failed to encode rendered math SVG.")
+                        }
+                        guard let insertResult = try await coordinator.loadImageToExcalidrawCanvas(
+                            imageData: data,
+                            type: "svg+xml"
+                        ) else {
+                            throw ToolError.executionFailed("Failed to insert rendered math SVG.")
+                        }
+                        latexResults.append(LatexInsertResult(
+                            elementCount: insertResult.elementCount,
+                            durationMs: insertResult.durationMs
+                        ))
+
                     case .insertSkeleton(let op):
                         let options = ExcalidrawCore.SkeletonInsertOptions(
                             layout: op.layout,
@@ -127,13 +149,18 @@ enum ExcalidrawCanvasActionApplier {
                             op.skeletons,
                             options: options
                         )
+                        registerElementIdAliases(
+                            inputIds: op.inputElementReferenceIds,
+                            outputIds: insertResult.elementIds,
+                            aliases: &elementIdAliases
+                        )
                         skeletonResults.append(insertResult)
                         try await cameraDirector.submitInsertedContentBounds(makeRect(from: insertResult.bounds))
 
                     case .connect(let op):
                         let connectResult = try await coordinator.connectElements(
-                            from: op.from,
-                            to: op.to,
+                            from: elementIdAliases[op.from] ?? op.from,
+                            to: elementIdAliases[op.to] ?? op.to,
                             arrow: op.arrow,
                             captureUpdate: op.captureUpdate
                         )
@@ -150,9 +177,20 @@ enum ExcalidrawCanvasActionApplier {
 
         return CanvasApplyResult(
             mermaidResults: mermaidResults,
+            latexResults: latexResults,
             skeletonResults: skeletonResults,
             connectResults: connectResults
         )
+    }
+
+    private static func registerElementIdAliases(
+        inputIds: [String],
+        outputIds: [String],
+        aliases: inout [String: String]
+    ) {
+        for (inputId, outputId) in zip(inputIds, outputIds) {
+            aliases[inputId] = outputId
+        }
     }
 
     private static func makeElementUpdates(from element: ExcalidrawElement) throws -> [String: ExcalidrawCore.JSONValue] {
@@ -200,6 +238,12 @@ enum ExcalidrawCanvasActionApplier {
         switch action {
             case .insertMermaid(let op):
                 return "insertMermaid definition=\(preview(op.definition))"
+            case .insertLatex(let op):
+                var parts = ["insertLatex latex=\(preview(op.latex))"]
+                if let color = op.color {
+                    parts.append("color=\(color)")
+                }
+                return parts.joined(separator: " ")
             case .insertSkeleton(let op):
                 var parts = ["insertSkeleton"]
                 if let layout = op.layout {

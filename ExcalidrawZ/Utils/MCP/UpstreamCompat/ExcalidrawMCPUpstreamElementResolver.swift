@@ -7,15 +7,24 @@
 
 import Foundation
 
+struct ExcalidrawMCPUpstreamViewportUpdate: Codable, Equatable, Sendable {
+    let x: Double
+    let y: Double
+    let width: Double
+    let height: Double
+}
+
 struct ExcalidrawMCPUpstreamElementResolver {
     struct Result: Sendable {
         let elements: [MCPJSONValue]
+        let viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
     }
 
     private struct ExtractedElements: Sendable {
         let drawElements: [MCPJSONValue]
         let restoreCheckpointID: String?
         let deleteIDs: Set<String>
+        let viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
     }
 
     var loadCheckpointElements: @Sendable (String) async -> [MCPJSONValue]?
@@ -41,17 +50,22 @@ struct ExcalidrawMCPUpstreamElementResolver {
             resolvedElements = extracted.drawElements
         }
 
-        return Result(elements: resolvedElements)
+        return Result(
+            elements: resolvedElements,
+            viewportUpdate: extracted.viewportUpdate
+        )
     }
 
     private static func extractViewportAndElements(_ elements: [MCPJSONValue]) -> ExtractedElements {
         var restoreCheckpointID: String?
         var deleteIDs: Set<String> = []
         var drawElements: [MCPJSONValue] = []
+        var viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
 
         for element in elements {
             switch element["type"]?.stringValue {
                 case ExcalidrawMCPUpstreamContract.PseudoElementType.cameraUpdate:
+                    viewportUpdate = Self.viewportUpdate(from: element) ?? viewportUpdate
                     continue
                 case ExcalidrawMCPUpstreamContract.PseudoElementType.restoreCheckpoint:
                     restoreCheckpointID = element["id"]?.stringValue
@@ -63,22 +77,46 @@ struct ExcalidrawMCPUpstreamElementResolver {
         }
 
         if !deleteIDs.isEmpty {
-            drawElements = drawElements.map { element in
-                guard Self.shouldHideInlineDeletedElement(element, deleteIDs: deleteIDs),
-                      var object = element.objectValue
-                else {
-                    return element
-                }
-                object["opacity"] = .number(1)
-                return .object(object)
-            }
+            drawElements = Self.filterDeletedElements(drawElements, deleteIDs: deleteIDs)
         }
 
         return ExtractedElements(
             drawElements: drawElements,
             restoreCheckpointID: restoreCheckpointID,
-            deleteIDs: deleteIDs
+            deleteIDs: deleteIDs,
+            viewportUpdate: viewportUpdate
         )
+    }
+
+    private static func viewportUpdate(from element: MCPJSONValue) -> ExcalidrawMCPUpstreamViewportUpdate? {
+        guard let x = finiteNumber(element["x"]),
+              let y = finiteNumber(element["y"]),
+              let width = finiteNumber(element["width"]),
+              let height = finiteNumber(element["height"]),
+              width > 0,
+              height > 0
+        else {
+            return nil
+        }
+
+        return ExcalidrawMCPUpstreamViewportUpdate(
+            x: x,
+            y: y,
+            width: width,
+            height: height
+        )
+    }
+
+    private static func finiteNumber(_ value: MCPJSONValue?) -> Double? {
+        switch value {
+            case .number(let number) where number.isFinite:
+                return number
+            case .string(let string):
+                let number = Double(string.trimmingCharacters(in: .whitespacesAndNewlines))
+                return number?.isFinite == true ? number : nil
+            default:
+                return nil
+        }
     }
 
     private static func filterDeletedElements(
@@ -104,6 +142,12 @@ struct ExcalidrawMCPUpstreamElementResolver {
         guard element["type"]?.stringValue == ExcalidrawMCPUpstreamContract.PseudoElementType.delete else {
             return []
         }
+        if let ids = element["ids"]?.arrayValue {
+            return ids.compactMap(\.stringValue)
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+        }
+
         let raw = element["ids"]?.stringValue ?? element["id"]?.stringValue ?? ""
         return raw
             .split(separator: ",")

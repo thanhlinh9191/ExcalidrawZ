@@ -43,7 +43,7 @@ struct QueryFileHistoryTool: Tool {
                 ),
                 "ai_only": ParameterProperty(
                     type: "boolean",
-                    description: "If true, only return AI-generated checkpoints (`ai_pre` / `ai_post`). Default: false."
+                    description: "If true, only return automated checkpoints (`ai_pre` / `ai_post` / `mcp_pre` / `mcp_post` / `restore_post`). Default: false."
                 )
             ],
             required: ["file_id"]
@@ -51,7 +51,7 @@ struct QueryFileHistoryTool: Tool {
     }
 
     /// Reading a file's checkpoint history exposes when it was edited
-    /// and which edits came from prior AI rounds — both pieces of user
+    /// and which edits came from prior automated rounds — both pieces of user
     /// data that the user should explicitly authorize before the AI
     /// pulls them into the chat.
     var approvalRequirement: ApprovalRequirement { .always }
@@ -76,7 +76,7 @@ struct QueryFileHistoryTool: Tool {
             return LockedContentAIGuard.lockedToolResult
         }
 
-        let payload: Output = try await ctx.perform {
+        let checkpointList: CheckpointList = try await ctx.perform {
             guard let file = try ctx.existingObject(with: fileObjectID) as? File else {
                 throw ToolError.executionFailed("File not found: \(params.fileID)")
             }
@@ -84,11 +84,17 @@ struct QueryFileHistoryTool: Tool {
             // Fetch checkpoints.
             let cpFetch = NSFetchRequest<FileCheckpoint>(entityName: "FileCheckpoint")
             if params.aiOnly {
-                cpFetch.predicate = NSPredicate(
-                    format: "file == %@ AND (source == %@ OR source == %@)",
-                    file,
+                let automatedSources = [
                     FileCheckpointSource.aiPre.rawValue,
-                    FileCheckpointSource.aiPost.rawValue
+                    FileCheckpointSource.aiPost.rawValue,
+                    FileCheckpointSource.mcpPre.rawValue,
+                    FileCheckpointSource.mcpPost.rawValue,
+                    FileCheckpointSource.restorePost.rawValue
+                ]
+                cpFetch.predicate = NSPredicate(
+                    format: "file == %@ AND source IN %@",
+                    file,
+                    automatedSources
                 )
             } else {
                 cpFetch.predicate = NSPredicate(format: "file == %@", file)
@@ -96,25 +102,41 @@ struct QueryFileHistoryTool: Tool {
             cpFetch.sortDescriptors = [NSSortDescriptor(key: "updatedAt", ascending: false)]
             cpFetch.fetchLimit = limit
 
-            let checkpoints = try ctx.fetch(cpFetch)
-            let entries = checkpoints.map { cp in
-                CheckpointEntry(
+            let candidates = try ctx.fetch(cpFetch).map { cp in
+                CheckpointCandidate(
+                    objectID: cp.objectID,
                     id: cp.id?.uuidString ?? "",
                     source: cp.checkpointSource.rawValue,
                     description: cp.historyDescription,
                     updatedAt: cp.updatedAt.map(ISO8601DateFormatter.shared.string(from:)),
-                    contentSize: cp.content?.count ?? 0
+                    fallbackContentSize: cp.content?.count ?? 0
                 )
             }
 
-            return Output(
-                fileID: params.fileID,
-                fileName: file.name ?? "Untitled",
-                history: entries,
-                returned: entries.count,
-                limit: limit
+            return CheckpointList(fileName: file.name ?? "Untitled", checkpoints: candidates)
+        }
+
+        var entries: [CheckpointEntry] = []
+        for checkpoint in checkpointList.checkpoints {
+            let contentSize = await contentSize(for: checkpoint)
+            entries.append(
+                CheckpointEntry(
+                    id: checkpoint.id,
+                    source: checkpoint.source,
+                    description: checkpoint.description,
+                    updatedAt: checkpoint.updatedAt,
+                    contentSize: contentSize
+                )
             )
         }
+
+        let payload = Output(
+            fileID: params.fileID,
+            fileName: checkpointList.fileName,
+            history: entries,
+            returned: entries.count,
+            limit: limit
+        )
 
         let data = try JSONEncoder().encode(payload)
         return .text(String(data: data, encoding: .utf8) ?? "{}")
@@ -161,6 +183,20 @@ struct QueryFileHistoryTool: Tool {
         }
     }
 
+    private struct CheckpointList {
+        let fileName: String
+        let checkpoints: [CheckpointCandidate]
+    }
+
+    private struct CheckpointCandidate {
+        let objectID: NSManagedObjectID
+        let id: String
+        let source: String
+        let description: String?
+        let updatedAt: String?
+        let fallbackContentSize: Int
+    }
+
     private struct CheckpointEntry: Encodable {
         let id: String
         let source: String
@@ -174,6 +210,16 @@ struct QueryFileHistoryTool: Tool {
             case description
             case updatedAt = "updated_at"
             case contentSize = "content_size"
+        }
+    }
+
+    private func contentSize(for checkpoint: CheckpointCandidate) async -> Int {
+        do {
+            let content = try await PersistenceController.shared.checkpointRepository
+                .loadCheckpointContent(checkpointObjectID: checkpoint.objectID)
+            return content.count
+        } catch {
+            return checkpoint.fallbackContentSize
         }
     }
 }

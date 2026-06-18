@@ -225,6 +225,13 @@ extension ExcalidrawCore {
         var zoom: Double?
     }
 
+    struct ViewportFrame: Codable, Hashable {
+        var x: Double
+        var y: Double
+        var width: Double
+        var height: Double
+    }
+
     struct CanvasPoint: Codable, Hashable {
         var x: Double
         var y: Double
@@ -963,6 +970,46 @@ extension ExcalidrawCore {
     }
 
     @MainActor
+    @discardableResult
+    func setViewportFrame(_ frame: ViewportFrame) async throws -> CameraState {
+        guard !self.webView.isLoading else { return cameraState }
+        let payload = try encodeJSON(frame)
+        let result = try await webView.callAsyncJavaScript(
+            """
+            const frame = \(payload);
+            const helper = window.excalidrawZHelper;
+            const api = helper?._api;
+            if (!helper || !api) {
+                throw new Error("setViewportFrame: excalidrawAPI not ready");
+            }
+
+            const appState = api.getAppState();
+            const viewportWidth = Number(appState.width) || window.innerWidth || frame.width;
+            const viewportHeight = Number(appState.height) || window.innerHeight || frame.height;
+            const frameWidth = Math.max(Math.abs(Number(frame.width) || viewportWidth), 1);
+            const frameHeight = Math.max(Math.abs(Number(frame.height) || viewportHeight), 1);
+            const zoom = Math.min(viewportWidth / frameWidth, viewportHeight / frameHeight);
+            const centerX = Number(frame.x || 0) + frameWidth / 2;
+            const centerY = Number(frame.y || 0) + frameHeight / 2;
+            const camera = {
+                scrollX: viewportWidth / 2 / zoom - centerX,
+                scrollY: viewportHeight / 2 / zoom - centerY,
+                zoom,
+            };
+
+            helper.setCamera(camera);
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            return JSON.stringify(helper.getCamera());
+            """,
+            arguments: [:],
+            contentWorld: .page
+        )
+        let camera = try decodeJavaScriptResult(result, as: CameraState.self)
+        cameraState = camera
+        return camera
+    }
+
+    @MainActor
     func scrollToCenter() async throws {
         guard !self.webView.isLoading else { return }
         _ = try await webView.callAsyncJavaScript(
@@ -1353,8 +1400,27 @@ extension ExcalidrawCore {
         guard let file = await self.parent?.file else {
             return nil
         }
-        let imageData = try await self.exportElementsToPNGData(elements: file.elements, colorScheme: .light)
+        let imageData = try await self.exportElementsToPNGData(
+            elements: file.elements,
+            files: file.files,
+            colorScheme: .light
+        )
         return imageData //NSImage(data: imageData)
+    }
+
+    func exportPDFData(
+        withBackground: Bool = true,
+        colorScheme: ColorScheme = .light
+    ) async throws -> Data? {
+        guard let file = await self.parent?.file else {
+            return nil
+        }
+        return try await exportElementsToPDFData(
+            elements: file.elements,
+            files: file.files,
+            withBackground: withBackground,
+            colorScheme: colorScheme
+        )
     }
     
     @MainActor
@@ -1568,6 +1634,28 @@ extension ExcalidrawCore {
         return data
         
     }
+
+    func exportElementsToPDFData(
+        elements: [ExcalidrawElement],
+        files: [String : ExcalidrawFile.ResourceFile]? = nil,
+        embedScene: Bool = false,
+        withBackground: Bool = true,
+        colorScheme: ColorScheme
+    ) async throws -> Data {
+        let name = await parent?.file?.name ?? String(localizable: .generalUntitled)
+        let svgData = try await exportElementsToSVGData(
+            elements: elements,
+            files: files,
+            embedScene: embedScene,
+            withBackground: withBackground,
+            colorScheme: colorScheme
+        )
+        let svgURL = try getTempDirectory()
+            .appendingPathComponent("\(UUID().uuidString).svg")
+        try svgData.write(to: svgURL)
+        return try await renderPDFData(from: svgURL, filename: name)
+    }
+
     func exportElementsToSVG(
         elements: [ExcalidrawElement],
         files: [String : ExcalidrawFile.ResourceFile]? = nil,
@@ -1763,7 +1851,9 @@ extension ExcalidrawCore {
             arguments: ["type": type],
             contentWorld: .page
         )
-        return LoadImageResult(fromJS: raw)
+        let result = LoadImageResult(fromJS: raw)
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "loadImageToExcalidrawCanvas")
+        return result
     }
     
     // Font

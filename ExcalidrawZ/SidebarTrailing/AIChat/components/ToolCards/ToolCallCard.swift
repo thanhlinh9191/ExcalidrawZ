@@ -85,6 +85,8 @@ private struct ToolCallVisualStyle {
                 return ToolCallVisualStyle(icon: .docText, accent: .indigo)
             case "read_canvas_image":
                 return ToolCallVisualStyle(icon: .photo, accent: .teal)
+            case "export":
+                return ToolCallVisualStyle(icon: .docRichtext, accent: .teal)
             case "file_access_status":
                 return ToolCallVisualStyle(icon: .eye, accent: .gray)
             case "rename_file":

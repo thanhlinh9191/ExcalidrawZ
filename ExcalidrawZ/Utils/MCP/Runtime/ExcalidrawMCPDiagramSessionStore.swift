@@ -14,6 +14,7 @@ struct ExcalidrawMCPDiagramSession: Identifiable, Codable, Sendable {
     let updatedAt: Date
     let elements: [MCPJSONValue]
     let sourceElementCount: Int
+    let viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
 }
 
 struct ExcalidrawMCPCheckpoint: Codable, Sendable {
@@ -83,7 +84,9 @@ actor ExcalidrawMCPDiagramSessionStore {
     @discardableResult
     func publishSession(
         elements: [MCPJSONValue],
-        sourceElementCount: Int
+        sourceElementCount: Int,
+        viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate? = nil,
+        notifiesUpdateHandler: Bool = true
     ) async throws -> ExcalidrawMCPDiagramSession {
         let sanitizedElements = try ExcalidrawMCPElementSanitizer.sanitizeElements(elements)
         let checkpoint = try saveCheckpoint(elements: sanitizedElements)
@@ -94,9 +97,12 @@ actor ExcalidrawMCPDiagramSessionStore {
             createdAt: now,
             updatedAt: now,
             elements: sanitizedElements,
-            sourceElementCount: sourceElementCount
+            sourceElementCount: sourceElementCount,
+            viewportUpdate: viewportUpdate
         )
-        try await updateHandler?(session)
+        if notifiesUpdateHandler {
+            try await updateHandler?(session)
+        }
         currentSession = session
         return session
     }

@@ -82,6 +82,12 @@ enum MCPJSONValue: Codable, Equatable, Sendable {
         switch jsonObject {
             case is NSNull:
                 self = .null
+            case let value as NSNumber:
+                if CFGetTypeID(value) == CFBooleanGetTypeID() {
+                    self = .bool(value.boolValue)
+                } else {
+                    self = .number(value.doubleValue)
+                }
             case let value as Bool:
                 self = .bool(value)
             case let value as Int:
@@ -124,6 +130,7 @@ enum MCPJSONValue: Codable, Equatable, Sendable {
     }
 
     static func parseJSONArray(from data: Data) throws -> [MCPJSONValue] {
+        try validateStrictJSONSyntax(data)
         let object = try JSONSerialization.jsonObject(with: data)
         guard let array = object as? [Any] else {
             throw MCPJSONValueError.expectedArray
@@ -134,11 +141,66 @@ enum MCPJSONValue: Codable, Equatable, Sendable {
     static func parse(from data: Data) throws -> MCPJSONValue {
         try MCPJSONValue(jsonObject: JSONSerialization.jsonObject(with: data))
     }
+
+    private static func validateStrictJSONSyntax(_ data: Data) throws {
+        guard let string = String(data: data, encoding: .utf8) else {
+            throw MCPJSONValueError.invalidUTF8
+        }
+
+        var isInString = false
+        var isEscaped = false
+        var pendingComma = false
+
+        for scalar in string.unicodeScalars {
+            if isInString {
+                if isEscaped {
+                    isEscaped = false
+                } else if scalar == "\\" {
+                    isEscaped = true
+                } else if scalar == "\"" {
+                    isInString = false
+                }
+                continue
+            }
+
+            if CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                continue
+            }
+
+            if pendingComma {
+                if scalar == "]" || scalar == "}" {
+                    throw MCPJSONValueError.trailingComma
+                }
+                pendingComma = false
+            }
+
+            if scalar == "\"" {
+                isInString = true
+            } else if scalar == "," {
+                pendingComma = true
+            }
+        }
+    }
 }
 
-private enum MCPJSONValueError: Error {
+private enum MCPJSONValueError: LocalizedError {
     case expectedArray
+    case invalidUTF8
+    case trailingComma
     case unsupportedValue
+
+    var errorDescription: String? {
+        switch self {
+            case .expectedArray:
+                "Expected a JSON array."
+            case .invalidUTF8:
+                "JSON input must be valid UTF-8."
+            case .trailingComma:
+                "JSON input must not contain trailing commas."
+            case .unsupportedValue:
+                "Unsupported JSON value."
+        }
+    }
 }
 
 private struct DynamicCodingKey: CodingKey {

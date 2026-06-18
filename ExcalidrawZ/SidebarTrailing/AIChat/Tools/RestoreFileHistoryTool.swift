@@ -93,10 +93,14 @@ struct RestoreFileHistoryTool: Tool {
                     "Checkpoint \(params.checkpointID) doesn't belong to file \(params.fileID)."
                 )
             }
+            guard let fileID = file.id else {
+                throw ToolError.executionFailed("File has no UUID: \(params.fileID)")
+            }
             return Resolution(
                 fileObjectID: file.objectID,
                 checkpointObjectID: checkpoint.objectID,
-                fileName: nil,
+                fileID: fileID,
+                fileName: file.name,
                 checkpointSource: nil,
                 checkpointUpdatedAt: nil
             )
@@ -104,6 +108,10 @@ struct RestoreFileHistoryTool: Tool {
         guard try await LockedContentAIGuard.canToolAccess(fileObjectID: resolution.fileObjectID) else {
             return LockedContentAIGuard.lockedToolResult
         }
+
+        let restoredContent = try await coreData.checkpointRepository.loadCheckpointContent(
+            checkpointObjectID: resolution.checkpointObjectID
+        )
 
         // 2. Run the actual restore through the existing repository
         //    method. It updates Core Data; storage save is on us.
@@ -113,10 +121,29 @@ struct RestoreFileHistoryTool: Tool {
         )
         try await coreData.fileRepository.saveFileContentToStorage(
             fileObjectID: resolution.fileObjectID,
-            content: try await coreData.checkpointRepository.loadCheckpointContent(
-                checkpointObjectID: resolution.checkpointObjectID
-            )
+            content: restoredContent
         )
+        try await restoreCurrentFilename(
+            resolution.fileName,
+            fileObjectID: resolution.fileObjectID
+        )
+
+        var postRestoreWarning: String?
+        let postRestoreCheckpointID: UUID?
+        do {
+            postRestoreCheckpointID = try await coreData.fileRepository.recordCheckpoint(
+                fileObjectID: resolution.fileObjectID,
+                content: restoredContent,
+                source: .restorePost,
+                description: restoreCheckpointDescription(
+                    phase: "Restore",
+                    checkpointID: params.checkpointID
+                )
+            )
+        } catch {
+            postRestoreCheckpointID = nil
+            postRestoreWarning = " Post-restore checkpoint failed: \(error.localizedDescription)"
+        }
 
         // 3. If we have a canvas context AND the restored file matches
         //    the canvas's current file, force a reload so the user sees
@@ -126,19 +153,22 @@ struct RestoreFileHistoryTool: Tool {
         if let context,
            let restoreContext = try? context.resolve(RestoreContext.self) {
             await reloadCanvasIfActive(
-                fileObjectID: resolution.fileObjectID,
+                fileID: resolution.fileID,
+                content: restoredContent,
                 canvasTarget: restoreContext.canvasTarget
             )
         }
 
-        let metadata: Resolution = try await resolveCtx.perform {
-            guard let file = try resolveCtx.existingObject(with: resolution.fileObjectID) as? File,
-                  let checkpoint = try resolveCtx.existingObject(with: resolution.checkpointObjectID) as? FileCheckpoint else {
+        let metadataCtx = coreData.newTaskContext()
+        let metadata: Resolution = try await metadataCtx.perform {
+            guard let file = try metadataCtx.existingObject(with: resolution.fileObjectID) as? File,
+                  let checkpoint = try metadataCtx.existingObject(with: resolution.checkpointObjectID) as? FileCheckpoint else {
                 throw ToolError.executionFailed("File or checkpoint disappeared during restore.")
             }
             return Resolution(
                 fileObjectID: resolution.fileObjectID,
                 checkpointObjectID: resolution.checkpointObjectID,
+                fileID: resolution.fileID,
                 fileName: file.name ?? "Untitled",
                 checkpointSource: checkpoint.checkpointSource.rawValue,
                 checkpointUpdatedAt: checkpoint.updatedAt
@@ -148,7 +178,9 @@ struct RestoreFileHistoryTool: Tool {
             .map(ISO8601DateFormatter.shared.string(from:)) ?? "unknown"
         return .text(
             "Restored file '\(metadata.fileName ?? "Untitled")' to checkpoint " +
-            "(\(metadata.checkpointSource ?? "unknown"), \(timestampString))."
+            "(\(metadata.checkpointSource ?? "unknown"), \(timestampString)). " +
+            "Restore checkpoint: \(postRestoreCheckpointID?.uuidString ?? "unavailable")." +
+            (postRestoreWarning ?? "")
         )
     }
 
@@ -176,9 +208,29 @@ struct RestoreFileHistoryTool: Tool {
     private struct Resolution {
         let fileObjectID: NSManagedObjectID
         let checkpointObjectID: NSManagedObjectID
+        let fileID: UUID
         let fileName: String?
         let checkpointSource: String?
         let checkpointUpdatedAt: Date?
+    }
+
+    private func restoreCheckpointDescription(phase: String, checkpointID: String) -> String {
+        "\(phase) checkpoint restore from \(checkpointID)"
+    }
+
+    private func restoreCurrentFilename(
+        _ fileName: String?,
+        fileObjectID: NSManagedObjectID
+    ) async throws {
+        guard let fileName else { return }
+        let context = PersistenceController.shared.newTaskContext()
+        try await context.perform {
+            guard let file = try context.existingObject(with: fileObjectID) as? File else {
+                throw ToolError.executionFailed("File disappeared during restore.")
+            }
+            file.name = fileName
+            try context.save()
+        }
     }
 
     /// Reload the canvas only if the restored file is currently active.
@@ -188,19 +240,21 @@ struct RestoreFileHistoryTool: Tool {
     /// for this kind of cross-thread access.
     @MainActor
     private func reloadCanvasIfActive(
-        fileObjectID: NSManagedObjectID,
+        fileID: UUID,
+        content: Data,
         canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
     ) async {
         guard let coordinator = ExcalidrawCoordinatorRegistry.shared.coordinator(for: canvasTarget) else {
             return
         }
-        let viewContext = PersistenceController.shared.container.viewContext
-        guard let restoredFile = try? viewContext.existingObject(with: fileObjectID) as? File else {
+        guard coordinator.documentSyncController.currentLoadedFileID == fileID.uuidString else {
             return
         }
-        // `loadFile(from:force:)` is the same call site `FileCheckpointDetailView`
-        // uses for the post-restore canvas refresh — guarantees behavioural
-        // parity with the existing UI restore path.
-        await coordinator.loadFile(from: restoredFile, force: true)
+        await coordinator.documentSyncController.load(
+            fileID: fileID.uuidString,
+            data: content,
+            force: true,
+            validateCurrentParentFile: false
+        )
     }
 }

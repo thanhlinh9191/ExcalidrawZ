@@ -253,13 +253,12 @@ actor FileRepository {
         }
     }
 
-    /// Force-write a checkpoint for the current state of a file without
-    /// going through the elements-update path. Used by the AI chat session
-    /// hooks: `beginAIChatSession` snapshots the current file state as
-    /// `.aiPre` *before* the user message is sent, and `endAIChatSession`
-    /// snapshots the post-AI state as `.aiPost`. Both bypass the
-    /// "first edit creates, subsequent updates" semantics — they always
-    /// create a fresh row tagged with the supplied metadata.
+    /// Force-write an explicitly tagged checkpoint for the current state of a
+    /// file without going through the elements-update path. Used by automated
+    /// integrations such as AI chat and MCP to create precise pre/post
+    /// rollback anchors. This bypasses the "first edit creates, subsequent
+    /// updates" semantics — every call creates a fresh row tagged with the
+    /// supplied metadata.
     func recordCheckpoint(
         fileObjectID: NSManagedObjectID,
         content: Data,

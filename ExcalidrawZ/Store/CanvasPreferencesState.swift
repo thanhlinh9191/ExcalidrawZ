@@ -18,24 +18,24 @@ import Combine
 /// because `apply()` is synchronous on main, so each `didSet` runs while the flag is still set.
 @MainActor
 final class CanvasPreferencesState: ObservableObject {
-    enum Theme: String, Codable, Hashable {
+    enum Theme: String, Codable, Hashable, Sendable {
         case light
         case dark
     }
 
-    enum BindingPreference: String, Codable, Hashable {
+    enum BindingPreference: String, Codable, Hashable, Sendable {
         case enabled
         case disabled
     }
 
-    enum PreferredSelectionTool: String, Codable, Hashable {
+    enum PreferredSelectionTool: String, Codable, Hashable, Sendable {
         case selection
         case lasso
     }
 
     /// Wrap (contain): elements must be fully inside the box.
     /// Overlap: any intersection counts.
-    enum BoxSelectionMode: String, Codable, Hashable {
+    enum BoxSelectionMode: String, Codable, Hashable, Sendable {
         case contain
         case overlap
     }
@@ -123,7 +123,7 @@ final class CanvasPreferencesState: ObservableObject {
 
 /// All-optional payload shared by the inbound diff event and the outbound partial-update call.
 /// Only non-nil fields are encoded — matching the partial-update contract on the JS side.
-struct CanvasPreferencesSnapshot: Codable {
+struct CanvasPreferencesSnapshot: Codable, Sendable {
     var theme: CanvasPreferencesState.Theme?
     var viewBackgroundColor: String?
     var gridModeEnabled: Bool?
@@ -150,6 +150,61 @@ struct CanvasPreferencesSnapshot: Codable {
         case stats
     }
 
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        theme = Self.decodeStringEnum(
+            CanvasPreferencesState.Theme.self,
+            from: container,
+            forKey: .theme
+        )
+        viewBackgroundColor = try? container.decodeIfPresent(
+            String.self,
+            forKey: .viewBackgroundColor
+        )
+        gridModeEnabled = Self.decodeBool(from: container, forKey: .gridModeEnabled)
+        zenModeEnabled = Self.decodeBool(from: container, forKey: .zenModeEnabled)
+        viewModeEnabled = Self.decodeBool(from: container, forKey: .viewModeEnabled)
+        objectsSnapModeEnabled = Self.decodeBool(
+            from: container,
+            forKey: .objectsSnapModeEnabled
+        )
+        isMidpointSnappingEnabled = Self.decodeBool(
+            from: container,
+            forKey: .isMidpointSnappingEnabled
+        )
+        bindingPreference = Self.decodeBindingPreference(
+            from: container,
+            forKey: .bindingPreference
+        )
+        preferredSelectionTool = Self.decodeStringEnum(
+            CanvasPreferencesState.PreferredSelectionTool.self,
+            from: container,
+            forKey: .preferredSelectionTool
+        )
+        boxSelectionMode = Self.decodeStringEnum(
+            CanvasPreferencesState.BoxSelectionMode.self,
+            from: container,
+            forKey: .boxSelectionMode
+        )
+        stats = Self.decodeBool(from: container, forKey: .stats)
+    }
+
+    var isEmpty: Bool {
+        theme == nil &&
+        viewBackgroundColor == nil &&
+        gridModeEnabled == nil &&
+        zenModeEnabled == nil &&
+        viewModeEnabled == nil &&
+        objectsSnapModeEnabled == nil &&
+        isMidpointSnappingEnabled == nil &&
+        bindingPreference == nil &&
+        preferredSelectionTool == nil &&
+        boxSelectionMode == nil &&
+        stats == nil
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(theme, forKey: .theme)
@@ -163,5 +218,59 @@ struct CanvasPreferencesSnapshot: Codable {
         try container.encodeIfPresent(preferredSelectionTool, forKey: .preferredSelectionTool)
         try container.encodeIfPresent(boxSelectionMode, forKey: .boxSelectionMode)
         try container.encodeIfPresent(stats, forKey: .stats)
+    }
+
+    private static func decodeStringEnum<T: RawRepresentable>(
+        _ type: T.Type,
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) -> T? where T.RawValue == String {
+        guard let rawValue = try? container.decodeIfPresent(String.self, forKey: key) else {
+            return nil
+        }
+        return T(rawValue: rawValue)
+    }
+
+    private static func decodeBindingPreference(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) -> CanvasPreferencesState.BindingPreference? {
+        if let value = decodeStringEnum(
+            CanvasPreferencesState.BindingPreference.self,
+            from: container,
+            forKey: key
+        ) {
+            return value
+        }
+        if let boolValue = decodeBool(from: container, forKey: key) {
+            return boolValue ? .enabled : .disabled
+        }
+        return nil
+    }
+
+    private static func decodeBool(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) -> Bool? {
+        if let value = try? container.decodeIfPresent(Bool.self, forKey: key) {
+            return value
+        }
+        if let value = try? container.decodeIfPresent(Int.self, forKey: key) {
+            return value != 0
+        }
+        if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
+            return value != 0
+        }
+        guard let rawValue = try? container.decodeIfPresent(String.self, forKey: key) else {
+            return nil
+        }
+        switch rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "true", "yes", "1", "enabled", "on":
+                return true
+            case "false", "no", "0", "disabled", "off":
+                return false
+            default:
+                return nil
+        }
     }
 }

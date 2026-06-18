@@ -11,7 +11,12 @@ extension AdjustElementsMiddleware {
         createdElementIds: inout [String]
     ) throws {
         let result = try hydrateWrapOp(op, existingElements: elements)
-        elements.append(contentsOf: result.elements)
+        guard let wrapper = result.elements.first else {
+            return
+        }
+        let insertIndex = min(max(result.backgroundInsertIndex, 0), elements.count)
+        elements.insert(wrapper, at: insertIndex)
+        elements.append(contentsOf: result.elements.dropFirst())
         createdElementIds.append(contentsOf: result.elements.map(\.id))
     }
 
@@ -87,7 +92,8 @@ extension AdjustElementsMiddleware {
         }
 
         return WrapOpResult(
-            elements: createdElements
+            elements: createdElements,
+            backgroundInsertIndex: targetIndexes.min() ?? existingElements.count
         )
     }
 

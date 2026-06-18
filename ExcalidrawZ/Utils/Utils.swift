@@ -599,6 +599,11 @@ func exportPDF(name: String, svgURL: URL) async {
     await webView.print(fileURL: svgURL)
 }
 
+func renderPDFData(from svgURL: URL, filename: String) async throws -> Data {
+    let webView = await PrinterWebView(filename: filename)
+    return try await webView.exportPDFData(fileURL: svgURL)
+}
+
 func exportPDF(image: NSImage, name: String? = nil) {
     let printInfo = NSPrintInfo.shared
     printInfo.topMargin = 0
@@ -634,6 +639,11 @@ func exportPDF(image: NSImage, name: String? = nil) {
 func exportPDF(name: String, svgURL: URL) async -> URL? {
     let webView = await PrinterWebView(filename: name)
     return await webView.exportPDF(fileURL: svgURL)
+}
+
+func renderPDFData(from svgURL: URL, filename: String) async throws -> Data {
+    let webView = await PrinterWebView(filename: filename)
+    return try await webView.exportPDFData(fileURL: svgURL)
 }
 
 func exportPDF(image: UIImage, name: String? = nil, to url: URL? = nil) throws -> URL {

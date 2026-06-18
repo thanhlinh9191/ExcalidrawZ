@@ -205,7 +205,10 @@ private extension NavigateCanvasTool {
                     throw ToolError.invalidInput("Missing camera payload for set_camera.")
                 }
                 try await coordinator.setCamera(camera)
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterMutation(
+                    using: coordinator,
+                    expected: camera
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -214,8 +217,14 @@ private extension NavigateCanvasTool {
                 )
 
             case .scrollToCenter:
+                let beforeCamera = try await coordinator.getCamera()
                 try await coordinator.scrollToCenter()
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterComputedMutation(
+                    using: coordinator,
+                    before: beforeCamera,
+                    animate: payload.options?.animate ?? true,
+                    duration: payload.options?.duration ?? 300
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -227,18 +236,26 @@ private extension NavigateCanvasTool {
                 guard let elementId = payload.elementId, !elementId.isEmpty else {
                     throw ToolError.invalidInput("Missing elementId for scroll_to_element.")
                 }
+                let animate = payload.options?.animate ?? true
+                let duration = payload.options?.duration ?? 300
+                let beforeCamera = try await coordinator.getCamera()
                 try await coordinator.scrollToElement(
                     id: elementId,
                     options: .init(
                         mode: payload.options?.mode ?? .fitContent,
-                        animate: payload.options?.animate ?? true,
-                        duration: payload.options?.duration ?? 300,
+                        animate: animate,
+                        duration: duration,
                         viewportZoomFactor: payload.options?.viewportZoomFactor,
                         minZoom: payload.options?.minZoom,
                         maxZoom: payload.options?.maxZoom
                     )
                 )
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterComputedMutation(
+                    using: coordinator,
+                    before: beforeCamera,
+                    animate: animate,
+                    duration: duration
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -247,14 +264,22 @@ private extension NavigateCanvasTool {
                 )
 
             case .zoomToFit:
+                let animate = payload.options?.animate ?? true
+                let duration = payload.options?.duration ?? 300
+                let beforeCamera = try await coordinator.getCamera()
                 try await coordinator.zoomToFit(
                     options: .init(
-                        animate: payload.options?.animate ?? true,
-                        duration: payload.options?.duration ?? 300,
+                        animate: animate,
+                        duration: duration,
                         viewportZoomFactor: payload.options?.viewportZoomFactor ?? 0.9
                     )
                 )
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterComputedMutation(
+                    using: coordinator,
+                    before: beforeCamera,
+                    animate: animate,
+                    duration: duration
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -266,15 +291,23 @@ private extension NavigateCanvasTool {
                 guard let elementIds = payload.elementIds, !elementIds.isEmpty else {
                     throw ToolError.invalidInput("Missing elementIds for zoom_to_fit_elements.")
                 }
+                let animate = payload.options?.animate ?? true
+                let duration = payload.options?.duration ?? 300
+                let beforeCamera = try await coordinator.getCamera()
                 try await coordinator.zoomToFitElements(
                     ids: elementIds,
                     options: .init(
-                        animate: payload.options?.animate ?? true,
-                        duration: payload.options?.duration ?? 300,
+                        animate: animate,
+                        duration: duration,
                         viewportZoomFactor: payload.options?.viewportZoomFactor ?? 0.9
                     )
                 )
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterComputedMutation(
+                    using: coordinator,
+                    before: beforeCamera,
+                    animate: animate,
+                    duration: duration
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -287,7 +320,10 @@ private extension NavigateCanvasTool {
                     throw ToolError.invalidInput("Missing zoom for zoom_to.")
                 }
                 try await coordinator.zoomTo(zoom)
-                let latestCamera = try await coordinator.getCamera()
+                let latestCamera = try await cameraAfterMutation(
+                    using: coordinator,
+                    expected: .init(zoom: zoom)
+                )
                 return ToolOutput(
                     ok: true,
                     action: payload.action.rawValue,
@@ -295,5 +331,83 @@ private extension NavigateCanvasTool {
                     camera: latestCamera
                 )
         }
+    }
+
+    @MainActor
+    func cameraAfterMutation(
+        using coordinator: ExcalidrawCanvasView.Coordinator,
+        expected: ExcalidrawCore.CameraPatch
+    ) async throws -> ExcalidrawCore.CameraState {
+        let deadline = Date().addingTimeInterval(0.6)
+        var latestCamera = try await coordinator.getCamera()
+        while Date() < deadline {
+            if camera(latestCamera, matches: expected) {
+                return latestCamera
+            }
+            try await Task.sleep(nanoseconds: 50_000_000)
+            latestCamera = try await coordinator.getCamera()
+        }
+        return latestCamera
+    }
+
+    @MainActor
+    func cameraAfterComputedMutation(
+        using coordinator: ExcalidrawCanvasView.Coordinator,
+        before beforeCamera: ExcalidrawCore.CameraState,
+        animate: Bool,
+        duration: Int
+    ) async throws -> ExcalidrawCore.CameraState {
+        let animationSeconds = animate ? max(Double(duration), 0) / 1000 : 0
+        let timeout = max(0.35, min(animationSeconds + 0.4, 2.0))
+        let deadline = Date().addingTimeInterval(timeout)
+        var latestCamera = try await coordinator.getCamera()
+        var previousCamera = latestCamera
+        var stableSampleCount = 0
+
+        while Date() < deadline {
+            try await Task.sleep(nanoseconds: 50_000_000)
+            latestCamera = try await coordinator.getCamera()
+
+            if camera(latestCamera, approximatelyMatches: previousCamera) {
+                stableSampleCount += 1
+            } else {
+                stableSampleCount = 0
+            }
+
+            if stableSampleCount >= 2,
+               !camera(latestCamera, approximatelyMatches: beforeCamera) {
+                return latestCamera
+            }
+
+            previousCamera = latestCamera
+        }
+
+        return latestCamera
+    }
+
+    func camera(_ camera: ExcalidrawCore.CameraState, matches patch: ExcalidrawCore.CameraPatch) -> Bool {
+        if let scrollX = patch.scrollX, !approximatelyEqual(camera.scrollX, scrollX) {
+            return false
+        }
+        if let scrollY = patch.scrollY, !approximatelyEqual(camera.scrollY, scrollY) {
+            return false
+        }
+        if let zoom = patch.zoom, !approximatelyEqual(camera.zoom, zoom) {
+            return false
+        }
+        return true
+    }
+
+    func camera(
+        _ lhs: ExcalidrawCore.CameraState,
+        approximatelyMatches rhs: ExcalidrawCore.CameraState
+    ) -> Bool {
+        approximatelyEqual(lhs.scrollX, rhs.scrollX) &&
+        approximatelyEqual(lhs.scrollY, rhs.scrollY) &&
+        approximatelyEqual(lhs.zoom, rhs.zoom)
+    }
+
+    func approximatelyEqual(_ lhs: Double, _ rhs: Double, tolerance: Double = 0.0001) -> Bool {
+        abs(lhs - rhs) <= tolerance
     }
 }

@@ -10,9 +10,18 @@ import Foundation
 actor ExcalidrawMCPToolRouter {
     private let store: ExcalidrawMCPDiagramSessionStore
     private var elementConverter: ExcalidrawMCPUpstreamToolHandler.ElementConverter?
+    private var serviceMode: ExcalidrawMCPServiceMode
 
-    init(store: ExcalidrawMCPDiagramSessionStore = ExcalidrawMCPDiagramSessionStore()) {
+    init(
+        serviceMode: ExcalidrawMCPServiceMode = .basic,
+        store: ExcalidrawMCPDiagramSessionStore = ExcalidrawMCPDiagramSessionStore()
+    ) {
+        self.serviceMode = serviceMode
         self.store = store
+    }
+
+    func setServiceMode(_ mode: ExcalidrawMCPServiceMode) {
+        serviceMode = mode
     }
 
     func setSessionUpdateHandler(
@@ -58,7 +67,7 @@ actor ExcalidrawMCPToolRouter {
                 return .object([:])
             case "tools/list":
                 return .object([
-                    "tools": .array(ExcalidrawMCPUpstreamToolCatalog.tools.map(\.jsonValue))
+                    "tools": .array(toolsForCurrentMode.map(\.jsonValue))
                 ])
             case "tools/call":
                 return try await callTool(params: request.params)
@@ -80,7 +89,7 @@ actor ExcalidrawMCPToolRouter {
                 ) as? String ?? "0")
             ]),
             "instructions": .string(
-                "Use read_me first, then create_view with Excalidraw elements JSON."
+                instructionsForCurrentMode
             )
         ])
     }
@@ -92,11 +101,39 @@ actor ExcalidrawMCPToolRouter {
             throw MCPJSONRPCError.invalidParams("tools/call requires params.name.")
         }
 
-        let result = try await makeUpstreamToolHandler().callTool(
-            name: name,
-            arguments: object["arguments"]?.objectValue ?? [:]
-        )
+        let arguments = object["arguments"]?.objectValue ?? [:]
+        let result: ExcalidrawMCPToolResult
+        switch serviceMode {
+            case .basic:
+                result = try await makeUpstreamToolHandler().callTool(
+                    name: name,
+                    arguments: arguments
+                )
+            case .optimized:
+                result = try await makeOptimizedToolHandler().callTool(
+                    name: name,
+                    arguments: arguments
+                )
+        }
         return result.jsonValue
+    }
+
+    private var toolsForCurrentMode: [ExcalidrawMCPTool] {
+        switch serviceMode {
+            case .basic:
+                return ExcalidrawMCPUpstreamToolCatalog.tools
+            case .optimized:
+                return ExcalidrawMCPOptimizedToolCatalog.tools
+        }
+    }
+
+    private var instructionsForCurrentMode: String {
+        switch serviceMode {
+            case .basic:
+                return "Use read_me first, then create_view with Excalidraw elements JSON."
+            case .optimized:
+                return ExcalidrawMCPOptimizedContract.instructions
+        }
     }
 
     private func makeUpstreamToolHandler() -> ExcalidrawMCPUpstreamToolHandler {
@@ -108,10 +145,11 @@ actor ExcalidrawMCPToolRouter {
                 }
                 return try await converter(elements)
             },
-            publishDiagram: { [store] elements, sourceElementCount in
+            publishDiagram: { [store] elements, sourceElementCount, viewportUpdate in
                 let session = try await store.publishSession(
                     elements: elements,
-                    sourceElementCount: sourceElementCount
+                    sourceElementCount: sourceElementCount,
+                    viewportUpdate: viewportUpdate
                 )
                 return ExcalidrawMCPUpstreamToolHandler.PublishedDiagram(
                     checkpointID: session.checkpointID
@@ -125,6 +163,62 @@ actor ExcalidrawMCPToolRouter {
             },
             readCheckpointElements: { [store] id in
                 await store.checkpoint(id: id)?.elements
+            }
+        )
+    }
+
+    private func makeOptimizedToolHandler() -> ExcalidrawMCPOptimizedToolHandler {
+        let converter = elementConverter
+        return ExcalidrawMCPOptimizedToolHandler(
+            convertRawElements: { elements in
+                guard let converter else {
+                    throw MCPJSONRPCError.internalError("MCP element converter is unavailable.")
+                }
+                return try await converter(elements)
+            },
+            publishDiagram: { [store] elements, sourceElementCount, viewportUpdate, clientUpdateID in
+                try await ExcalidrawMCPAppBridge.shared.ensureOptimizedUpdateViewAllowed()
+                let session = try await store.publishSession(
+                    elements: elements,
+                    sourceElementCount: sourceElementCount,
+                    viewportUpdate: viewportUpdate,
+                    notifiesUpdateHandler: false
+                )
+                let applyResult = try await ExcalidrawMCPAppBridge.shared.apply(
+                    session,
+                    clientUpdateID: clientUpdateID
+                )
+                return ExcalidrawMCPOptimizedToolHandler.PublishedDiagram(
+                    appPreCheckpointID: applyResult.preCheckpointID?.uuidString,
+                    appPostCheckpointID: applyResult.postCheckpointID?.uuidString,
+                    appCheckpointWarning: applyResult.checkpointWarning
+                )
+            },
+            readCheckpointElements: { [store] id in
+                await store.checkpoint(id: id)?.elements
+            },
+            getAppContext: {
+                await ExcalidrawMCPAppBridge.shared.optimizedAppContext()
+            },
+            readView: { options in
+                try await ExcalidrawMCPAppBridge.shared.optimizedReadView(
+                    options: options
+                )
+            },
+            createFile: { name in
+                try await ExcalidrawMCPAppBridge.shared.optimizedCreateFile(
+                    name: name
+                )
+            },
+            openFile: { fileID in
+                try await ExcalidrawMCPAppBridge.shared.optimizedOpenFile(
+                    fileID: fileID
+                )
+            },
+            setCanvasPreferences: { update in
+                try await ExcalidrawMCPAppBridge.shared.optimizedSetCanvasPreferences(
+                    update
+                )
             }
         )
     }

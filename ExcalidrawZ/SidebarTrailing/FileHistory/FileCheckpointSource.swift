@@ -27,6 +27,17 @@ enum FileCheckpointSource: String {
     /// Snapshot taken right *after* an AI turn finishes successfully.
     /// Message ownership is recorded in `AIMessageCheckpointLink`.
     case aiPost = "ai_post"
+
+    /// Snapshot taken right before an Optimized MCP update mutates the active
+    /// file. Not linked to an AI chat message.
+    case mcpPre = "mcp_pre"
+
+    /// Snapshot taken right after an Optimized MCP update mutates the active
+    /// file. Not linked to an AI chat message.
+    case mcpPost = "mcp_post"
+
+    /// Snapshot taken right after a checkpoint restore finishes.
+    case restorePost = "restore_post"
 }
 
 extension FileCheckpointRepresentable {
@@ -38,12 +49,12 @@ extension FileCheckpointRepresentable {
         return parsed
     }
 
-    /// Whether this checkpoint was created by the AI integration (either
-    /// pre or post).
+    /// Whether this checkpoint was created by an automated integration
+    /// boundary rather than normal user editing.
     var isAIGenerated: Bool {
         switch checkpointSource {
             case .user: return false
-            case .aiPre, .aiPost: return true
+            case .aiPre, .aiPost, .mcpPre, .mcpPost, .restorePost: return true
         }
     }
 }

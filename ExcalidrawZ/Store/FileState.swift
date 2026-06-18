@@ -408,6 +408,17 @@ final class FileState: ObservableObject {
     /// (pre, post) pair anchored to that message round.
     @Published var aiChatSession: AIChatSessionState?
 
+    /// Nested MCP mutation depth. While non-zero, normal canvas save paths
+    /// still persist file content but must not create user-edit checkpoints;
+    /// the MCP bridge writes explicit `.mcpPre` / `.mcpPost` rows instead.
+    var mcpCheckpointSuppressionDepth: Int = 0
+
+    /// Shared guard for automated mutation sessions that manage their own
+    /// explicit checkpoint boundaries.
+    var automaticCheckpointWritesSuppressed: Bool {
+        aiChatSession != nil || mcpCheckpointSuppressionDepth > 0
+    }
+
     struct AIChatSessionState: Equatable {
         /// Conversation id this session belongs to. Surfaced for sanity
         /// checks (the conversation could in theory change mid-session
@@ -646,6 +657,7 @@ final class FileState: ObservableObject {
         }
         let didUpdateFile = didUpdateFlag
         let id = file.objectID
+        let suppressCheckpoint = automaticCheckpointWritesSuppressed
         self.didUpdateFileState[activeFile] = true
         Task.detached {
             do {
@@ -658,15 +670,13 @@ final class FileState: ObservableObject {
                 )
                 
                 // Step 2: Update file elements through repository.
-                // Checkpoint policy: suppress entirely while an AI chat
-                // session is active (so AI-driven mutations don't pollute
-                // user history); otherwise fall back to historical
+                // Checkpoint policy: suppress entirely while an AI/MCP
+                // mutation session is active (so automated mutations don't
+                // pollute user history); otherwise fall back to historical
                 // user-edit semantics.
-                let checkpointPolicy: CheckpointWriteOptions = await MainActor.run {
-                    self.aiChatSession != nil
-                        ? .suppress
-                        : .userEdit(newCheckpoint: !didUpdateFile)
-                }
+                let checkpointPolicy: CheckpointWriteOptions = suppressCheckpoint
+                    ? .suppress
+                    : .userEdit(newCheckpoint: !didUpdateFile)
                 try await PersistenceController.shared.fileRepository.updateElements(
                     fileObjectID: id,
                     fileData: content,
@@ -725,10 +735,12 @@ final class FileState: ObservableObject {
         guard let data = excalidrawFile.content else { return }
         try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
 
-        // Skip checkpoint writes entirely while an AI chat session is
-        // active — file content still saves, history doesn't. Mirrors the
+        // Skip checkpoint writes entirely while an automated mutation session
+        // is active — file content still saves, history doesn't. Mirrors the
         // database-file path's `.suppress` policy.
-        let suppressCheckpoint = await MainActor.run { self.aiChatSession != nil }
+        let suppressCheckpoint = await MainActor.run {
+            self.automaticCheckpointWritesSuppressed
+        }
         if suppressCheckpoint {
             await MainActor.run { self.didUpdateFile = true }
             return

@@ -131,7 +131,10 @@ struct AdjustElementsTool: Tool {
             canvasTarget: adjustContext.canvasTarget,
             dryRun: payload.dryRun ?? false
         )
-        let outputSurface = ToolOutputSurface(canvasTarget: adjustContext.canvasTarget)
+        let outputSurface = ToolOutputSurface(
+            canvasTarget: adjustContext.canvasTarget,
+            dryRun: payload.dryRun ?? false
+        )
         let proposalSourceInput = proposal == nil ? nil : ToolOutputJSONValue.parseObject(from: input)
 
         let output = ToolOutput(
@@ -143,6 +146,7 @@ struct AdjustElementsTool: Tool {
             opCount: payload.ops.count,
             opCounts: result.opCounts,
             mermaidResults: canvasResults.mermaidResults.isEmpty ? nil : canvasResults.mermaidResults,
+            latexResults: canvasResults.latexResults.isEmpty ? nil : canvasResults.latexResults,
             skeletonResults: canvasResults.skeletonResults.isEmpty ? nil : canvasResults.skeletonResults,
             connectResults: canvasResults.connectResults.isEmpty ? nil : canvasResults.connectResults,
             proposalSummary: Self.makeProposalSummary(
@@ -283,6 +287,7 @@ private struct ToolOutput: Encodable {
     let opCount: Int
     let opCounts: [String: Int]
     let mermaidResults: [ExcalidrawCore.MermaidInsertResult]?
+    let latexResults: [LatexInsertResult]?
     let skeletonResults: [ExcalidrawCore.SkeletonInsertResult]?
     let connectResults: [ExcalidrawCore.ConnectElementsResult]?
     let proposalSummary: String?
@@ -411,8 +416,11 @@ private struct ToolOutputSurface {
     let canvasTarget: String
     let assistantInstruction: String
 
-    init(canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget) {
-        if canvasTarget.targetsProposalCanvas {
+    init(canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget, dryRun: Bool) {
+        if dryRun {
+            self.canvasTarget = canvasTarget.targetsProposalCanvas ? "proposal" : "user_document"
+            self.assistantInstruction = "Dry run only. No canvas changes were applied."
+        } else if canvasTarget.targetsProposalCanvas {
             self.canvasTarget = "proposal"
             self.assistantInstruction = "The changes were created on an AI proposal canvas, not in the user's file. Tell the user this is a proposal and that they can Apply it if they want it. Do not say the file or user canvas has been updated unless the user applies it."
         } else {
@@ -424,8 +432,14 @@ private struct ToolOutputSurface {
 
 struct CanvasApplyResult {
     var mermaidResults: [ExcalidrawCore.MermaidInsertResult] = []
+    var latexResults: [LatexInsertResult] = []
     var skeletonResults: [ExcalidrawCore.SkeletonInsertResult] = []
     var connectResults: [ExcalidrawCore.ConnectElementsResult] = []
+}
+
+struct LatexInsertResult: Codable, Hashable {
+    var elementCount: Int
+    var durationMs: Double
 }
 
 struct ToolInput: Decodable {
@@ -544,6 +558,7 @@ enum Operation: Decodable {
     case delete(DeleteOp)
     case wrap(WrapOp)
     case mermaid(MermaidOp)
+    case latex(LatexOp)
     case connect(ConnectOp)
 
     var kind: String {
@@ -556,6 +571,7 @@ enum Operation: Decodable {
             case .delete: return "delete"
             case .wrap: return "wrap"
             case .mermaid: return "mermaid"
+            case .latex: return "latex"
             case .connect: return "connect"
         }
     }
@@ -584,6 +600,8 @@ enum Operation: Decodable {
                 self = .wrap(try WrapOp(from: decoder))
             case "mermaid":
                 self = .mermaid(try MermaidOp(from: decoder))
+            case "latex", "math":
+                self = .latex(try LatexOp(from: decoder))
             case "connect":
                 self = .connect(try ConnectOp(from: decoder))
             default:
@@ -671,6 +689,12 @@ struct MermaidOp: Decodable {
     let captureUpdate: ExcalidrawCore.CaptureUpdate?
 }
 
+struct LatexOp: Decodable {
+    let op: String
+    let latex: String
+    let color: String?
+}
+
 struct ConnectOp: Decodable {
     let op: String
     let from: String
@@ -689,6 +713,12 @@ struct SkeletonInsertAction {
     let files: [String: ExcalidrawCore.JSONValue]?
     let captureUpdate: ExcalidrawCore.CaptureUpdate?
     let sanitize: Bool?
+}
+
+extension SkeletonInsertAction {
+    var inputElementReferenceIds: [String] {
+        skeletons.skeletonInputElementIds()
+    }
 }
 
 struct ElementSkeleton: Decodable {
@@ -760,8 +790,42 @@ struct AdjustmentResult {
 
 enum CanvasAction {
     case insertMermaid(MermaidOp)
+    case insertLatex(LatexOp)
     case insertSkeleton(SkeletonInsertAction)
     case connect(ConnectOp)
+
+    var pendingElementReferenceIds: [String] {
+        switch self {
+            case .insertSkeleton(let action):
+                return action.inputElementReferenceIds
+            case .insertMermaid, .insertLatex, .connect:
+                return []
+        }
+    }
+}
+
+private extension ExcalidrawCore.JSONValue {
+    func skeletonInputElementIds() -> [String] {
+        switch self {
+            case .array(let values):
+                return values.compactMap(\.directSkeletonInputElementId)
+            case .object(_):
+                return directSkeletonInputElementId.map { [$0] } ?? []
+            case .string(_), .number(_), .bool(_), .null:
+                return []
+        }
+    }
+
+    var directSkeletonInputElementId: String? {
+        guard case .object(let object) = self,
+              case .string? = object["type"],
+              case .string(let id)? = object["id"]
+        else {
+            return nil
+        }
+        let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 /// Result of hydrating an `add` op: the new element plus any boundElements
@@ -784,11 +848,11 @@ struct PatchResult {
     let touchedParentIDs: [String]
 }
 
-/// Result of hydrating a `wrap` op. We add wrapper elements incrementally
-/// instead of full-replacing the scene, so consecutive tool calls don't erase
-/// elements that the WebView has applied before Swift file state catches up.
+/// Result of hydrating a `wrap` op. The wrapper itself must sit behind its
+/// targets, so callers use the insertion index with a full scene replace.
 struct WrapOpResult {
     let elements: [ExcalidrawElement]
+    let backgroundInsertIndex: Int
 }
 
 struct AddLabeledShapeOpResult {
@@ -813,73 +877,87 @@ struct AdjustElementsMiddleware {
         var updatedElementIds: [String] = []
         var deletedElementIds: [String] = []
         var canvasActions: [CanvasAction] = []
-        let requiresFullReplace = false
+        var pendingCanvasElementIds = Set<String>()
+        var requiresFullReplace = false
 
         let opCounts = payload.ops.reduce(into: [String: Int]()) { partial, op in
             partial[op.kind, default: 0] += 1
         }
 
-        for op in payload.ops {
-            switch op {
-                case .add(let addOp):
-                    try await applyAddOp(
-                        addOp,
-                        elements: &elements,
-                        canvasActions: &canvasActions
-                    )
+        for (index, op) in payload.ops.enumerated() {
+            do {
+                switch op {
+                    case .add(let addOp):
+                        let actionStartIndex = canvasActions.count
+                        try await applyAddOp(
+                            addOp,
+                            elements: &elements,
+                            canvasActions: &canvasActions
+                        )
+                        for action in canvasActions.dropFirst(actionStartIndex) {
+                            pendingCanvasElementIds.formUnion(action.pendingElementReferenceIds)
+                        }
 
-                case .addLabeledShape(let addLabeledShapeOp):
-                    try applyAddLabeledShapeOp(
-                        addLabeledShapeOp,
-                        elements: &elements,
-                        createdElementIds: &createdElementIds
-                    )
+                    case .addLabeledShape(let addLabeledShapeOp):
+                        try applyAddLabeledShapeOp(
+                            addLabeledShapeOp,
+                            elements: &elements,
+                            createdElementIds: &createdElementIds
+                        )
 
-                case .update(let updateOp):
-                    try applyUpdateOp(
-                        updateOp,
-                        elements: &elements,
-                        updatedElementIds: &updatedElementIds
-                    )
+                    case .update(let updateOp):
+                        try applyUpdateOp(
+                            updateOp,
+                            elements: &elements,
+                            updatedElementIds: &updatedElementIds
+                        )
 
-                case .move(let moveOp):
-                    try applyMoveOp(
-                        moveOp,
-                        elements: &elements,
-                        updatedElementIds: &updatedElementIds
-                    )
+                    case .move(let moveOp):
+                        try applyMoveOp(
+                            moveOp,
+                            elements: &elements,
+                            updatedElementIds: &updatedElementIds
+                        )
 
-                case .resize(let resizeOp):
-                    try applyResizeOp(
-                        resizeOp,
-                        elements: &elements,
-                        updatedElementIds: &updatedElementIds
-                    )
+                    case .resize(let resizeOp):
+                        try applyResizeOp(
+                            resizeOp,
+                            elements: &elements,
+                            updatedElementIds: &updatedElementIds
+                        )
 
-                case .delete(let deleteOp):
-                    try applyDeleteOp(
-                        deleteOp,
-                        elements: &elements,
-                        deletedElementIds: &deletedElementIds
-                    )
+                    case .delete(let deleteOp):
+                        try applyDeleteOp(
+                            deleteOp,
+                            elements: &elements,
+                            deletedElementIds: &deletedElementIds
+                        )
 
-                case .wrap(let wrapOp):
-                    try applyWrapOp(
-                        wrapOp,
-                        elements: &elements,
-                        createdElementIds: &createdElementIds
-                    )
+                    case .wrap(let wrapOp):
+                        requiresFullReplace = true
+                        try applyWrapOp(
+                            wrapOp,
+                            elements: &elements,
+                            createdElementIds: &createdElementIds
+                        )
 
-                case .mermaid(let mermaidOp):
-                    try applyMermaidOp(mermaidOp, canvasActions: &canvasActions)
+                    case .mermaid(let mermaidOp):
+                        try applyMermaidOp(mermaidOp, canvasActions: &canvasActions)
 
-                case .connect(let connectOp):
-                    try applyConnectOp(
-                        connectOp,
-                        elements: elements,
-                        canvasActions: &canvasActions
-                    )
+                    case .latex(let latexOp):
+                        try applyLatexOp(latexOp, canvasActions: &canvasActions)
 
+                    case .connect(let connectOp):
+                        try applyConnectOp(
+                            connectOp,
+                            elements: elements,
+                            pendingElementIds: pendingCanvasElementIds,
+                            canvasActions: &canvasActions
+                        )
+
+                }
+            } catch {
+                throw OperationExecutionError(index: index, kind: op.kind, underlying: error)
             }
         }
 
@@ -902,6 +980,17 @@ extension AdjustElementsMiddleware {
     struct AdjustmentError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
+    }
+
+    struct OperationExecutionError: LocalizedError {
+        let index: Int
+        let kind: String
+        let underlying: Error
+
+        var errorDescription: String? {
+            let detail = (underlying as? LocalizedError)?.errorDescription ?? underlying.localizedDescription
+            return "Operation #\(index + 1) (\(kind)) failed: \(detail)"
+        }
     }
 
     func indexOfElement(_ id: String, in elements: [ExcalidrawElement]) throws -> Int {

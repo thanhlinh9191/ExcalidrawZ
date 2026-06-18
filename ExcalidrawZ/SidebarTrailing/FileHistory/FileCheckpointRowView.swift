@@ -136,12 +136,27 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
     /// normal checkpoint rather than an AI-produced result.
     @ViewBuilder
     private var sourceBadge: some View {
-        if checkpoint.checkpointSource == .aiPost {
+        switch checkpoint.checkpointSource {
+        case .aiPost:
             BadgeLabel(
                 text: "AI",
                 icon: .sparkles,
                 tint: .accentColor
             )
+        case .mcpPost:
+            BadgeLabel(
+                text: "MCP",
+                icon: .sparkles,
+                tint: .accentColor
+            )
+        case .restorePost:
+            BadgeLabel(
+                text: "Restore",
+                icon: .arrowCounterclockwise,
+                tint: .accentColor
+            )
+        case .user, .aiPre, .mcpPre:
+            EmptyView()
         }
     }
 }

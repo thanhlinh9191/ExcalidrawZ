@@ -12,7 +12,19 @@ extension AdjustElementsMiddleware {
     ) throws {
         let index = try indexOfElement(op.id, in: elements)
         elements[index] = try moveElement(elements[index], dx: op.dx, dy: op.dy)
-        updatedElementIds.append(op.id)
+        appendUpdatedElementID(op.id, to: &updatedElementIds)
+
+        if case .generic(let container) = elements[index] {
+            let labelIDs = moveBoundLabels(
+                for: container,
+                dx: op.dx,
+                dy: op.dy,
+                elements: &elements
+            )
+            for labelID in labelIDs {
+                appendUpdatedElementID(labelID, to: &updatedElementIds)
+            }
+        }
     }
 
     func moveElement(_ element: ExcalidrawElement, dx: Double, dy: Double) throws -> ExcalidrawElement {
