@@ -177,7 +177,7 @@ struct ExcalidrawMCPLLMCoreToolAdapter: Sendable {
         let hasCheckpoint = preCheckpointID != nil || postCheckpointID != nil
         let status = hasCheckpoint ? "recorded" : "unavailable"
         let summary = if hasCheckpoint {
-            "App file-history checkpoints recorded. Call get_checkpoints to retrieve their ids."
+            "App file-history checkpoints recorded. Call get_current_file_checkpoints to retrieve their ids."
         } else {
             "App file-history checkpoints unavailable for this target."
         }

@@ -75048,6 +75048,72 @@
         }
       }
     },
+    "settingsAIMCPClaudeDesktopConfigLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop config"
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeDesktopConfigPathLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Config file location"
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeDesktopGuideMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop can connect to ExcalidrawZ through the local HTTP MCP endpoint. Keep ExcalidrawZ open and enable the MCP Server first."
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeDesktopGuideSteps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Claude Desktop, open Settings > Developer > Edit Config. Paste the configuration below, save the file, then restart Claude Desktop."
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeDesktopOpenConfigButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Config"
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeDesktopRevealFolderButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveal Folder"
+          }
+        }
+      }
+    },
     "settingsAIMCPHTTPConfigLabel": {
       "extractionState": "manual",
       "localizations": {
@@ -75845,108 +75911,108 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Matches the upstream excalidraw-mcp tool flow for broad compatibility with MCP clients."
+            "value": "Basic canvas content generation."
           }
         },
         "ar": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "يتوافق مع تدفق الأدوات excalidraw-mcp القياسي للحصول على توافق واسع مع عملاء MCP."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Entspricht dem upstream excalidraw-mcp Werkzeugfluss für breite Kompatibilität mit MCP-Clients."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Coincide con el flujo de herramientas excalidraw-mcp de upstream para una amplia compatibilidad con clientes de MCP."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "S'adapte au flux d'outils standard d'excalidraw-mcp pour une large compatibilité avec les clients MCP."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "कई अनुकूलता के लिए अपस्ट्रीम excalidraw-mcp उपकरण प्रवाह से मेल खाता है।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Corrisponde al flusso di strumenti standard di excalidraw-mcp per una compatibilità ampia con i client MCP."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "広範なMCPクライアントとの互換性のために、上流のexcalidraw-mcpツールフローに一致します。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "광범위한 MCP 클라이언트와의 호환성을 위해 상류 excalidraw-mcp 도구 흐름과 일치합니다."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Komt overeen met de upstream excalidraw-mcp toolflow voor brede compatibiliteit met MCP-clients."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Dopasowuje przepływ narzędzi excalidraw-mcp do ogólnej kompatybilności z klientami MCP."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Correspondendo ao fluxo de ferramenta do excalidraw-mcp upstream para ampla compatibilidade com clientes MCP."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Совпадает с рабочим процессом инструмента excalidraw-mcp для широкой совместимости с клиентами MCP."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "ตรงกับกระบวนการเครื่องมือ excalidraw-mcp ของต้นน้ำเพื่อความเข้ากันได้ที่กว้างขวางกับลูกค้า MCP"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Geniş uyumluluk için upstream excalidraw-mcp araç akışına eşleşir."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Khớp với quy trình công cụ excalidraw-mcp phía am cho sự tương thích rộng rãi với các khách hàng MCP."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "与上游的 excalidraw-mcp 工具流程一致，以实现与 MCP 客户端的广泛兼容性。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "與上游 excalidraw-mcp 工具流程相符，以廣泛相容於 MCP 客戶端。"
           }
         }
@@ -76071,109 +76137,483 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Compare the standard excalidraw-mcp-compatible flow with the ExcalidrawZ-native interaction path."
+            "value": "Learn what Basic and Optimized MCP modes can do."
           }
         },
         "ar": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "قارن التدفق المتوافق مع excalidraw-mcp القياسي مع مسار التفاعل المعتمد على ExcalidrawZ."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Vergleichen Sie den standardmäßigen excalidraw-mcp-kompatiblen Fluss mit dem ExcalidrawZ-nativen Interaktionspfad."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Compara el flujo estándar compatible con excalidraw-mcp con la ruta de interacción nativa de ExcalidrawZ."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Comparez le flux compatible avec excalidraw-mcp standard avec le chemin d'interaction natif d'ExcalidrawZ."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "मानक excalidraw-mcp-संगत प्रवाह की तुलना ExcalidrawZ-नैटिव इंटरैक्शन पथ से करें।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Confronta il flusso compatibile con excalidraw-mcp standard con il percorso di interazione nativo di ExcalidrawZ."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "標準のexcalidraw-mcp互換フローとExcalidrawZネイティブのインタラクションパスを比較します。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "표준 excalidraw-mcp 호환 흐름과 ExcalidrawZ 기본 상호작용 경로를 비교합니다."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Vergelijk de standaard excalidraw-mcp-compatibele flow met het ExcalidrawZ-native interactiepad."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Porównaj standardowy przepływ kompatybilny z excalidraw-mcp z natywną ścieżką interakcji w ExcalidrawZ."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Compare o fluxo padrão compatível com excalidraw-mcp com o caminho de interação nativo do ExcalidrawZ."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Сравните стандартный совместимый с excalidraw-mcp поток с нативным путем взаимодействия ExcalidrawZ."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "เปรียบเทียบกระบวนการที่เข้ากันได้กับ excalidraw-mcp มาตรฐานกับเส้นทางการโต้ตอบแบบเนทีฟของ ExcalidrawZ"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Standard excalidraw-mcp uyumlu akışı, ExcalidrawZ yerel etkileşim yoluyla karşılaştırın."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "So sánh quy trình tương thích excalidraw-mcp tiêu chuẩn với con đường tương tác của ExcalidrawZ."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "将标准的 excalidraw-mcp 兼容流与 ExcalidrawZ 本地交互路径进行比较。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "比較標準的 excalidraw-mcp 相容流程與 ExcalidrawZ 本地互動路徑。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureBasicCompatibilityTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Client compatibility"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureBasicDrawingTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas drawing"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureBasicFocusTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas generation"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureBasicRevisionTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple revisions"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureBasicSceneTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene generation"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedAppToolsTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-level tools"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedAssistantTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistant workflow"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedCurrentFileTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current file editing"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedFileWorkflowTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File workflow"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedFocusTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow integration"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedCrossFileBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List, create, open, and switch between ExcalidrawZ files and authorized local files."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedCrossFileTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cross-file editing"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedExportBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export image, PDF, and .excalidraw artifacts from the current canvas."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedExportTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedIncrementalBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make targeted changes to existing canvases, which works better for complex files than replacing the whole view."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedIncrementalTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incremental changes"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedLibraryBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse and apply Excalidraw libraries and reusable items from the app."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedLibraryTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library compatibility"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedMathBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insert LaTeX formulas and function plots through ExcalidrawZ's native math renderer."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedMathTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Math tool"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedToolsBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use multiple native tools, including Mermaid, LaTeX formulas, function plots, canvas preferences, and precise element edits."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedToolsTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Powerful tools"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedVisualCheckBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the rendered canvas image after changes so the client can inspect layout, overlap, and readability."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedVisualCheckTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image-based checks"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeFeatureOptimizedHistoryTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File History"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonBasicBestFor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeps close compatibility with clients that already support excalidraw-mcp."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonBasicCanvasTools": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draws shapes, text, arrows, labels, colors, and camera framing."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonBasicDrawingFlow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creates a complete Excalidraw scene from a prompt."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonBasicHistory": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports simple revisions through MCP checkpoints."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonOptimizedBestFor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best when the client should work like an ExcalidrawZ-aware assistant, not just a diagram generator."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonOptimizedCanvasTools": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can inspect the rendered canvas, export files, change canvas preferences, navigate the view, use libraries, insert Mermaid, insert math, and patch elements."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonOptimizedDrawingFlow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edits the active ExcalidrawZ file directly instead of only creating a generated view."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonOptimizedFileAwareness": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can list, create, open, and confirm ExcalidrawZ files and authorized local files."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServiceModeComparisonOptimizedHistory": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records ExcalidrawZ File History around changes and can restore saved checkpoints."
           }
         }
       }
@@ -76184,108 +76624,108 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uses ExcalidrawZ-native MCP tools for deeper canvas control, file-aware context, and workflows built around this app."
+            "value": "Designed for full ExcalidrawZ workflows, from editing existing files to checking, exporting, and reusing app content."
           }
         },
         "ar": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "يستخدم أدوات MCP الأصلية لـ ExcalidrawZ للحصول على تحكم أعمق في اللوحة، وسياق مستوعب للملفات، وتدفقات عمل مبنية على هذا التطبيق."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Verwendet ExcalidrawZ-native MCP-Tools für tiefere Steuerung der Leinwand, dateibewussten Kontext und workflows, die um diese App herum aufgebaut sind."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Utiliza herramientas MCP nativas de ExcalidrawZ para un control más profundo del lienzo, contexto consciente de archivos y flujos de trabajo construidos en torno a esta aplicación."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Utilise des outils MCP natifs d'ExcalidrawZ pour un contrôle plus approfondi de la toile, un contexte conscient des fichiers et des flux de travail construits autour de cette application."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "गहरे कैनवास नियंत्रण, फ़ाइल-जानकारी संदर्भ, और इस ऐप के चारों ओर निर्मित कार्यप्रवाहों के लिए ExcalidrawZ-नैटिव MCP उपकरणों का उपयोग करता है।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Utilizza strumenti MCP nativi di ExcalidrawZ per un controllo più profondo della tela, contesto consapevole dei file e flussi di lavoro costruiti attorno a questa app."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "ExcalidrawZネイティブのMCPツールを使用して、より深いキャンバス制御、ファイル対応のコンテキスト、およびこのアプリに基づいて構築されたワークフローを実現します。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "ExcalidrawZ 기본 MCP 도구를 사용하여 더 깊은 캔버스 제어, 파일 인식 контекст 및 이 앱을 중심으로 구축된 워크플로를 제공합니다."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Maakt gebruik van ExcalidrawZ-native MCP-tools voor diepere canvasbesturing, context bewust van bestanden, en workflows die rond deze app zijn opgebouwd."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Używa natywnych narzędzi MCP ExcalidrawZ dla głębszej kontroli nad płótnem, kontekstu świadomego pliku oraz przepływów pracy zbudowanych wokół tej aplikacji."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Usa ferramentas MCP nativas do ExcalidrawZ para um controle mais profundo do canvas, contexto consciente de arquivos e fluxos de trabalho construídos em torno deste aplicativo."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Использует нативные инструменты MCP ExcalidrawZ для более глубокого контроля холста, контекста, осведомленного о файлах, и рабочих процессов, построенных вокруг этого приложения."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "ใช้เครื่องมือ MCP แบบเนทีฟของ ExcalidrawZ สำหรับการควบคุมผืนผ้าใบที่ลึกซึ้งยิ่งขึ้น บริบทที่รู้จักไฟล์ และกระบวนการทำงานที่สร้างขึ้นรอบแอปนี้"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Derin tuval kontrolü, dosya bilgilendirilmiş bağlam ve bu uygulama etrafında kurulmuş iş akışları için ExcalidrawZ yerel MCP araçlarını kullanır."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "Sử dụng các công cụ MCP bản địa của ExcalidrawZ để kiểm soát canvas sâu hơn, ngữ cảnh dựa trên tệp và quy trình làm việc được xây dựng xung quanh ứng dụng này."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "使用 ExcalidrawZ 本地 MCP 工具以更深层次的画布控制、文件感知上下文和围绕该应用构建的工作流。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "translated",
+            "state": "needs_review",
             "value": "使用 ExcalidrawZ 本地的 MCP 工具，提供更深入的畫布控制、檔案感知上下文和圍繞本應用構建的工作流程。"
           }
         }
@@ -122621,6 +123061,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "滑鼠和觸控板控制"
+          }
+        }
+      }
+    },
+    "whatsNewBetterMathToolDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create and edit LaTeX formulas and function plots with live previews, templates, colors, and AI-assisted generation."
+          }
+        }
+      }
+    },
+    "whatsNewBetterMathToolTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Better Math Tool"
+          }
+        }
+      }
+    },
+    "whatsNewMCPServicesDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect ExcalidrawZ to MCP clients. Basic mode matches excalidraw-mcp, while Optimized mode can edit files, inspect the canvas, use libraries, and export results."
+          }
+        }
+      }
+    },
+    "whatsNewMCPServicesTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Services"
+          }
+        }
+      }
+    },
+    "whatsNewCustomToolOrderDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reorder drawing tools in Settings. The toolbar layout and number shortcuts follow your custom order."
+          }
+        }
+      }
+    },
+    "whatsNewCustomToolOrderTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom Tool Order"
           }
         }
       }

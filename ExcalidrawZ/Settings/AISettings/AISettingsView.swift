@@ -33,7 +33,6 @@ struct AISettingsView: View {
     @State var isLoadingAIUserInfo: Bool = false
     @State var aiUserInfoLoadError: String?
     @State var didCopyAIAccountID: Bool = false
-    @State var didCopyMCPClientConfig: Bool = false
     @State var isPresentingMCPConnectionGuide: Bool = false
     @State var isPresentingMCPServiceModeHelp: Bool = false
     @State var selectedMCPConnectionGuideTab: MCPConnectionGuideTab = .vscode

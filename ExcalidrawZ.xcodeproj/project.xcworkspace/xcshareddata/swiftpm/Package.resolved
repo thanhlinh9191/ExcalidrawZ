@@ -1,5 +1,5 @@
 {
-  "originHash" : "15a6184b2b4ee2dfee2534d7fa65b2d369b4a1a19f72473c915a1311ae390dc1",
+  "originHash" : "55f823d3ea73498a121b786cb5e5ccc5758f0f6f12c043154e4dafa3a38ed403",
   "pins" : [
     {
       "identity" : "alerttoast",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/chocoford/ChocofordKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "bbf92c4411803a322c7fca95782449186e23c2df"
+        "revision" : "24c935b8868d17f36d0a1869747a33eff45b5d5e"
       }
     },
     {
@@ -71,15 +71,6 @@
       "state" : {
         "branch" : "dev",
         "revision" : "ce8eb346dbbacac107965015b409a4a67d875038"
-      }
-    },
-    {
-      "identity" : "mathjaxswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/colinc86/MathJaxSwift.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "00e9c3df6b1c82031c7fe3785028f3d21c0d73ba"
       }
     },
     {

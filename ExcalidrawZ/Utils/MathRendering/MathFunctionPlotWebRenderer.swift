@@ -110,12 +110,21 @@ final class MathFunctionPlotWebRenderer: NSObject {
         return try await withCheckedThrowingContinuation { continuation in
             webView.evaluateJavaScript(script) { result, error in
                 if let error {
-                    continuation.resume(throwing: error)
+                    continuation.resume(throwing: MathFunctionPlotRenderError.renderFailed(Self.renderErrorDescription(from: error)))
                 } else {
                     continuation.resume(returning: result)
                 }
             }
         }
+    }
+
+    private static func renderErrorDescription(from error: Error) -> String {
+        let nsError = error as NSError
+        if let message = nsError.userInfo["WKJavaScriptExceptionMessage"] as? String,
+           !message.isEmpty {
+            return message
+        }
+        return error.localizedDescription
     }
 
     private func number(from value: Any?) -> Double? {
@@ -335,6 +344,7 @@ private enum MathFunctionPlotRenderError: LocalizedError {
     case invalidRenderResult
     case missingFunctionPlotRuntime
     case webViewUnavailable
+    case renderFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -346,6 +356,8 @@ private enum MathFunctionPlotRenderError: LocalizedError {
                 "Function plot runtime is missing from the app bundle."
             case .webViewUnavailable:
                 "Function plot renderer is unavailable."
+            case .renderFailed(let message):
+                "Function plot failed: \(message)"
         }
     }
 }

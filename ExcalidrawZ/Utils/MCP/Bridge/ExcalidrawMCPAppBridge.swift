@@ -25,6 +25,28 @@ final class ExcalidrawMCPAppBridge {
         let checkpointWarning: String?
     }
 
+    struct CreateFileRequest: Sendable {
+        let name: String?
+        let groupID: String?
+        let localFolderID: String?
+
+        init(
+            name: String?,
+            groupID: String?,
+            localFolderID: String? = nil
+        ) {
+            self.name = name
+            self.groupID = groupID
+            self.localFolderID = localFolderID
+        }
+
+        var hasExplicitTarget: Bool {
+            name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+                || groupID?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+                || localFolderID?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        }
+    }
+
     private struct ApplyRequestKey: Hashable {
         let targetFileID: String
         let clientUpdateID: String
@@ -40,6 +62,11 @@ final class ExcalidrawMCPAppBridge {
         case unsupportedActiveFile(String)
         case currentFileAccessDenied
         case fileNotFound(String)
+        case groupNotFound(String)
+        case unsupportedTargetGroup(String)
+        case localFolderNotFound(String)
+        case localFileNotFound(String)
+        case invalidCreateTarget(String)
         case invalidGeneratedFile(String)
 
         var errorDescription: String? {
@@ -62,6 +89,16 @@ final class ExcalidrawMCPAppBridge {
                     AIFileAccessStatusMessage.protectedContentAccessDenied
                 case .fileNotFound(let id):
                     "File not found: \(id)"
+                case .groupNotFound(let id):
+                    "Group not found: \(id)"
+                case .unsupportedTargetGroup(let reason):
+                    "The requested group cannot be used for MCP file creation: \(reason)"
+                case .localFolderNotFound(let id):
+                    "Local folder not found or not accessible: \(id)"
+                case .localFileNotFound(let id):
+                    "Local file not found or not accessible: \(id)"
+                case .invalidCreateTarget(let message):
+                    "Invalid MCP file creation target: \(message)"
                 case .invalidGeneratedFile(let message):
                     "The generated Excalidraw file is invalid: \(message)"
             }
@@ -110,7 +147,8 @@ final class ExcalidrawMCPAppBridge {
     @discardableResult
     func apply(
         _ session: ExcalidrawMCPDiagramSession,
-        clientUpdateID: String? = nil
+        clientUpdateID: String? = nil,
+        createFileIfNeeded: CreateFileRequest? = nil
     ) async throws -> ApplyResult {
         guard let fileState else {
             throw BridgeError.appContextUnavailable
@@ -119,6 +157,11 @@ final class ExcalidrawMCPAppBridge {
             throw BridgeError.aiGenerationInProgress
         }
         syncCoordinatorRegistry(fileState: fileState)
+
+        if let createFileIfNeeded,
+           fileState.currentActiveFile == nil || createFileIfNeeded.hasExplicitTarget {
+            try await createTargetFileIfNeeded(createFileIfNeeded)
+        }
 
         let targetFile = try await requireActiveFileForMCPUpdate(fileState: fileState)
         let applyRequestKey = applyRequestKey(
@@ -230,6 +273,7 @@ final class ExcalidrawMCPAppBridge {
         )
         let loadedFileID = coordinator?.documentSyncController.currentLoadedFileID
         let loadedFileMatchesCurrentFile = activeFile.map { $0.id == loadedFileID } ?? false
+        let localFolder = await currentLocalFolder(for: activeFile)
 
         return .object([
             "serviceMode": .string(ExcalidrawMCPServiceMode.optimized.rawValue),
@@ -240,7 +284,9 @@ final class ExcalidrawMCPAppBridge {
                 allowsFileAccess: allowsFileAccess,
                 lockedContentAllowsRead: lockedContentAllowsRead,
                 canReadCurrentFile: canReadCurrentFile,
-                canUpdateView: canUpdateView
+                canUpdateView: canUpdateView,
+                activeGroup: fileState.currentActiveGroup,
+                localFolder: localFolder
             ),
             "canvas": .object([
                 "target": .string(canvasTarget.rawValue),
@@ -248,6 +294,54 @@ final class ExcalidrawMCPAppBridge {
                 "loadedFileId": optionalString(loadedFileMatchesCurrentFile ? loadedFileID : nil),
                 "loadedFileMatchesCurrentFile": .bool(loadedFileMatchesCurrentFile),
                 "preferences": canvasPreferences
+            ])
+        ])
+    }
+
+    func optimizedCurrentFile() async -> MCPJSONValue {
+        guard let fileState else {
+            return .object([
+                "ready": .bool(false),
+                "currentFile": .object([
+                    "isOpen": .bool(false),
+                    "canReadContent": .bool(false),
+                    "canUpdateView": .bool(false),
+                    "message": .string("ExcalidrawZ is not ready. Open the app window before using MCP drawing tools.")
+                ])
+            ])
+        }
+        syncCoordinatorRegistry(fileState: fileState)
+
+        let activeFile = fileState.currentActiveFile
+        let allowsFileAccess = AIChatPreferences.shared.allowsFileAccess(for: activeFile)
+        let lockedContentAllowsRead = await LockedContentAIGuard.canAIRead(activeFile: activeFile)
+        let canReadCurrentFile = activeFile != nil && allowsFileAccess && lockedContentAllowsRead
+        let canUpdateView = canUpdateView(
+            activeFile: activeFile,
+            canReadCurrentFile: canReadCurrentFile
+        )
+        let canvasTarget = canvasTarget(for: activeFile)
+        let coordinator = ExcalidrawCoordinatorRegistry.shared.coordinator(for: canvasTarget)
+        let loadedFileID = coordinator?.documentSyncController.currentLoadedFileID
+        let loadedFileMatchesCurrentFile = activeFile.map { $0.id == loadedFileID } ?? false
+        let localFolder = await currentLocalFolder(for: activeFile)
+
+        return .object([
+            "ready": .bool(true),
+            "currentFile": currentFileInfo(
+                activeFile,
+                allowsFileAccess: allowsFileAccess,
+                lockedContentAllowsRead: lockedContentAllowsRead,
+                canReadCurrentFile: canReadCurrentFile,
+                canUpdateView: canUpdateView,
+                activeGroup: fileState.currentActiveGroup,
+                localFolder: localFolder
+            ),
+            "canvas": .object([
+                "target": .string(canvasTarget.rawValue),
+                "isReady": .bool(coordinator != nil && coordinator?.isLoading != true),
+                "loadedFileId": optionalString(loadedFileMatchesCurrentFile ? loadedFileID : nil),
+                "loadedFileMatchesCurrentFile": .bool(loadedFileMatchesCurrentFile)
             ])
         ])
     }
@@ -285,6 +379,7 @@ final class ExcalidrawMCPAppBridge {
         let allowsFileAccess = AIChatPreferences.shared.allowsFileAccess(for: activeFile)
         let lockedContentAllowsRead = await LockedContentAIGuard.canAIRead(activeFile: activeFile)
         let canReadCurrentFile = activeFile != nil && allowsFileAccess && lockedContentAllowsRead
+        let localFolder = await currentLocalFolder(for: activeFile)
         object["metadata"] = .object([
             "source": .string("ExcalidrawZ Optimized MCP"),
             "currentFile": currentFileInfo(
@@ -295,7 +390,9 @@ final class ExcalidrawMCPAppBridge {
                 canUpdateView: canUpdateView(
                     activeFile: activeFile,
                     canReadCurrentFile: canReadCurrentFile
-                )
+                ),
+                activeGroup: fileState.currentActiveGroup,
+                localFolder: localFolder
             )
         ])
         return .object(object)
@@ -608,7 +705,206 @@ final class ExcalidrawMCPAppBridge {
         }
     }
 
-    func optimizedCreateFile(name rawName: String?) async throws -> MCPJSONValue {
+    private func createTargetFileIfNeeded(_ request: CreateFileRequest) async throws {
+        let localFolderID = request.localFolderID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let groupID = request.groupID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard localFolderID.isEmpty || groupID.isEmpty else {
+            throw BridgeError.invalidCreateTarget("Use either group_id or local_folder_id, not both.")
+        }
+
+        if !localFolderID.isEmpty {
+            _ = try await optimizedCreateLocalFile(
+                name: request.name,
+                localFolderID: localFolderID
+            )
+        } else {
+            _ = try await optimizedCreateFile(
+                name: request.name,
+                groupID: request.groupID
+            )
+        }
+    }
+
+    func optimizedListGroups() async throws -> MCPJSONValue {
+        guard let fileState else {
+            throw BridgeError.appContextUnavailable
+        }
+        let currentGroupID: String? = {
+            guard case .group(let group) = fileState.currentActiveGroup else {
+                return nil
+            }
+            return group.id?.uuidString
+        }()
+
+        let context = PersistenceController.shared.newTaskContext()
+        let groups = try await context.perform {
+            let roots = try PersistenceController.shared.listGroups(context: context)
+            var entries: [MCPJSONValue] = []
+
+            func appendGroup(
+                _ groupNode: PersistenceController.ExcalidrawGroup,
+                depth: Int
+            ) throws {
+                let group = groupNode.group
+                let groupType = group.groupType
+                let pathComponents = (groupNode.ancestors + [group]).map {
+                    $0.name ?? "Untitled"
+                }
+                let files = try PersistenceController.shared.listFiles(in: group, context: context)
+                let id = group.id?.uuidString
+                let parentID = group.parent?.id?.uuidString
+
+                entries.append(.object([
+                    "id": id.map(MCPJSONValue.string) ?? .null,
+                    "name": group.name.map(MCPJSONValue.string) ?? .null,
+                    "type": .string(groupType.rawValue),
+                    "parent_id": parentID.map(MCPJSONValue.string) ?? .null,
+                    "path": .array(pathComponents.map(MCPJSONValue.string)),
+                    "depth": .number(Double(depth)),
+                    "file_count": .number(Double(files.count)),
+                    "children_count": .number(Double(groupNode.children.count)),
+                    "can_create_file": .bool(groupType != .trash && id != nil),
+                    "is_current": .bool(id == currentGroupID)
+                ]))
+
+                for child in groupNode.children {
+                    try appendGroup(child, depth: depth + 1)
+                }
+            }
+
+            for root in roots {
+                try appendGroup(root, depth: 0)
+            }
+            return entries
+        }
+
+        return .object([
+            "groups": .array(groups),
+            "returned": .number(Double(groups.count)),
+            "id_policy": .string("Pass a non-trash group id to create_file.group_id or create_view.group_id. Local folders are not included in this tool.")
+        ])
+    }
+
+    func optimizedListLocalFolders() async throws -> MCPJSONValue {
+        guard let fileState else {
+            throw BridgeError.appContextUnavailable
+        }
+        let currentFolderID: String? = {
+            guard case .localFolder(let folder) = fileState.currentActiveGroup else {
+                return nil
+            }
+            return folder.objectID.uriRepresentation().absoluteString
+        }()
+
+        let context = PersistenceController.shared.newTaskContext()
+        let folders = try await context.perform {
+            let request = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+            request.sortDescriptors = [
+                NSSortDescriptor(key: "rank", ascending: true),
+                NSSortDescriptor(key: "filePath", ascending: true)
+            ]
+            let localFolders = try context.fetch(request)
+            return localFolders.map { folder in
+                let folderID = folder.objectID.uriRepresentation().absoluteString
+                let pathComponents = Self.localFolderPathComponents(folder)
+                let directFileCount = (try? folder.getFiles(deep: false).count) ?? 0
+                let canCreateFile: Bool = {
+                    switch folder.checkPathExists() {
+                        case .success:
+                            return true
+                        case .failure:
+                            return false
+                    }
+                }()
+                return MCPJSONValue.object([
+                    "local_folder_id": .string(folderID),
+                    "name": .string(folder.url?.lastPathComponent ?? folder.filePath ?? "Untitled"),
+                    "path": Self.optionalStringValue(folder.filePath),
+                    "parent_local_folder_id": Self.optionalStringValue(
+                        folder.parent?.objectID.uriRepresentation().absoluteString
+                    ),
+                    "path_components": .array(pathComponents.map(MCPJSONValue.string)),
+                    "depth": .number(Double(pathComponents.count - 1)),
+                    "direct_file_count": .number(Double(directFileCount)),
+                    "can_create_file": .bool(canCreateFile),
+                    "is_current": .bool(folderID == currentFolderID)
+                ])
+            }
+        }
+
+        return .object([
+            "local_folders": .array(folders),
+            "returned": .number(Double(folders.count)),
+            "id_policy": .string("Pass local_folder_id to list_local_files, create_local_file, or create_view.local_folder_id.")
+        ])
+    }
+
+    func optimizedListLocalFiles(
+        folderID rawFolderID: String?,
+        deep: Bool = true,
+        limit: Int = 100
+    ) async throws -> MCPJSONValue {
+        guard fileState != nil else {
+            throw BridgeError.appContextUnavailable
+        }
+        let cappedLimit = min(max(limit, 1), 200)
+        let context = PersistenceController.shared.newTaskContext()
+
+        let files = try await context.perform {
+            let folders: [LocalFolder]
+            if let rawFolderID,
+               !rawFolderID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                folders = [try Self.localFolder(from: rawFolderID, context: context)]
+            } else {
+                let request = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+                request.sortDescriptors = [
+                    NSSortDescriptor(key: "rank", ascending: true),
+                    NSSortDescriptor(key: "filePath", ascending: true)
+                ]
+                folders = try context.fetch(request)
+            }
+
+            var seenPaths = Set<String>()
+            var entries: [MCPJSONValue] = []
+            for folder in folders where entries.count < cappedLimit {
+                let folderID = folder.objectID.uriRepresentation().absoluteString
+                let folderPathComponents = Self.localFolderPathComponents(folder)
+                let urls = (try? folder.getFiles(deep: deep)) ?? []
+                for url in urls where entries.count < cappedLimit {
+                    let standardizedURL = url.standardizedFileURL
+                    let path = standardizedURL.path
+                    guard seenPaths.insert(path).inserted else { continue }
+                    let resourceValues = try? standardizedURL.resourceValues(
+                        forKeys: [.contentModificationDateKey, .fileSizeKey]
+                    )
+                    entries.append(.object([
+                        "file_url": .string(standardizedURL.absoluteString),
+                        "path": .string(path),
+                        "name": .string(standardizedURL.lastPathComponent),
+                        "local_folder_id": .string(folderID),
+                        "local_folder_path": Self.optionalStringValue(folder.filePath),
+                        "local_folder_path_components": .array(folderPathComponents.map(MCPJSONValue.string)),
+                        "updated_at": Self.optionalStringValue(resourceValues?.contentModificationDate.map(Self.iso8601String(from:))),
+                        "size_bytes": resourceValues?.fileSize.map { .number(Double($0)) } ?? .null
+                    ]))
+                }
+            }
+            return entries
+        }
+
+        return .object([
+            "files": .array(files),
+            "returned": .number(Double(files.count)),
+            "limit": .number(Double(cappedLimit)),
+            "deep": .bool(deep),
+            "id_policy": .string("Pass file_url to open_local_file. Only files inside registered local folders are returned.")
+        ])
+    }
+
+    func optimizedCreateFile(
+        name rawName: String?,
+        groupID rawGroupID: String? = nil
+    ) async throws -> MCPJSONValue {
         guard let fileState,
               let context
         else {
@@ -619,7 +915,8 @@ final class ExcalidrawMCPAppBridge {
         }
         let targetGroupID = try targetGroupID(
             fileState: fileState,
-            context: context
+            context: context,
+            requestedGroupID: rawGroupID
         )
         guard let content = ExcalidrawFile().content else {
             throw BridgeError.invalidGeneratedFile("Unable to create an empty Excalidraw file.")
@@ -648,7 +945,48 @@ final class ExcalidrawMCPAppBridge {
             allowsFileAccess: true,
             lockedContentAllowsRead: true,
             canReadCurrentFile: true,
-            canUpdateView: true
+            canUpdateView: true,
+            activeGroup: fileState.currentActiveGroup
+        )
+    }
+
+    func optimizedCreateLocalFile(
+        name rawName: String?,
+        localFolderID rawLocalFolderID: String
+    ) async throws -> MCPJSONValue {
+        guard let fileState,
+              let context
+        else {
+            throw BridgeError.appContextUnavailable
+        }
+        guard fileState.aiChatSession == nil else {
+            throw BridgeError.aiGenerationInProgress
+        }
+        let folder = try Self.localFolder(from: rawLocalFolderID, context: context)
+        guard let content = ExcalidrawFile().content else {
+            throw BridgeError.invalidGeneratedFile("Unable to create an empty Excalidraw file.")
+        }
+
+        let fileURL = try await folder.withSecurityScopedURL { scopedURL in
+            let url = try Self.uniqueLocalExcalidrawFileURL(
+                in: scopedURL,
+                requestedName: rawName
+            )
+            try await FileCoordinator.shared.coordinatedWrite(url: url, data: content)
+            return url.standardizedFileURL
+        }
+
+        fileState.currentActiveGroup = .localFolder(folder)
+        let activeFile = FileState.ActiveFile.localFile(fileURL)
+        fileState.setActiveFile(activeFile)
+        return currentFileInfo(
+            activeFile,
+            allowsFileAccess: true,
+            lockedContentAllowsRead: true,
+            canReadCurrentFile: true,
+            canUpdateView: true,
+            activeGroup: fileState.currentActiveGroup,
+            localFolder: folder
         )
     }
 
@@ -683,7 +1021,49 @@ final class ExcalidrawMCPAppBridge {
             allowsFileAccess: true,
             lockedContentAllowsRead: true,
             canReadCurrentFile: true,
-            canUpdateView: true
+            canUpdateView: true,
+            activeGroup: fileState.currentActiveGroup
+        )
+    }
+
+    func optimizedOpenLocalFile(fileURL rawFileURL: String) async throws -> MCPJSONValue {
+        guard let fileState else {
+            throw BridgeError.appContextUnavailable
+        }
+        guard fileState.aiChatSession == nil else {
+            throw BridgeError.aiGenerationInProgress
+        }
+        let fileURL = try Self.localFileURL(from: rawFileURL)
+        let containingFolderID = try await localFolderObjectID(containing: fileURL)
+
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: fileURL) {
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory),
+                  !isDirectory.boolValue,
+                  fileURL.pathExtension.lowercased() == "excalidraw" else {
+                throw BridgeError.localFileNotFound(rawFileURL)
+            }
+        }
+
+        let containingFolder: LocalFolder? = {
+            guard let context else { return nil }
+            return try? context.existingObject(with: containingFolderID) as? LocalFolder
+        }()
+
+        if let folder = containingFolder {
+            fileState.currentActiveGroup = .localFolder(folder)
+        }
+
+        let activeFile = FileState.ActiveFile.localFile(fileURL)
+        fileState.setActiveFile(activeFile)
+        return currentFileInfo(
+            activeFile,
+            allowsFileAccess: true,
+            lockedContentAllowsRead: true,
+            canReadCurrentFile: true,
+            canUpdateView: true,
+            activeGroup: fileState.currentActiveGroup,
+            localFolder: containingFolder
         )
     }
 
@@ -718,8 +1098,26 @@ final class ExcalidrawMCPAppBridge {
 
     private func targetGroupID(
         fileState: FileState,
-        context: NSManagedObjectContext
+        context: NSManagedObjectContext,
+        requestedGroupID: String? = nil
     ) throws -> NSManagedObjectID {
+        let trimmedGroupID = requestedGroupID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmedGroupID.isEmpty {
+            guard let groupID = UUID(uuidString: trimmedGroupID) else {
+                throw BridgeError.groupNotFound(trimmedGroupID)
+            }
+            let request = NSFetchRequest<Group>(entityName: "Group")
+            request.predicate = NSPredicate(format: "id == %@", groupID as CVarArg)
+            request.fetchLimit = 1
+            guard let group = try context.fetch(request).first else {
+                throw BridgeError.groupNotFound(trimmedGroupID)
+            }
+            guard group.groupType != .trash else {
+                throw BridgeError.unsupportedTargetGroup("Trash cannot receive new MCP files.")
+            }
+            return group.objectID
+        }
+
         if case .group(let group) = fileState.currentActiveGroup,
            group.groupType != .trash {
             return group.objectID
@@ -730,6 +1128,119 @@ final class ExcalidrawMCPAppBridge {
         }
 
         return defaultGroup.objectID
+    }
+
+    private nonisolated static func localFolder(
+        from rawLocalFolderID: String,
+        context: NSManagedObjectContext
+    ) throws -> LocalFolder {
+        let trimmed = rawLocalFolderID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let uri = URL(string: trimmed),
+              let objectID = PersistenceController.shared.container
+                .persistentStoreCoordinator
+                .managedObjectID(forURIRepresentation: uri),
+              let folder = try context.existingObject(with: objectID) as? LocalFolder else {
+            throw BridgeError.localFolderNotFound(trimmed)
+        }
+        return folder
+    }
+
+    private func localFolderObjectID(containing fileURL: URL) async throws -> NSManagedObjectID {
+        let filePath = fileURL.standardizedFileURL.path
+        let context = PersistenceController.shared.newTaskContext()
+        return try await context.perform {
+            let request = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+            let folders = try context.fetch(request)
+            guard let match = folders.compactMap({ folder -> (path: String, objectID: NSManagedObjectID)? in
+                guard let folderPath = folder.filePath else { return nil }
+                let standardizedFolderPath = URL(fileURLWithPath: folderPath).standardizedFileURL.path
+                guard Self.filePath(filePath, isContainedInFolderPath: standardizedFolderPath) else {
+                    return nil
+                }
+                return (standardizedFolderPath, folder.objectID)
+            })
+            .max(by: { $0.path.count < $1.path.count }) else {
+                throw BridgeError.localFileNotFound(fileURL.absoluteString)
+            }
+            return match.objectID
+        }
+    }
+
+    private nonisolated static func localFileURL(from rawFileURL: String) throws -> URL {
+        let trimmed = rawFileURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let url: URL?
+        if let parsed = URL(string: trimmed), parsed.isFileURL {
+            url = parsed
+        } else if trimmed.hasPrefix("/") {
+            url = URL(fileURLWithPath: trimmed)
+        } else {
+            url = nil
+        }
+        guard let url else {
+            throw BridgeError.localFileNotFound(trimmed)
+        }
+        return url.standardizedFileURL
+    }
+
+    private nonisolated static func uniqueLocalExcalidrawFileURL(
+        in folderURL: URL,
+        requestedName: String?
+    ) throws -> URL {
+        let baseName = normalizedLocalFileBaseName(requestedName)
+        var candidate = folderURL.appendingPathComponent(baseName).appendingPathExtension("excalidraw")
+        var index = 1
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            candidate = folderURL
+                .appendingPathComponent("\(baseName)-\(index)")
+                .appendingPathExtension("excalidraw")
+            index += 1
+        }
+        return candidate
+    }
+
+    private nonisolated static func normalizedLocalFileBaseName(_ rawName: String?) -> String {
+        var name = rawName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if name.lowercased().hasSuffix(".excalidraw") {
+            name = String(name.dropLast(".excalidraw".count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let invalidCharacters = CharacterSet(charactersIn: "/:")
+        name = name
+            .components(separatedBy: invalidCharacters)
+            .joined(separator: "-")
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: ".")))
+        return name.isEmpty ? "Untitled" : name
+    }
+
+    private nonisolated static func optionalStringValue(_ value: String?) -> MCPJSONValue {
+        value.map(MCPJSONValue.string) ?? .null
+    }
+
+    private nonisolated static func groupPathComponents(_ group: Group?) -> [String] {
+        var current = group
+        var components: [String] = []
+        while let group = current {
+            components.insert(group.name ?? "Untitled", at: 0)
+            current = group.parent
+        }
+        return components
+    }
+
+    private nonisolated static func localFolderPathComponents(_ folder: LocalFolder) -> [String] {
+        var current: LocalFolder? = folder
+        var components: [String] = []
+        while let folder = current {
+            components.insert(folder.url?.lastPathComponent ?? folder.filePath ?? "Untitled", at: 0)
+            current = folder.parent
+        }
+        return components
+    }
+
+    private nonisolated static func filePath(
+        _ filePath: String,
+        isContainedInFolderPath folderPath: String
+    ) -> Bool {
+        filePath == folderPath || filePath.hasPrefix(folderPath + "/")
     }
 
     private func libraryFileObjectID(
@@ -842,20 +1353,31 @@ final class ExcalidrawMCPAppBridge {
         }
     }
 
-    func optimizedActiveLibraryFileID() async throws -> String {
+    func optimizedActiveCheckpointTargetArguments() async throws -> [String: MCPJSONValue] {
         guard let fileState else {
             throw BridgeError.appContextUnavailable
         }
-        guard case .file(let file) = fileState.currentActiveFile else {
-            throw BridgeError.unsupportedActiveFile(
-                "get_checkpoints requires a library file_id or an active library file."
-            )
-        }
         try await ensureMCPCanAccessActiveFile(fileState.currentActiveFile)
-        guard let id = file.id?.uuidString else {
-            throw BridgeError.fileNotFound("active file")
+
+        switch fileState.currentActiveFile {
+            case .file(let file):
+                guard let id = file.id?.uuidString else {
+                    throw BridgeError.fileNotFound("active file")
+                }
+                return ["file_id": .string(id)]
+            case .localFile(let url):
+                return ["file_url": .string(url.standardizedFileURL.absoluteString)]
+            case .temporaryFile:
+                throw BridgeError.unsupportedActiveFile(
+                    "get_current_file_checkpoints requires an active library file or active local file."
+                )
+            case .collaborationFile:
+                throw BridgeError.unsupportedActiveFile("collaboration files are not supported yet.")
+            case nil:
+                throw BridgeError.unsupportedActiveFile(
+                    "get_current_file_checkpoints requires an active library file or active local file."
+                )
         }
-        return id
     }
 
     func optimizedChatToolContext(
@@ -980,18 +1502,20 @@ final class ExcalidrawMCPAppBridge {
         allowsFileAccess: Bool,
         lockedContentAllowsRead: Bool,
         canReadCurrentFile: Bool,
-        canUpdateView: Bool
+        canUpdateView: Bool,
+        activeGroup: FileState.ActiveGroup? = nil,
+        localFolder: LocalFolder? = nil
     ) -> MCPJSONValue {
         guard let activeFile else {
             return .object([
                 "isOpen": .bool(false),
                 "canReadContent": .bool(false),
                 "canUpdateView": .bool(false),
-                "message": .string("No file is currently open. Call list_files and open_file, or call create_file, before update_view.")
+                "message": .string("No file is currently open. Call list_files/open_file, list_local_files/open_local_file, create_file, or create_local_file before update_view.")
             ])
         }
 
-        return .object([
+        var fileInfo: [String: MCPJSONValue] = [
             "isOpen": .bool(true),
             "id": .string(activeFile.id),
             "name": optionalString(activeFile.name),
@@ -1003,7 +1527,51 @@ final class ExcalidrawMCPAppBridge {
             "lockedContentAllowsRead": .bool(lockedContentAllowsRead),
             "canReadContent": .bool(canReadCurrentFile),
             "canUpdateView": .bool(canUpdateView)
-        ])
+        ]
+        if case .file(let file) = activeFile {
+            let groupPath = Self.groupPathComponents(file.group)
+            fileInfo["group_id"] = optionalString(file.group?.id?.uuidString)
+            fileInfo["group"] = optionalString(file.group?.name)
+            fileInfo["group_path"] = .array(groupPath.map(MCPJSONValue.string))
+            fileInfo["group_type"] = optionalString(file.group?.groupType.rawValue)
+        }
+        if case .localFile(let url) = activeFile {
+            let standardizedURL = url.standardizedFileURL
+            fileInfo["file_url"] = .string(standardizedURL.absoluteString)
+            fileInfo["path"] = .string(standardizedURL.path)
+            let folder = localFolder ?? {
+                guard case .localFolder(let folder) = activeGroup else { return nil }
+                return folder
+            }()
+            if let folder {
+                fileInfo["local_folder_id"] = .string(folder.objectID.uriRepresentation().absoluteString)
+                fileInfo["local_folder_path"] = Self.optionalStringValue(folder.filePath)
+                fileInfo["local_folder_path_components"] = .array(
+                    Self.localFolderPathComponents(folder).map(MCPJSONValue.string)
+                )
+            }
+        }
+        return .object(fileInfo)
+    }
+
+    private func currentLocalFolder(for activeFile: FileState.ActiveFile?) async -> LocalFolder? {
+        guard case .localFile(let url) = activeFile else {
+            return nil
+        }
+        let filePath = url.standardizedFileURL.path
+        if case .localFolder(let folder) = fileState?.currentActiveGroup,
+           let folderPath = folder.filePath,
+           Self.filePath(
+               filePath,
+               isContainedInFolderPath: URL(fileURLWithPath: folderPath).standardizedFileURL.path
+           ) {
+            return folder
+        }
+        guard let context,
+              let objectID = try? await localFolderObjectID(containing: url) else {
+            return nil
+        }
+        return try? context.existingObject(with: objectID) as? LocalFolder
     }
 
     private func currentCanvasPreferencesValue(

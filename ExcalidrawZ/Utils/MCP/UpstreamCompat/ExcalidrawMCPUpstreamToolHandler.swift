@@ -12,11 +12,18 @@ struct ExcalidrawMCPUpstreamToolHandler {
         let checkpointID: String
     }
 
+    struct CreateViewTarget: Sendable {
+        let name: String?
+        let groupID: String?
+        let localFolderID: String?
+    }
+
     typealias ElementConverter = @Sendable ([MCPJSONValue]) async throws -> [MCPJSONValue]
     typealias PublishDiagram = @Sendable (
         _ elements: [MCPJSONValue],
         _ sourceElementCount: Int,
-        _ viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?
+        _ viewportUpdate: ExcalidrawMCPUpstreamViewportUpdate?,
+        _ target: CreateViewTarget
     ) async throws -> PublishedDiagram
     typealias SaveCheckpoint = @Sendable (_ id: String, _ data: MCPJSONValue) async throws -> Void
     typealias ReadCheckpointData = @Sendable (_ id: String) async -> MCPJSONValue?
@@ -76,15 +83,21 @@ struct ExcalidrawMCPUpstreamToolHandler {
         )
         let resolved = try await resolver.resolve(parsedElements)
         let convertedElements = try await convertRawElements(resolved.elements)
+        let target = CreateViewTarget(
+            name: arguments["name"]?.stringValue,
+            groupID: arguments["group_id"]?.stringValue,
+            localFolderID: arguments["local_folder_id"]?.stringValue
+        )
         let published = try await publishDiagram(
             convertedElements,
             parsedElements.count,
-            resolved.viewportUpdate
+            resolved.viewportUpdate,
+            target
         )
 
         return ExcalidrawMCPToolResult(
             text: """
-            Diagram received by ExcalidrawZ and applied to the current file. If no file was open, ExcalidrawZ created one. Checkpoint id: "\(published.checkpointID)".
+            Diagram received by ExcalidrawZ and applied to a file. If name, group_id, or local_folder_id was provided, ExcalidrawZ created a new file first; otherwise it used the current file or created one if no file was open. Checkpoint id: "\(published.checkpointID)".
             If the user asks to revise this diagram, call create_view again with a restoreCheckpoint pseudo-element using that id.
             """,
             structuredContent: .object([

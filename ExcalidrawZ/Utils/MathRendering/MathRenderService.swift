@@ -122,6 +122,33 @@ private extension String {
             expression = expression.replacingOccurrences(of: replacement.0, with: replacement.1)
         }
 
+        let regularExpressionOptions: String.CompareOptions = [.regularExpression]
+        expression = expression.replacingOccurrences(
+            of: #"\^\{([^{}]+)\}"#,
+            with: "^($1)",
+            options: regularExpressionOptions
+        )
+        expression = expression.replacingOccurrences(
+            of: #"sqrt\{([^{}]+)\}"#,
+            with: "sqrt($1)",
+            options: regularExpressionOptions
+        )
+        expression = expression.replacingOccurrences(
+            of: #"(\d|\))\s*x\b"#,
+            with: "$1*x",
+            options: regularExpressionOptions
+        )
+        expression = expression.replacingOccurrences(
+            of: #"(\d|\))\s*(PI)\b"#,
+            with: "$1*$2",
+            options: regularExpressionOptions
+        )
+        expression = expression.replacingOccurrences(
+            of: #"(\d|\)|x)\s*\("#,
+            with: "$1*(",
+            options: regularExpressionOptions
+        )
+
         return expression
     }
 }

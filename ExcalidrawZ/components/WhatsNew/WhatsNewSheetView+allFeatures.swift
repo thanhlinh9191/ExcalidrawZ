@@ -12,51 +12,35 @@ extension WhatsNewView {
     @ViewBuilder
     func featuresContent() -> some View {
         // 不能只有一行，不知道为啥一定报错
-#if os(iOS)
         WhatsNewFeatureRow(
-            title: .localizable(.whatsNewIOSToolbarTitle),
-            description: .localizable(.whatsNewIOSToolbarDescription),
+            title: .localizable(.whatsNewMCPServicesTitle),
+            description: .localizable(.whatsNewMCPServicesDescription),
         ) {
-            Image(systemSymbol: .ipadAndIphone)
+            Image(systemSymbol: .serverRack)
                 .resizable()
                 .symbolRenderingMode(.hierarchical)
         }
 
         WhatsNewFeatureRow(
-            title: .localizable(.whatsNewIOSMouseControlsTitle),
-            description: .localizable(.whatsNewIOSMouseControlsDescription),
+            title: .localizable(.whatsNewBetterMathToolTitle),
+            description: .localizable(.whatsNewBetterMathToolDescription),
         ) {
-            Image(systemSymbol: .computermouse)
+            Image(systemSymbol: .xSquareroot)
                 .resizable()
                 .symbolRenderingMode(.hierarchical)
         }
-#else
+
         WhatsNewFeatureRow(
-            title: .localizable(.whatsNewLockedFilesTitle),
-            description: .localizable(.whatsNewLockedFilesDescription),
+            title: .localizable(.whatsNewCustomToolOrderTitle),
+            description: .localizable(.whatsNewCustomToolOrderDescription),
         ) {
-            Image(systemSymbol: .lockShield)
+            Image(systemSymbol: {
+                if #available(macOS 13.0, iOS 16.0, *) { .arrowUpAndDownTextHorizontal } else { .arrowUpAndDownCircle }
+            }())
                 .resizable()
                 .symbolRenderingMode(.hierarchical)
         }
-        
-        WhatsNewFeatureRow(
-            title: .localizable(.whatsNewAIProposalCanvasTitle),
-            description: .localizable(.whatsNewAIProposalCanvasDescription),
-        ) {
-            if #available(macOS 26.1, iOS 26.1, *) {
-                Image(systemName: "rectangle.badge.sparkles")
-                    .resizable()
-                    .symbolRenderingMode(.hierarchical)
-            } else {
-                Image(systemSymbol: .sparkle)
-                    .resizable()
-                    .symbolRenderingMode(.hierarchical)
-            }
-        }
-#endif
     }
-
 
     @ViewBuilder
     func allFeaturesList() -> some View {
@@ -67,6 +51,51 @@ extension WhatsNewView {
                         version: Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
                     ) {
                         featuresContent()
+                    }
+                    WhatsNewVersionSection(version: "v2.1.1") {
+#if os(iOS)
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewIOSToolbarTitle),
+                            description: .localizable(.whatsNewIOSToolbarDescription),
+                        ) {
+                            Image(systemSymbol: .ipadAndIphone)
+                                .resizable()
+                                .symbolRenderingMode(.hierarchical)
+                        }
+
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewIOSMouseControlsTitle),
+                            description: .localizable(.whatsNewIOSMouseControlsDescription),
+                        ) {
+                            Image(systemSymbol: .computermouse)
+                                .resizable()
+                                .symbolRenderingMode(.hierarchical)
+                        }
+#else
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewLockedFilesTitle),
+                            description: .localizable(.whatsNewLockedFilesDescription),
+                        ) {
+                            Image(systemSymbol: .lockShield)
+                                .resizable()
+                                .symbolRenderingMode(.hierarchical)
+                        }
+
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewAIProposalCanvasTitle),
+                            description: .localizable(.whatsNewAIProposalCanvasDescription),
+                        ) {
+                            if #available(macOS 26.1, iOS 26.1, *) {
+                                Image(systemName: "rectangle.badge.sparkles")
+                                    .resizable()
+                                    .symbolRenderingMode(.hierarchical)
+                            } else {
+                                Image(systemSymbol: .sparkle)
+                                    .resizable()
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                        }
+#endif
                     }
 #if os(iOS)
                     WhatsNewVersionSection(version: "v2.1.0") {

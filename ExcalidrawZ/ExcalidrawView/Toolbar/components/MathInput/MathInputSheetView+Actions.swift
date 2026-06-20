@@ -102,12 +102,15 @@ extension MathInputSheetView {
 
     func applyTemplate(_ template: MathTemplate) {
         if activeWorkspace == .function {
-            functionExpressions = [
-                MathFunctionExpression(
-                    expression: template.latex,
-                    colorHex: functionColorPalette[0]
+            let color = functionColorPalette[functionExpressions.count % functionColorPalette.count]
+            withAnimation(.easeInOut(duration: 0.18)) {
+                functionExpressions.append(
+                    MathFunctionExpression(
+                        expression: template.latex,
+                        colorHex: color
+                    )
                 )
-            ]
+            }
             functionPanelTab = .input
             generatePreview(input: functionLatexSource)
             return

@@ -71,11 +71,15 @@ struct ListAllFilesTool: Tool {
 
             let files = try context.fetch(fetchRequest)
             return files.map { f in
-                FileEntryCandidate(
+                let groupPath = Self.groupPath(for: f.group)
+                return FileEntryCandidate(
                     objectID: f.objectID,
                     id: f.id?.uuidString ?? "",
                     name: f.name ?? "Untitled",
+                    groupID: f.group?.id?.uuidString,
                     group: f.group?.name,
+                    groupPath: groupPath.isEmpty ? nil : groupPath,
+                    groupType: f.group?.groupType.rawValue,
                     updatedAt: f.updatedAt.map(ISO8601DateFormatter.shared.string(from:)),
                     inTrash: f.inTrash
                 )
@@ -149,7 +153,10 @@ struct ListAllFilesTool: Tool {
         let objectID: NSManagedObjectID
         let id: String
         let name: String
+        let groupID: String?
         let group: String?
+        let groupPath: [String]?
+        let groupType: String?
         let updatedAt: String?
         let inTrash: Bool
 
@@ -157,7 +164,10 @@ struct ListAllFilesTool: Tool {
             FileEntry(
                 id: id,
                 name: name,
+                groupID: groupID,
                 group: group,
+                groupPath: groupPath,
+                groupType: groupType,
                 updatedAt: updatedAt,
                 inTrash: inTrash
             )
@@ -167,9 +177,33 @@ struct ListAllFilesTool: Tool {
     private struct FileEntry: Encodable {
         let id: String
         let name: String
+        let groupID: String?
         let group: String?
+        let groupPath: [String]?
+        let groupType: String?
         let updatedAt: String?
         let inTrash: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case id
+            case name
+            case groupID = "group_id"
+            case group
+            case groupPath = "group_path"
+            case groupType = "group_type"
+            case updatedAt
+            case inTrash
+        }
+    }
+
+    private static func groupPath(for group: Group?) -> [String] {
+        var current = group
+        var path: [String] = []
+        while let group = current {
+            path.insert(group.name ?? "Untitled", at: 0)
+            current = group.parent
+        }
+        return path
     }
 }
 

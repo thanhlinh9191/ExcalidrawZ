@@ -16,13 +16,14 @@ enum ExcalidrawMCPOptimizedContract {
     user's current ExcalidrawZ file.
     After update_view changes visible content, call read_canvas_image once to
     inspect the rendered canvas before giving the user a final answer.
-    Use get_app_context, file_access_status, list_files, create_file,
-    open_file, read_file, read_view, set_canvas_preferences,
-    export, navigate_canvas, get_checkpoints, rename_file,
-    restore_file_history, list_libraries, list_library_items,
-    query_library_item, add_library_item_to_canvas, read_canvas_image, and
-    adjust_elements when you need app, file, history, library, visual, export,
-    or canvas context.
+    Use get_app_context, get_current_file, file_access_status, list_groups,
+    list_files, list_local_folders, list_local_files, create_file,
+    create_local_file, open_file, open_local_file, read_file, read_view,
+    set_canvas_preferences, export, navigate_canvas,
+    get_current_file_checkpoints, rename_file, restore_file_history,
+    list_libraries, list_library_items, query_library_item,
+    add_library_item_to_canvas, read_canvas_image, and adjust_elements when you
+    need app, file, history, library, visual, export, or canvas context.
     """
 
     enum ToolName {
@@ -30,10 +31,16 @@ enum ExcalidrawMCPOptimizedContract {
         static let readView = "read_view"
         static let updateView = "update_view"
         static let getAppContext = "get_app_context"
+        static let getCurrentFile = "get_current_file"
+        static let listGroups = "list_groups"
         static let listFiles = "list_files"
-        static let getCheckpoints = "get_checkpoints"
+        static let listLocalFolders = "list_local_folders"
+        static let listLocalFiles = "list_local_files"
+        static let getCurrentFileCheckpoints = "get_current_file_checkpoints"
         static let createFile = "create_file"
+        static let createLocalFile = "create_local_file"
         static let openFile = "open_file"
+        static let openLocalFile = "open_local_file"
         static let setCanvasPreferences = "set_canvas_preferences"
     }
 }
@@ -51,6 +58,10 @@ enum ExcalidrawMCPOptimizedRecall {
     1. Read the upstream guide below.
     2. Generate raw Excalidraw elements using the same format.
     3. If no file is open, call list_files and open_file, or call create_file.
+       Use list_groups first when the user asks to create the file in a
+       particular ExcalidrawZ group. Use list_local_folders / create_local_file
+       / open_local_file when the target should be a user-authorized local
+       folder file.
     4. Call update_view, not create_view.
     5. After update_view changes visible content, call read_canvas_image once
        before the final answer.
@@ -61,17 +72,21 @@ enum ExcalidrawMCPOptimizedRecall {
     ExcalidrawZ differences:
     - update_view updates the user's current ExcalidrawZ file.
     - update_view does not create or open files. If no file is open, call
-      list_files and open_file, or call create_file. list_files omits locked or
+      list_files and open_file, call create_file, or use the local-folder tools
+      for local files. Pass create_file.group_id when the user wants the new
+      library file in a specific ExcalidrawZ group. list_files omits locked or
       protected files that MCP cannot access.
-    - get_app_context.currentFile is the MCP source of truth for whether a file
-      is open/readable/writable. canvas.loadedFileId is only populated when the
-      WebView loaded file is aligned with currentFile.
+    - get_current_file is the quickest way to confirm the current file and its
+      location before a mutation. get_app_context.currentFile is the broader
+      app-context source of truth for whether a file is open/readable/writable.
+      canvas.loadedFileId is only populated when the WebView loaded file is
+      aligned with currentFile.
     - update_view records ExcalidrawZ File History checkpoints around the
       mutation when the target supports history: mcp_pre before the update and
       mcp_post after the update. update_view does not return checkpoint ids.
-      Call get_checkpoints when you need App checkpoint ids for context or
-      rollback, then use restore_file_history only when the user asks to roll
-      back a saved file state.
+      Call get_current_file_checkpoints when you need current-file App
+      checkpoint ids for context or rollback, then use restore_file_history
+      only when the user asks to roll back a saved library file state.
     - Pass client_update_id to update_view when available. ExcalidrawZ stores it
       in File History checkpoint descriptions and treats repeated requests with
       the same current file + client_update_id as idempotent retries.
@@ -110,8 +125,10 @@ enum ExcalidrawMCPOptimizedRecall {
       small set, or inserting Mermaid content. Do not use adjust_elements for
       math insertion, whole-scene creation, or replacement.
     - Use navigate_canvas for viewport/camera changes.
-    - Use list_files, create_file, open_file, and get_checkpoints for file and
-      history context.
+    - Use list_groups, list_files, create_file, open_file, list_local_folders,
+      list_local_files, create_local_file, open_local_file, and
+      get_current_file_checkpoints for file, group, folder, and history
+      context.
     - Use list_libraries, list_library_items, query_library_item, and
       add_library_item_to_canvas for reusable library content.
     - Use rename_file and restore_file_history only when the user explicitly
@@ -140,7 +157,7 @@ enum ExcalidrawMCPOptimizedRecall {
         )
         .replacingOccurrences(
             of: "Every create_view call returns a `checkpointId` in its response. To continue from a previous diagram state, start your elements array with a restoreCheckpoint element:",
-            with: "Optimized update_view records ExcalidrawZ File History checkpoints instead of returning a restoreCheckpoint id. To inspect or roll back history, call get_checkpoints and then restore_file_history with the App checkpoint id. For ordinary revisions, inspect the current result with read_view or read_canvas_image, then send the complete revised elements array to update_view."
+            with: "Optimized update_view records ExcalidrawZ File History checkpoints instead of returning a restoreCheckpoint id. To inspect current-file history, call get_current_file_checkpoints. To roll back a library file, use restore_file_history with an App checkpoint id. For ordinary revisions, inspect the current result with read_view or read_canvas_image, then send the complete revised elements array to update_view."
         )
         .replacingOccurrences(
             of: "`[{\"type\":\"restoreCheckpoint\",\"id\":\"<checkpointId>\"}, ...additional new elements...]`",
@@ -148,11 +165,11 @@ enum ExcalidrawMCPOptimizedRecall {
         )
         .replacingOccurrences(
             of: "The saved state (including any user edits made in fullscreen) is loaded from the client, and your new elements are appended on top. This saves tokens — you don't need to re-send the entire diagram.",
-            with: "ExcalidrawZ owns File History checkpoints. Use get_checkpoints when the user asks about history, rollback, or previous states."
+            with: "ExcalidrawZ owns File History checkpoints. Use get_current_file_checkpoints when the user asks about current-file history, rollback, or previous states."
         )
         .replacingOccurrences(
             of: "- **With restoreCheckpoint**: restore a saved state, then surgically remove specific elements before adding new ones",
-            with: "- **With App File History**: call get_checkpoints / restore_file_history when the user asks to roll back a saved file state"
+            with: "- **With App File History**: call get_current_file_checkpoints / restore_file_history when the user asks to roll back a saved library file state"
         )
         .replacingOccurrences(
             of: "If the user asks to revise, call create_view again",
@@ -240,8 +257,71 @@ extension ExcalidrawMCPToolSchemas {
             "name": .object([
                 "type": .string("string"),
                 "description": .string("Optional name for the new ExcalidrawZ file. The new file is opened immediately.")
+            ]),
+            "group_id": .object([
+                "type": .string("string"),
+                "description": .string("Optional UUID of a non-trash ExcalidrawZ library group returned by list_groups. If omitted, ExcalidrawZ uses the current active group or the default group.")
             ])
         ]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let optimizedListGroups: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([:]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let optimizedListLocalFolders: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([:]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let optimizedListLocalFiles: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([
+            "local_folder_id": .object([
+                "type": .string("string"),
+                "description": .string("Optional local folder id returned by list_local_folders. If omitted, searches all registered local folders.")
+            ]),
+            "deep": .object([
+                "type": .string("boolean"),
+                "description": .string("Whether to include nested subfolders. Defaults to true.")
+            ]),
+            "limit": .object([
+                "type": .string("integer"),
+                "description": .string("Maximum local files to return, capped at 200. Defaults to 100.")
+            ])
+        ]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let optimizedCreateLocalFile: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([
+            "local_folder_id": .object([
+                "type": .string("string"),
+                "description": .string("Local folder id returned by list_local_folders. The folder must still be accessible.")
+            ]),
+            "name": .object([
+                "type": .string("string"),
+                "description": .string("Optional file name. `.excalidraw` is added automatically when omitted.")
+            ])
+        ]),
+        "required": .array([.string("local_folder_id")]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let optimizedOpenLocalFile: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([
+            "file_url": .object([
+                "type": .string("string"),
+                "description": .string("Local file URL returned by list_local_files. Plain absolute paths are also accepted when they are inside a registered local folder.")
+            ])
+        ]),
+        "required": .array([.string("file_url")]),
         "additionalProperties": .bool(false)
     ])
 
@@ -348,13 +428,9 @@ extension ExcalidrawMCPToolSchemas {
         "additionalProperties": .bool(false)
     ])
 
-    static let optimizedGetCheckpoints: MCPJSONValue = .object([
+    static let optimizedGetCurrentFileCheckpoints: MCPJSONValue = .object([
         "type": .string("object"),
         "properties": .object([
-            "file_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional UUID of a library file. Defaults to the active library file.")
-            ]),
             "limit": .object([
                 "type": .string("integer"),
                 "description": .string("Maximum checkpoints to return, capped at 200. Defaults to 50.")
@@ -480,22 +556,22 @@ enum ExcalidrawMCPOptimizedToolCatalog {
             tool: ListAllFilesTool(),
             exposedName: ExcalidrawMCPOptimizedContract.ToolName.listFiles,
             title: "List Files",
-            description: "Lists readable library files so the MCP client can choose a file for get_checkpoints or follow-up work.",
+            description: "Lists readable library files so the MCP client can choose a file for follow-up work.",
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: QueryFileHistoryTool(),
-            exposedName: ExcalidrawMCPOptimizedContract.ToolName.getCheckpoints,
-            title: "Get Checkpoints",
-            description: "Lists checkpoint metadata for a library file. Defaults to the active library file when file_id is omitted.",
-            schemaOverride: ExcalidrawMCPToolSchemas.optimizedGetCheckpoints,
+            exposedName: ExcalidrawMCPOptimizedContract.ToolName.getCurrentFileCheckpoints,
+            title: "Get Current File Checkpoints",
+            description: "Lists checkpoint metadata for the currently open library or local file.",
+            schemaOverride: ExcalidrawMCPToolSchemas.optimizedGetCurrentFileCheckpoints,
             annotations: ["readOnlyHint": .bool(true)],
             normalizeArguments: { arguments in
                 var normalized = arguments
-                if normalized["file_id"]?.stringValue?.isEmpty != false {
-                    normalized["file_id"] = .string(
-                        try await ExcalidrawMCPAppBridge.shared.optimizedActiveLibraryFileID()
-                    )
+                normalized.removeValue(forKey: "file_id")
+                normalized.removeValue(forKey: "file_url")
+                for (key, value) in try await ExcalidrawMCPAppBridge.shared.optimizedActiveCheckpointTargetArguments() {
+                    normalized[key] = value
                 }
                 return normalized
             }
@@ -528,7 +604,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: RestoreFileHistoryTool(),
             title: "Restore File History",
-            description: "Restore a drawing file to a specific checkpoint. Get file_id from list_files and checkpoint_id from get_checkpoints. This overwrites the file's current content.",
+            description: "Restore the current library file to a specific checkpoint. Get checkpoint_id from get_current_file_checkpoints. This overwrites the file's current content.",
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
                     requiresMutation: true
@@ -553,16 +629,56 @@ enum ExcalidrawMCPOptimizedToolCatalog {
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.getCurrentFile,
+            title: "Get Current File",
+            description: "Returns the currently open ExcalidrawZ file, its library/local-folder location, writable state, and canvas loaded-file alignment.",
+            inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
+            annotations: ["readOnlyHint": .bool(true)]
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.listGroups,
+            title: "List Groups",
+            description: "Lists ExcalidrawZ library groups. Pass a non-trash group id to create_file.group_id when creating a new library file in a specific group.",
+            inputSchema: ExcalidrawMCPToolSchemas.optimizedListGroups,
+            annotations: ["readOnlyHint": .bool(true)]
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.listLocalFolders,
+            title: "List Local Folders",
+            description: "Lists user-authorized local folders. Use local_folder_id with list_local_files or create_local_file.",
+            inputSchema: ExcalidrawMCPToolSchemas.optimizedListLocalFolders,
+            annotations: ["readOnlyHint": .bool(true)]
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.listLocalFiles,
+            title: "List Local Files",
+            description: "Lists .excalidraw files inside user-authorized local folders. Use file_url with open_local_file.",
+            inputSchema: ExcalidrawMCPToolSchemas.optimizedListLocalFiles,
+            annotations: ["readOnlyHint": .bool(true)]
+        ),
+        ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.createFile,
             title: "Create File",
-            description: "Creates and opens a new ExcalidrawZ library file. Use this before update_view when the user wants a new drawing or no file is open.",
+            description: "Creates and opens a new ExcalidrawZ library file. Use group_id from list_groups when the user wants the file in a specific group.",
             inputSchema: ExcalidrawMCPToolSchemas.optimizedCreateFile
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.createLocalFile,
+            title: "Create Local File",
+            description: "Creates and opens a new .excalidraw file inside a user-authorized local folder.",
+            inputSchema: ExcalidrawMCPToolSchemas.optimizedCreateLocalFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.openFile,
             title: "Open File",
             description: "Opens a readable ExcalidrawZ library file by id. Use list_files first; locked or protected files are omitted and cannot be opened for MCP.",
             inputSchema: ExcalidrawMCPToolSchemas.optimizedOpenFile
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPOptimizedContract.ToolName.openLocalFile,
+            title: "Open Local File",
+            description: "Opens a .excalidraw file inside a user-authorized local folder. Use list_local_files first.",
+            inputSchema: ExcalidrawMCPToolSchemas.optimizedOpenLocalFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.readView,
@@ -582,7 +698,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
     private static let updateViewTool = ExcalidrawMCPTool(
         name: ExcalidrawMCPOptimizedContract.ToolName.updateView,
         title: "Update View",
-        description: "Updates the currently open ExcalidrawZ file with raw Excalidraw elements. Call list_files/open_file or create_file first when no file is open.",
+        description: "Updates the currently open ExcalidrawZ file with raw Excalidraw elements. Call list_files/open_file, list_local_files/open_local_file, create_file, or create_local_file first when no file is open.",
         inputSchema: ExcalidrawMCPToolSchemas.optimizedUpdateView
     )
 }
@@ -619,18 +735,30 @@ struct ExcalidrawMCPOptimizedToolHandler {
     ) async throws -> PublishedDiagram
     typealias ReadCheckpointElements = @Sendable (_ id: String) async -> [MCPJSONValue]?
     typealias GetAppContext = @Sendable () async throws -> MCPJSONValue
+    typealias GetCurrentFile = @Sendable () async throws -> MCPJSONValue
+    typealias ListGroups = @Sendable () async throws -> MCPJSONValue
+    typealias ListLocalFolders = @Sendable () async throws -> MCPJSONValue
+    typealias ListLocalFiles = @Sendable (_ folderID: String?, _ deep: Bool, _ limit: Int) async throws -> MCPJSONValue
     typealias ReadView = @Sendable (_ options: CurrentCanvasOptions) async throws -> MCPJSONValue
-    typealias CreateFile = @Sendable (_ name: String?) async throws -> MCPJSONValue
+    typealias CreateFile = @Sendable (_ name: String?, _ groupID: String?) async throws -> MCPJSONValue
+    typealias CreateLocalFile = @Sendable (_ name: String?, _ localFolderID: String) async throws -> MCPJSONValue
     typealias OpenFile = @Sendable (_ fileID: String) async throws -> MCPJSONValue
+    typealias OpenLocalFile = @Sendable (_ fileURL: String) async throws -> MCPJSONValue
     typealias SetCanvasPreferences = @Sendable (_ update: CanvasPreferencesSnapshot) async throws -> MCPJSONValue
 
     var convertRawElements: ElementConverter
     var publishDiagram: PublishDiagram
     var readCheckpointElements: ReadCheckpointElements
     var getAppContext: GetAppContext
+    var getCurrentFile: GetCurrentFile
+    var listGroups: ListGroups
+    var listLocalFolders: ListLocalFolders
+    var listLocalFiles: ListLocalFiles
     var readView: ReadView
     var createFile: CreateFile
+    var createLocalFile: CreateLocalFile
     var openFile: OpenFile
+    var openLocalFile: OpenLocalFile
     var setCanvasPreferences: SetCanvasPreferences
     var appToolAdapters: [String: ExcalidrawMCPLLMCoreToolAdapter] = Dictionary(
         uniqueKeysWithValues: ExcalidrawMCPOptimizedToolCatalog.appToolAdapters.map {
@@ -649,14 +777,32 @@ struct ExcalidrawMCPOptimizedToolHandler {
             case ExcalidrawMCPOptimizedContract.ToolName.getAppContext:
                 return try await appContext()
 
+            case ExcalidrawMCPOptimizedContract.ToolName.getCurrentFile:
+                return try await currentFile()
+
+            case ExcalidrawMCPOptimizedContract.ToolName.listGroups:
+                return try await listGroupsTool(arguments: arguments)
+
+            case ExcalidrawMCPOptimizedContract.ToolName.listLocalFolders:
+                return try await listLocalFoldersTool(arguments: arguments)
+
+            case ExcalidrawMCPOptimizedContract.ToolName.listLocalFiles:
+                return try await listLocalFilesTool(arguments: arguments)
+
             case ExcalidrawMCPOptimizedContract.ToolName.readView:
                 return try await readView(arguments: arguments)
 
             case ExcalidrawMCPOptimizedContract.ToolName.createFile:
                 return try await createFileTool(arguments: arguments)
 
+            case ExcalidrawMCPOptimizedContract.ToolName.createLocalFile:
+                return try await createLocalFileTool(arguments: arguments)
+
             case ExcalidrawMCPOptimizedContract.ToolName.openFile:
                 return try await openFileTool(arguments: arguments)
+
+            case ExcalidrawMCPOptimizedContract.ToolName.openLocalFile:
+                return try await openLocalFileTool(arguments: arguments)
 
             case ExcalidrawMCPOptimizedContract.ToolName.setCanvasPreferences:
                 return try await setCanvasPreferencesTool(arguments: arguments)
@@ -680,6 +826,42 @@ struct ExcalidrawMCPOptimizedToolHandler {
         )
     }
 
+    private func currentFile() async throws -> ExcalidrawMCPToolResult {
+        let file = try await getCurrentFile()
+        return try jsonToolResult(
+            value: file,
+            fallbackText: "Current ExcalidrawZ file status is available."
+        )
+    }
+
+    private func listGroupsTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
+        let groups = try await listGroups()
+        return try jsonToolResult(
+            value: groups,
+            fallbackText: "ExcalidrawZ library groups are available."
+        )
+    }
+
+    private func listLocalFoldersTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
+        let folders = try await listLocalFolders()
+        return try jsonToolResult(
+            value: folders,
+            fallbackText: "ExcalidrawZ local folders are available."
+        )
+    }
+
+    private func listLocalFilesTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
+        let files = try await listLocalFiles(
+            arguments["local_folder_id"]?.stringValue,
+            arguments["deep"]?.boolValue ?? true,
+            min(max(Int(arguments["limit"]?.numberValue ?? 100), 1), 200)
+        )
+        return try jsonToolResult(
+            value: files,
+            fallbackText: "ExcalidrawZ local files are available."
+        )
+    }
+
     private func readView(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
         let options = CurrentCanvasOptions(
             includeElements: arguments["include_elements"]?.boolValue ?? true,
@@ -694,13 +876,34 @@ struct ExcalidrawMCPOptimizedToolHandler {
     }
 
     private func createFileTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
-        let file = try await createFile(arguments["name"]?.stringValue)
+        if arguments["local_folder_id"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            throw MCPJSONRPCError.invalidParams("create_file creates library files. Use create_local_file with local_folder_id for local folder files.")
+        }
+        let file = try await createFile(
+            arguments["name"]?.stringValue,
+            arguments["group_id"]?.stringValue
+        )
         return try jsonToolResult(
             value: .object([
                 "file": file,
                 "message": .string("Created and opened a new ExcalidrawZ file. You can now call update_view.")
             ]),
             fallbackText: "Created and opened a new ExcalidrawZ file."
+        )
+    }
+
+    private func createLocalFileTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
+        guard let localFolderID = arguments["local_folder_id"]?.stringValue,
+              !localFolderID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw MCPJSONRPCError.invalidParams("create_local_file requires arguments.local_folder_id.")
+        }
+        let file = try await createLocalFile(arguments["name"]?.stringValue, localFolderID)
+        return try jsonToolResult(
+            value: .object([
+                "file": file,
+                "message": .string("Created and opened a new local Excalidraw file. You can now call update_view.")
+            ]),
+            fallbackText: "Created and opened a new local Excalidraw file."
         )
     }
 
@@ -716,6 +919,21 @@ struct ExcalidrawMCPOptimizedToolHandler {
                 "message": .string("Opened the ExcalidrawZ file. You can now call update_view.")
             ]),
             fallbackText: "Opened the ExcalidrawZ file."
+        )
+    }
+
+    private func openLocalFileTool(arguments: [String: MCPJSONValue]) async throws -> ExcalidrawMCPToolResult {
+        guard let fileURL = arguments["file_url"]?.stringValue,
+              !fileURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw MCPJSONRPCError.invalidParams("open_local_file requires arguments.file_url.")
+        }
+        let file = try await openLocalFile(fileURL)
+        return try jsonToolResult(
+            value: .object([
+                "file": file,
+                "message": .string("Opened the local Excalidraw file. You can now call update_view.")
+            ]),
+            fallbackText: "Opened the local Excalidraw file."
         )
     }
 
@@ -770,7 +988,7 @@ struct ExcalidrawMCPOptimizedToolHandler {
             View updated in ExcalidrawZ.
             \(appCheckpointText)
             Next, call read_canvas_image once to inspect the rendered canvas before your final answer.
-            If you need App checkpoint ids for history or rollback, call get_checkpoints.
+            If you need App checkpoint ids for current-file history or rollback, call get_current_file_checkpoints.
             """,
             structuredContent: structuredUpdateViewContent(
                 published: published,
@@ -873,9 +1091,9 @@ struct ExcalidrawMCPOptimizedToolHandler {
             return published.appCheckpointWarning ?? "App file-history checkpoints: unavailable for this target."
         }
         if let warning = published.appCheckpointWarning {
-            return "App file-history checkpoints recorded. Call get_checkpoints to retrieve their ids. \(warning)"
+            return "App file-history checkpoints recorded. Call get_current_file_checkpoints to retrieve their ids. \(warning)"
         }
-        return "App file-history checkpoints recorded. Call get_checkpoints to retrieve their ids."
+        return "App file-history checkpoints recorded. Call get_current_file_checkpoints to retrieve their ids."
     }
 
     private func structuredUpdateViewContent(

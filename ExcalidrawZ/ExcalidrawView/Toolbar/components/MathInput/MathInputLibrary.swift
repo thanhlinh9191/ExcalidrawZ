@@ -111,13 +111,13 @@ extension MathTemplate {
         .init(title: "Sine Function", category: "Trigonometry", latex: "f(x) = \\sin(x)"),
         .init(title: "Cosine Function", category: "Trigonometry", latex: "f(x) = \\cos(x)"),
         .init(title: "Tangent Function", category: "Trigonometry", latex: "f(x) = \\tan(x)"),
-        .init(title: "Linear Function", category: "Algebra", latex: "f(x) = mx + b"),
-        .init(title: "Quadratic Function", category: "Algebra", latex: "f(x) = ax^2 + bx + c"),
-        .init(title: "Exponential Function", category: "Algebra", latex: "f(x) = ae^{kx}"),
-        .init(title: "Logarithmic Function", category: "Algebra", latex: "f(x) = \\log_b(x)"),
-        .init(title: "Piecewise Function", category: "Layout", latex: "f(x) = \\begin{cases} x + 1, & x < 0 \\\\ x^2, & x \\ge 0 \\end{cases}"),
-        .init(title: "Limit", category: "Calculus", latex: "\\lim_{x \\to a} f(x) = L"),
-        .init(title: "Chain Rule", category: "Calculus", latex: "\\frac{d}{dx} f(g(x)) = f'(g(x))g'(x)")
+        .init(title: "Linear Function", category: "Algebra", latex: "f(x) = 2x + 1"),
+        .init(title: "Quadratic Function", category: "Algebra", latex: "f(x) = x^2 - 3x + 2"),
+        .init(title: "Cubic Function", category: "Algebra", latex: "f(x) = 0.2x^3 - x"),
+        .init(title: "Exponential Function", category: "Algebra", latex: "f(x) = exp(0.5x)"),
+        .init(title: "Logarithmic Function", category: "Algebra", latex: "f(x) = log(x)"),
+        .init(title: "Absolute Value", category: "Algebra", latex: "f(x) = abs(x)"),
+        .init(title: "Square Root", category: "Algebra", latex: "f(x) = sqrt(x)")
     ]
 
     static let geometryTemplates: [MathTemplate] = [
