@@ -75056,6 +75056,108 @@
             "state": "translated",
             "value": "Claude Desktop config"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعدادات تكوين Claude Desktop"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop-Konfiguration"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración de Claude Desktop"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration de Claude Desktop"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्लॉड डेस्कटॉप कॉन्फ़िग"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurazione di Claude Desktop"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claudeデスクトップの設定"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클로드 데스크톱 구성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop-configuratie"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfiguracja Claude Desktop"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuração do Claude Desktop"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфигурация Claude Desktop"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การตั้งค่า Claude Desktop"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Masaüstü yapılandırması"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cấu hình Claude Desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 配置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 桌面配置"
+          }
         }
       }
     },
@@ -75066,6 +75168,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Config file location"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "موقع ملف التكوين"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speicherort der Konfigurationsdatei"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ubicación del archivo de configuración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emplacement du fichier de configuration"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कॉन्फ़िग फ़ाइल स्थान"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posizione del file di configurazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定ファイルの場所"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구성 파일 위치"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locatie configuratiebestand"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokalizacja pliku konfiguracyjnego"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Localização do arquivo de configuração"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расположение файла конфигурации"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ตำแหน่งไฟล์การตั้งค่า"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapılandırma dosyası konumu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vị trí tệp cấu hình"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件位置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件位置"
           }
         }
       }
@@ -75078,6 +75282,108 @@
             "state": "translated",
             "value": "Claude Desktop can connect to ExcalidrawZ through the local HTTP MCP endpoint. Keep ExcalidrawZ open and enable the MCP Server first."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمكن لـ Claude Desktop الاتصال بـ ExcalidrawZ من خلال نقطة النهاية المحلية لـ HTTP MCP. احتفظ بـ ExcalidrawZ مفتوحًا وقم بتمكين خادم MCP أولاً."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop kann über den lokalen HTTP MCP-Endpunkt mit ExcalidrawZ verbunden werden. Halten Sie ExcalidrawZ geöffnet und aktivieren Sie zuerst den MCP-Server."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop puede conectarse a ExcalidrawZ a través del punto final MCP HTTP local. Mantén ExcalidrawZ abierto y habilita primero el Servidor MCP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop peut se connecter à ExcalidrawZ via le point de terminaison MCP HTTP local. Gardez ExcalidrawZ ouvert et activez d'abord le serveur MCP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्लॉड डेस्कटॉप स्थानीय HTTP MCP एंडपॉइंट के माध्यम से एक्स्कलिड्रॉज़ से कनेक्ट कर सकता है। कृपया एक्स्कलिड्रॉज़ को खोला रखें और पहले MCP सर्वर सक्षम करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop può connettersi a ExcalidrawZ tramite l'endpoint MCP HTTP locale. Mantieni ExcalidrawZ aperto e attiva prima il server MCP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claudeデスクトップは、ローカルHTTP MCPエンドポイント経由でExcalidrawZに接続できます。まずExcalidrawZを開いてMCPサーバーを有効にしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클로드 데스크톱은 로컬 HTTP MCP 엔드포인트를 통해 ExcalidrawZ에 연결할 수 있습니다. ExcalidrawZ를 열어 두고 먼저 MCP 서버를 활성화하십시오."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop kan verbinding maken met ExcalidrawZ via de lokale HTTP MCP-eindpunt. Houd ExcalidrawZ open en schakel eerst de MCP Server in."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop może połączyć się z ExcalidrawZ przez lokalny punkt końcowy HTTP MCP. Najpierw otwórz ExcalidrawZ i włącz serwer MCP."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Claude Desktop pode se conectar ao ExcalidrawZ através do endpoint HTTP MCP local. Mantenha o ExcalidrawZ aberto e habilite o Servidor MCP primeiro."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop может подключаться к ExcalidrawZ через локальную HTTP MCP точку доступа. Сначала держите ExcalidrawZ открытым и включите MCP сервер."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop สามารถเชื่อมต่อกับ ExcalidrawZ ผ่านจุดสิ้นสุด HTTP MCP ภายในได้ โปรดเปิด ExcalidrawZ และเปิดใช้งาน MCP Server ก่อน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Masaüstü, yerel HTTP MCP uç noktasından ExcalidrawZ ile bağlantı kurabilir. Öncelikle ExcalidrawZ'i açık tutun ve MCP Sunucusunu etkinleştirin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop có thể kết nối với ExcalidrawZ thông qua điểm cuối MCP HTTP cục bộ. Giữ ExcalidrawZ mở và kích hoạt máy chủ MCP trước."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 可以通过本地 HTTP MCP 端点连接到 ExcalidrawZ。请先保持 ExcalidrawZ 打开并启用 MCP 服务器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 桌面可以通過本地 HTTP MCP 端點連接到 ExcalidrawZ。首先保持 ExcalidrawZ 開啟並啟用 MCP 伺服器。"
+          }
         }
       }
     },
@@ -75088,6 +75394,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "In Claude Desktop, open Settings > Developer > Edit Config. Paste the configuration below, save the file, then restart Claude Desktop."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في Claude Desktop، افتح الإعدادات > المطور > تعديل التكوين. الصق التكوين أدناه، احفظ الملف، ثم أعد تشغيل Claude Desktop."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffnen Sie in Claude Desktop die Einstellungen > Entwickler > Konfiguration bearbeiten. Fügen Sie die folgende Konfiguration ein, speichern Sie die Datei und starten Sie Claude Desktop neu."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En Claude Desktop, abre Configuración > Desarrollador > Editar Config. Pega la configuración a continuación, guarda el archivo y luego reinicia Claude Desktop."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans Claude Desktop, ouvrez Paramètres > Développeur > Modifier la configuration. Collez la configuration ci-dessous, enregistrez le fichier, puis redémarrez Claude Desktop."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्लॉड डेस्कटॉप में, सेटिंग्स > डेवलपर > कॉन्फ़िग संपादित करें खोलें। नीचे दिए गए कॉन्फ़िगरेशन को पेस्ट करें, फ़ाइल सहेजें, फिर क्लॉड डेस्कटॉप को फिर से चालू करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Claude Desktop, apri Impostazioni > Sviluppatore > Modifica Config. Incolla la configurazione qui sotto, salva il file e poi riavvia Claude Desktop."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claudeデスクトップで、設定 > 開発者 > 設定の編集を開きます。以下の設定を貼り付けて、ファイルを保存し、その後Claudeデスクトップを再起動してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클로드 데스크톱에서 설정 > 개발자 > 구성 편집을 엽니다. 아래 구성을 붙여넣고, 파일을 저장한 후 클로드 데스크톱을 재시작하십시오."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Claude Desktop Instellingen > Ontwikkelaar > Configuratie bewerken. Plak de onderstaande configuratie, sla het bestand op en herstart Claude Desktop."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W Claude Desktop otwórz Ustawienia > Deweloper > Edytuj konfigurację. Wklej poniższą konfigurację, zapisz plik, a następnie zrestartuj Claude Desktop."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Claude Desktop, abra Configurações > Desenvolvedor > Editar Config. Cole a configuração abaixo, salve o arquivo e reinicie o Claude Desktop."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В Claude Desktop откройте Настройки > Разработчик > Редактировать конфигурацию. Вставьте конфигурацию ниже, сохраните файл, затем перезапустите Claude Desktop."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ใน Claude Desktop ให้เปิดการตั้งค่า > นักพัฒนา > แก้ไขการตั้งค่า วางการตั้งค่าด้านล่างนี้ บันทึกไฟล์ แล้วรีสตาร์ท Claude Desktop"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Masaüstü'nde Ayarlar > Geliştirici > Yapılandırmayı Düzenle bölümünü açın. Aşağıdaki yapılandırmayı yapıştırın, dosyayı kaydedin ve ardından Claude Masaüstü'nü yeniden başlatın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trong Claude Desktop, mở Cài đặt > Nhà phát triển > Chỉnh sửa cấu hình. Dán cấu hình bên dưới, lưu tệp, sau đó khởi động lại Claude Desktop."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Claude Desktop 中，打开设置 > 开发者 > 编辑配置。粘贴下面的配置，保存文件，然后重启 Claude Desktop。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Claude 桌面中，打開設置 > 開發者 > 編輯配置。粘貼以下配置，保存文件，然後重新啟動 Claude 桌面。"
           }
         }
       }
@@ -75100,6 +75508,108 @@
             "state": "translated",
             "value": "Open Config"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح التكوين"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfiguration öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir configuración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir la configuration"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कॉन्फ़िग खोलें"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Config"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구성 열기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Configuratie"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz konfigurację"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Configuração"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть конфигурацию"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เปิดการตั้งค่า"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapılandırmayı Aç"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mở cấu hình"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开配置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開配置"
+          }
         }
       }
     },
@@ -75110,6 +75620,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reveal Folder"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إظهار المجلد"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner anzeigen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revelar carpeta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Révéler le dossier"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोल्डर दिखाएँ"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra Cartella"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダーを表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "폴더 표시"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toon Map"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odsłoń folder"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revelar Pasta"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать папку"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เปิดเผยโฟลเดอร์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasörü Göster"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiện thư mục"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示文件夹"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示資料夾"
           }
         }
       }
@@ -75916,104 +76528,104 @@
         },
         "ar": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "يتوافق مع تدفق الأدوات excalidraw-mcp القياسي للحصول على توافق واسع مع عملاء MCP."
+            "state": "translated",
+            "value": "توليد محتوى القماش الأساسي."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Entspricht dem upstream excalidraw-mcp Werkzeugfluss für breite Kompatibilität mit MCP-Clients."
+            "state": "translated",
+            "value": "Grundlegende Erstellung von Canvas-Inhalten."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Coincide con el flujo de herramientas excalidraw-mcp de upstream para una amplia compatibilidad con clientes de MCP."
+            "state": "translated",
+            "value": "Generación básica de contenido en el lienzo."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "S'adapte au flux d'outils standard d'excalidraw-mcp pour une large compatibilité avec les clients MCP."
+            "state": "translated",
+            "value": "Génération de contenu de canvas de base."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "कई अनुकूलता के लिए अपस्ट्रीम excalidraw-mcp उपकरण प्रवाह से मेल खाता है।"
+            "state": "translated",
+            "value": "बुनियादी कैनवास सामग्री सृजन।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "needs_review",
+            "state": "translated",
             "value": "Corrisponde al flusso di strumenti standard di excalidraw-mcp per una compatibilità ampia con i client MCP."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "広範なMCPクライアントとの互換性のために、上流のexcalidraw-mcpツールフローに一致します。"
+            "state": "translated",
+            "value": "基本的なキャンバスコンテンツ生成。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "광범위한 MCP 클라이언트와의 호환성을 위해 상류 excalidraw-mcp 도구 흐름과 일치합니다."
+            "state": "translated",
+            "value": "기본 캔버스 콘텐츠 생성."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Komt overeen met de upstream excalidraw-mcp toolflow voor brede compatibiliteit met MCP-clients."
+            "state": "translated",
+            "value": "Basis canvasinhoud generatie."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Dopasowuje przepływ narzędzi excalidraw-mcp do ogólnej kompatybilności z klientami MCP."
+            "state": "translated",
+            "value": "Podstawowe generowanie treści na płótnie."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Correspondendo ao fluxo de ferramenta do excalidraw-mcp upstream para ampla compatibilidade com clientes MCP."
+            "state": "translated",
+            "value": "Geração de conteúdo básico para canvas."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Совпадает с рабочим процессом инструмента excalidraw-mcp для широкой совместимости с клиентами MCP."
+            "state": "translated",
+            "value": "Основное создание контента на холсте."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "ตรงกับกระบวนการเครื่องมือ excalidraw-mcp ของต้นน้ำเพื่อความเข้ากันได้ที่กว้างขวางกับลูกค้า MCP"
+            "state": "translated",
+            "value": "การสร้างเนื้อหาบนผืนผ้าใบขั้นพื้นฐาน"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Geniş uyumluluk için upstream excalidraw-mcp araç akışına eşleşir."
+            "state": "translated",
+            "value": "Temel tuval içerik üretimi."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Khớp với quy trình công cụ excalidraw-mcp phía am cho sự tương thích rộng rãi với các khách hàng MCP."
+            "state": "translated",
+            "value": "Phát sinh nội dung canvas cơ bản."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "needs_review",
+            "state": "translated",
             "value": "与上游的 excalidraw-mcp 工具流程一致，以实现与 MCP 客户端的广泛兼容性。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "與上游 excalidraw-mcp 工具流程相符，以廣泛相容於 MCP 客戶端。"
+            "state": "translated",
+            "value": "基本畫布內容生成。"
           }
         }
       }
@@ -76142,104 +76754,104 @@
         },
         "ar": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "قارن التدفق المتوافق مع excalidraw-mcp القياسي مع مسار التفاعل المعتمد على ExcalidrawZ."
+            "state": "translated",
+            "value": "تعرف على ما يمكن أن تفعله أوضاع MCP الأساسية والمُحسّنة."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Vergleichen Sie den standardmäßigen excalidraw-mcp-kompatiblen Fluss mit dem ExcalidrawZ-nativen Interaktionspfad."
+            "state": "translated",
+            "value": "Erfahren Sie, was die Basis- und optimierten MCP-Modi tun können."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Compara el flujo estándar compatible con excalidraw-mcp con la ruta de interacción nativa de ExcalidrawZ."
+            "state": "translated",
+            "value": "Aprende lo que los modos MCP Básico y Optimizado pueden hacer."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Comparez le flux compatible avec excalidraw-mcp standard avec le chemin d'interaction natif d'ExcalidrawZ."
+            "state": "translated",
+            "value": "Découvrez ce que peuvent faire les modes MCP de base et optimisé."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "मानक excalidraw-mcp-संगत प्रवाह की तुलना ExcalidrawZ-नैटिव इंटरैक्शन पथ से करें।"
+            "state": "translated",
+            "value": "जानें कि बुनियादी और अनुकूलित MCP मोड क्या कर सकते हैं।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Confronta il flusso compatibile con excalidraw-mcp standard con il percorso di interazione nativo di ExcalidrawZ."
+            "state": "translated",
+            "value": "Scopri cosa possono fare le modalità MCP Base e Ottimizzata."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "標準のexcalidraw-mcp互換フローとExcalidrawZネイティブのインタラクションパスを比較します。"
+            "state": "translated",
+            "value": "基本および最適化されたMCPモードが何をできるかを学びます。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "표준 excalidraw-mcp 호환 흐름과 ExcalidrawZ 기본 상호작용 경로를 비교합니다."
+            "state": "translated",
+            "value": "기본 및 최적화된 MCP 모드가 할 수 있는 일을 알아보세요."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Vergelijk de standaard excalidraw-mcp-compatibele flow met het ExcalidrawZ-native interactiepad."
+            "state": "translated",
+            "value": "Leer wat Basis en Geoptimaliseerde MCP-modi kunnen doen."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Porównaj standardowy przepływ kompatybilny z excalidraw-mcp z natywną ścieżką interakcji w ExcalidrawZ."
+            "state": "translated",
+            "value": "Dowiedz się, co mogą zrobić tryby podstawowy i zoptymalizowany MCP."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Compare o fluxo padrão compatível com excalidraw-mcp com o caminho de interação nativo do ExcalidrawZ."
+            "state": "translated",
+            "value": "Saiba o que os modos MCP Básico e Otimizado podem fazer."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Сравните стандартный совместимый с excalidraw-mcp поток с нативным путем взаимодействия ExcalidrawZ."
+            "state": "translated",
+            "value": "Узнайте, что могут сделать базовые и оптимизированные режимы MCP."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "เปรียบเทียบกระบวนการที่เข้ากันได้กับ excalidraw-mcp มาตรฐานกับเส้นทางการโต้ตอบแบบเนทีฟของ ExcalidrawZ"
+            "state": "translated",
+            "value": "เรียนรู้ว่าสถานะ MCP ขั้นพื้นฐานและขั้นสูงสามารถทำอะไรได้บ้าง"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Standard excalidraw-mcp uyumlu akışı, ExcalidrawZ yerel etkileşim yoluyla karşılaştırın."
+            "state": "translated",
+            "value": "Temel ve Optimize edilmiş MCP modlarının neler yapabileceğini öğrenin."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "So sánh quy trình tương thích excalidraw-mcp tiêu chuẩn với con đường tương tác của ExcalidrawZ."
+            "state": "translated",
+            "value": "Tìm hiểu những gì các chế độ MCP Cơ bản và Tối ưu hóa có thể làm."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "将标准的 excalidraw-mcp 兼容流与 ExcalidrawZ 本地交互路径进行比较。"
+            "state": "translated",
+            "value": "了解基本和优化的 MCP 模式可以做什么。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "比較標準的 excalidraw-mcp 相容流程與 ExcalidrawZ 本地互動路徑。"
+            "state": "translated",
+            "value": "了解基本和優化的 MCP 模式可以做什麼。"
           }
         }
       }
@@ -76252,6 +76864,108 @@
             "state": "translated",
             "value": "Client compatibility"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توافق العملاء"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kompatibilität der Clients"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilidad del cliente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilité des clients"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्लाइंट संगतता"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilità client"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クライアントの互換性"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클라이언트 호환성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clientcompatibiliteit"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kompatybilność klientów"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilidade do cliente"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Совместимость клиентов"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ความเข้ากันได้ของลูกค้า"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İstemci uyumluluğu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tương thích khách hàng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客户端兼容性"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客戶端相容性"
+          }
         }
       }
     },
@@ -76262,6 +76976,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canvas drawing"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رسم القماش"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas-Zeichnung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujo en el lienzo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dessin sur canvas"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कैनवास चित्रण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disegno su canvas"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンバス描画"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캔버스 드로잉"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas tekenen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rysowanie na płótnie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desenho em canvas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рисование на холсте"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การวาดบนผืนผ้าใบ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuval çizimi"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vẽ trên canvas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画布绘制"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "畫布繪製"
           }
         }
       }
@@ -76274,6 +77090,108 @@
             "state": "translated",
             "value": "Canvas generation"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توليد القماش"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas-Generierung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generación del lienzo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Génération de canvas"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कैनवास सृजन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generazione canvas"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンバス生成"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캔버스 생성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas generatie"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generowanie płótna"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geração de canvas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создание холста"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การสร้างผืนผ้าใบ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuval üretimi"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tạo canvas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画布生成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "畫布生成"
+          }
         }
       }
     },
@@ -76284,6 +77202,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Simple revisions"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مراجعات بسيطة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einfache Überarbeitungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisiones simples"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Révisions simples"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सरल संशोधन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisioni semplici"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シンプルなリビジョン"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "간단한 수정"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eenvoudige revisies"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proste rewizje"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisões simples"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Простые ревизии"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การแก้ไขที่ง่าย"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basit revizyonlar"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sửa đổi đơn giản"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简单修订"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "簡單修訂"
           }
         }
       }
@@ -76296,6 +77316,108 @@
             "state": "translated",
             "value": "Scene generation"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توليد المشهد"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Szenengenerierung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generación de escenas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Génération de scènes"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दृश्य निर्माण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generazione di scene"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シーン生成"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "장면 생성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scène generatie"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generowanie scen"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geração de cena"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Генерация сцен"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การสร้างฉาก"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sahne oluşturma"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tạo cảnh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "场景生成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "場景生成"
+          }
         }
       }
     },
@@ -76306,6 +77428,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "App-level tools"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدوات على مستوى التطبيق"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Tools"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herramientas a nivel de aplicación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils au niveau de l'application"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप-स्तरीय उपकरण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strumenti a livello di app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリレベルのツール"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 수준 도구"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-niveau tools"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narzędzia na poziomie aplikacji"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferramentas de nível de aplicativo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Инструменты на уровне приложения"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เครื่องมือระดับแอป"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulama düzeyinde araçlar"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Công cụ cấp ứng dụng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用级工具"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用級工具"
           }
         }
       }
@@ -76318,6 +77542,108 @@
             "state": "translated",
             "value": "Assistant workflow"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تدفق عمل المساعد"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistenten-Workflow"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flujo de trabajo del asistente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flux de travail de l'assistant"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सहायक कार्यप्रवाह"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flusso di lavoro dell'assistente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アシスタントワークフロー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어시스턴트 워크플로"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistant werkstroom"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przepływ pracy asystenta"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fluxo de trabalho do assistente"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рабочий процесс помощника"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การทำงานของผู้ช่วย"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asistan iş akışı"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luồng công việc của trợ lý"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "助手工作流程"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "助手工作流程"
+          }
         }
       }
     },
@@ -76328,6 +77654,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Current file editing"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحرير الملف الحالي"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bearbeitung der aktuellen Datei"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edición del archivo actual"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Édition du fichier courant"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वर्तमान फाइल संपादन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica del file corrente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在のファイル編集"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재 파일 편집"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Huidige bestand bewerking"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edycja bieżącego pliku"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edição de arquivo atual"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редактирование текущего файла"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การแก้ไขไฟล์ปัจจุบัน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mevcut dosya düzenleme"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chỉnh sửa tệp hiện tại"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前文件编辑"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當前檔案編輯"
           }
         }
       }
@@ -76340,6 +77768,108 @@
             "state": "translated",
             "value": "File workflow"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تدفق عمل الملفات"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datei-Workflow"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flujo de trabajo de archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flux de travail des fichiers"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ाइल कार्यप्रवाह"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flusso di lavoro dei file"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルワークフロー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 워크플로"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestand werkstroom"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przepływ pracy pliku"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fluxo de trabalho de arquivo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рабочий процесс с файлами"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การทำงานกับไฟล์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya iş akışı"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luồng công việc tệp"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件工作流程"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檔案工作流程"
+          }
         }
       }
     },
@@ -76350,6 +77880,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Workflow integration"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دمج التدفق"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow-Integration"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integración de flujo de trabajo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégration des flux de travail"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कार्यप्रवाह एकीकरण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrazione del flusso di lavoro"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ワークフロー統合"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "워크플로 통합"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integratie van werkstromen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integracja przepływu pracy"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integração de fluxo de trabalho"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Интеграция рабочих процессов"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การรวมการทำงาน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İş akışı entegrasyonu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tích hợp công việc"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作流程集成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作流程整合"
           }
         }
       }
@@ -76362,6 +77994,108 @@
             "state": "translated",
             "value": "List, create, open, and switch between ExcalidrawZ files and authorized local files."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قائمة، إنشاء، فتح، والتبديل بين ملفات ExcalidrawZ والملفات المحلية المصرح بها."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste erstellen, öffnen und zwischen ExcalidrawZ-Dateien und autorisierten lokalen Dateien wechseln."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listar, crear, abrir y cambiar entre archivos de ExcalidrawZ y archivos locales autorizados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lister, créer, ouvrir et basculer entre les fichiers ExcalidrawZ et les fichiers locaux autorisés."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ फ़ाइलों और अधिकृत स्थानीय फ़ाइलों के बीच सूची, निर्माण, खोलें और स्विच करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elenca, crea, apri e passa tra file ExcalidrawZ e file locali autorizzati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZファイルと承認されたローカルファイルのリスト作成、オープン、切り替えを行います。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ 파일 및 승인된 로컬 파일 간에 목록을 작성하고, 열고, 전환하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lijst, maak, open en wissel tussen ExcalidrawZ-bestanden en geautoriseerde lokale bestanden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lista, twórz, otwieraj i przełączaj się między plikami ExcalidrawZ oraz autoryzowanymi plikami lokalnymi."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste, crie, abra e mude entre arquivos ExcalidrawZ e arquivos locais autorizados."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Список, создание, открытие и переключение между файлами ExcalidrawZ и авторизованными локальными файлами."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "รายการ สร้าง เปิด และสลับระหว่างไฟล์ ExcalidrawZ และไฟล์ในท้องถิ่นที่ได้รับอนุญาต"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ dosyaları ve yetkilendirilmiş yerel dosyalar arasında listeleme, oluşturma, açma ve geçiş yapma."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Danh sách, tạo, mở và chuyển đổi giữa các tệp ExcalidrawZ và các tệp cục bộ được ủy quyền."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出、创建、打开并切换 ExcalidrawZ 文件和授权的本地文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出、創建、打開及切換 ExcalidrawZ 檔案和授權的本地檔案。"
+          }
         }
       }
     },
@@ -76372,6 +78106,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cross-file editing"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحرير عبر الملفات"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bearbeitung über Dateien hinweg"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edición entre archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Édition inter-fichiers"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्रॉस-फ़ाइल संपादन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica tra file"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クロスファイル編集"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "크로스 파일 편집"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cross-bestand bewerking"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edycja między plikami"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edição entre arquivos"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редактирование между файлами"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การแก้ไขข้ามไฟล์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyalar arası düzenleme"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chỉnh sửa nhiều tệp"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨文件编辑"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨檔案編輯"
           }
         }
       }
@@ -76384,6 +78220,108 @@
             "state": "translated",
             "value": "Export image, PDF, and .excalidraw artifacts from the current canvas."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصدير الصور، PDF، وملفات .excalidraw من القماش الحالي."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportiere Bild-, PDF- und .excalidraw-Artefakte von der aktuellen Leinwand."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar imagen, PDF y artefactos .excalidraw desde el lienzo actual."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter des images, PDF et artefacts .excalidraw depuis le canevas actuel."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वर्तमान कैनवास से छवि, PDF और .excalidraw आर्टिफैक्ट्स निर्यात करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta immagini, PDF e artefatti .excalidraw dalla tela corrente."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在のキャンバスから画像、PDF、および.excalidrawアーティファクトをエクスポートします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재 캔버스에서 이미지, PDF 및 .excalidraw 아티팩트를 내보내세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporteer afbeelding, PDF en .excalidraw artefacten van het huidige canvas."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksportuj obrazy, pliki PDF oraz artefakty .excalidraw z bieżącego płótna."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte imagem, PDF e artefatos .excalidraw do canvas atual."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспортируйте изображения, PDF и артефакты .excalidraw с текущего холста."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ส่งออกภาพ PDF และไฟล์ .excalidraw จากผืนผ้าใบปัจจุบัน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şu anki kanvas üzerinden resim, PDF ve .excalidraw belgeleri dışa aktarın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xuất hình ảnh, PDF và các tác phẩm .excalidraw từ bề mặt hiện tại."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从当前画布导出图像、PDF 和 .excalidraw 作品。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從當前畫布導出圖像、PDF 和 .excalidraw 工件。"
+          }
         }
       }
     },
@@ -76394,6 +78332,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Export"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصدير"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निर्यात"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エクスポート"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내보내기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporteren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksportuj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспорт"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ส่งออก"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa aktar"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xuất"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "導出"
           }
         }
       }
@@ -76406,6 +78446,108 @@
             "state": "translated",
             "value": "Make targeted changes to existing canvases, which works better for complex files than replacing the whole view."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إجراء تغييرات مستهدفة على القماش الحالي، والتي تعمل بشكل أفضل للملفات المعقدة من استبدال العرض بالكامل."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zielgerichtete Änderungen an bestehenden Leinwänden vornehmen, was bei komplexen Dateien besser funktioniert als das Ersetzen der gesamten Ansicht."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Realizar cambios específicos en lienzos existentes, lo que funciona mejor para archivos complejos que reemplazar toda la vista."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apporter des modifications ciblées aux canevas existants, ce qui fonctionne mieux pour les fichiers complexes que de remplacer l'ensemble de la vue."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मौजूदा कैनवास में लक्षित परिवर्तन करें, जो जटिल फ़ाइलों के लिए पूरे दृश्य को बदलने की तुलना में बेहतर काम करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apporta modifiche mirate a tele esistenti, che funzionano meglio per file complessi rispetto alla sostituzione dell'intera vista."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既存のキャンバスにターゲットを絞った変更を加えます。これは複雑なファイルには全体の表示を置き換えるよりも効果的です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "전체 뷰를 교체하는 것보다 복잡한 파일에 더 효과적인 기존 캔버스에 대한 특정 변경을 수행하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maak gerichte wijzigingen aan bestaande canvassen, wat beter werkt voor complexe bestanden dan het vervangen van het volledige weergave."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wprowadź celowe zmiany w istniejących płótnach, co lepiej działa w przypadku złożonych plików niż zastępowanie całego widoku."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faça alterações direcionadas em canvases existentes, que funcionam melhor para arquivos complexos do que substituir toda a visualização."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вносите целевые изменения в существующие холсты, что работает лучше для сложных файлов, чем замена всего представления."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ทำการเปลี่ยนแปลงที่เฉพาะเจาะจงกับผืนผ้าใบที่มีอยู่ ซึ่งทำงานได้ดีกว่าสำหรับไฟล์ที่ซับซ้อนกว่าการแทนที่มุมมองทั้งหมด"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mevcut kanvaslarda hedefli değişiklikler yapın, bu, karmaşık dosyalar için tüm görünümü değiştirmekten daha iyi çalışır."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thực hiện các thay đổi có mục tiêu đối với các bề mặt hiện có, cái này hoạt động tốt hơn cho các tệp phức tạp so với việc thay thế toàn bộ chế độ xem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对现有画布进行有针对性的更改，这对于复杂文件比替换整个视图更有效。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "對現有畫布進行有針對性的更改，這對於複雜檔案比替換整個視圖更有效。"
+          }
         }
       }
     },
@@ -76416,6 +78558,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Incremental changes"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التغييرات التدريجية"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inkrementelle Änderungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambios incrementales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifications incrémentales"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आंशिक परिवर्तन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifiche incrementali"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "増分変更"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "증분 변경"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incrementele wijzigingen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwiększone zmiany"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mudanças incrementais"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Инкрементальные изменения"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การเปลี่ยนแปลงที่เพิ่มขึ้น"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aşamalı değişiklikler"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thay đổi từng phần"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "增量更改"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "增量變更"
           }
         }
       }
@@ -76428,6 +78672,108 @@
             "state": "translated",
             "value": "Browse and apply Excalidraw libraries and reusable items from the app."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصفح وتطبيق مكتبات إكزاليدراو والعناصر القابلة لإعادة الاستخدام من التطبيق."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durchsuchen und Anwenden von Excalidraw-Bibliotheken und wiederverwendbaren Elementen aus der App."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navega y aplica bibliotecas de Excalidraw y elementos reutilizables desde la aplicación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parcourez et appliquez des bibliothèques Excalidraw et des éléments réutilisables depuis l'application."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप से Excalidraw पुस्तकालयों और पुन: प्रयोज्य वस्तुओं को ब्राउज़ और लागू करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sfoglia e applica librerie Excalidraw e oggetti riutilizzabili dall'app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリからExcalidrawライブラリや再利用可能なアイテムを参照して適用します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱에서 Excalidraw 라이브러리와 재사용 가능한 항목을 탐색하고 적용하십시오."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blader door en pas Excalidraw-bibliotheken en herbruikbare items uit de app toe."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przeglądaj i stosuj biblioteki Excalidraw oraz elementy wielokrotnego użytku z aplikacji."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navegue e aplique bibliotecas Excalidraw e itens reutilizáveis a partir do aplicativo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Просмотр и применение библиотек Excalidraw и повторно используемых элементов из приложения."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เรียกดูและใช้ไลบรารี Excalidraw และรายการที่นำกลับมาใช้ซ้ำได้จากแอป"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamadan Excalidraw kütüphanelerini ve yeniden kullanılabilir öğeleri görüntüleyin ve uygulayın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duyệt và áp dụng các thư viện Excalidraw và các vật phẩm tái sử dụng từ ứng dụng."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浏览并应用来自应用的 Excalidraw 库和可重用项目。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瀏覽並從應用程式中應用 Excalidraw 資源庫和可重用項目。"
+          }
         }
       }
     },
@@ -76438,6 +78784,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Library compatibility"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توافق المكتبة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothekskompatibilität"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilidad de biblioteca"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilité des bibliothèques"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुस्तकालय संगतता"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilità della libreria"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライブラリの互換性"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "라이브러리 호환성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliotheekcompatibiliteit"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kompatybilność biblioteki"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibilidade de biblioteca"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Совместимость библиотек"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ความเข้ากันได้ของไลบรารี"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kütüphane uyumluluğu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tính tương thích với thư viện"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "库兼容性"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "資源庫兼容性"
           }
         }
       }
@@ -76450,6 +78898,108 @@
             "state": "translated",
             "value": "Insert LaTeX formulas and function plots through ExcalidrawZ's native math renderer."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدخل صيغ LaTeX ومخططات الدوال من خلال عارض الرياضيات الأصلي لإكزاليدراو زد."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fügen Sie LaTeX-Formeln und Funktionsdiagramme über den nativen Mathematik-Renderer von ExcalidrawZ ein."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserta fórmulas LaTeX y gráficos de funciones a través del renderizador de matemáticas nativo de ExcalidrawZ."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insérez des formules LaTeX et des graphiques de fonctions via le moteur mathématique natif d'ExcalidrawZ."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ के मूल गणित रेंडरर के जरिए LaTeX सूत्र और फ़ंक्शन प्लॉट डालें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci formule LaTeX e grafici di funzioni tramite il renderer matematico nativo di ExcalidrawZ."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZのネイティブ数学レンダラーを通じてLaTeX数式や関数プロットを挿入します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ의 네이티브 수학 렌더러를 통해 LaTeX 수식과 함수 그래프를 삽입하십시오."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voeg LaTeX-formules en functieplottisaties in via de native wiskunde renderer van ExcalidrawZ."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wstawiaj formuły LaTeX i wykresy funkcji za pomocą natywnego renderera matematycznego ExcalidrawZ."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insira fórmulas LaTeX e gráficos de funções através do renderizador matemático nativo do ExcalidrawZ."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставка формул LaTeX и графиков функций с помощью встроенного математического рендера ExcalidrawZ."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แทรกรูปสูตร LaTeX และกราฟฟังก์ชันผ่านตัวเรนเดอร์คณิตศาสตร์ในตัวของ ExcalidrawZ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ'nin yerel matematik renderleyicisi aracılığıyla LaTeX formüllerini ve fonksiyon grafikleri ekleyin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chèn công thức LaTeX và đồ thị hàm thông qua trình tạo toán học gốc của ExcalidrawZ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过 ExcalidrawZ 的本地数学渲染器插入 LaTeX 公式和函数图。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通過 ExcalidrawZ 的原生數學渲染器插入 LaTeX 公式和函數圖。"
+          }
         }
       }
     },
@@ -76460,6 +79010,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Math tool"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أداة الرياضيات"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mathe-Tool"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herramienta de matemáticas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outil mathématique"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "गणित उपकरण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strumento matematico"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数学ツール"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "수학 도구"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiskundig gereedschap"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narzędzie matematyczne"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferramenta matemática"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Математический инструмент"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เครื่องมือคณิตศาสตร์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matematik aracı"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Công cụ toán học"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数学工具"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數學工具"
           }
         }
       }
@@ -76472,6 +79124,108 @@
             "state": "translated",
             "value": "Use multiple native tools, including Mermaid, LaTeX formulas, function plots, canvas preferences, and precise element edits."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم أدوات أصلية متعددة، بما في ذلك ميرميد، صيغ LaTeX، مخططات الدوال، تفضيلات اللوحة، وتحريرات العناصر الدقيقة."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwenden Sie mehrere native Werkzeuge, einschließlich Mermaid, LaTeX-Formeln, Funktionsdiagrammen, Canvas-Voreinstellungen und präzisen Elementbearbeitungen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliza múltiples herramientas nativas, incluyendo Mermaid, fórmulas LaTeX, gráficos de funciones, preferencias del lienzo y ediciones precisas de elementos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez plusieurs outils natifs, y compris Mermaid, formules LaTeX, graphiques de fonctions, préférences de toile et éditions précises des éléments."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mermaid, LaTeX सूत्र, फ़ंक्शन प्लॉट, कैनवास प्राथमिकताएँ और सटीक तत्व संपादन सहित कई मूल उपकरणों का उपयोग करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilizza più strumenti nativi, inclusi Mermaid, formule LaTeX, grafici di funzioni, preferenze della tela e modifiche precise degli elementi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mermaid、LaTeX数式、関数プロット、キャンバス設定、精密要素編集を含む複数のネイティブツールを使用します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mermaid, LaTeX 수식, 함수 그래프, 캔버스 기본 설정 및 정밀 요소 편집을 포함한 여러 네이티브 도구를 사용하십시오."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gebruik meerdere native tools, waaronder Mermaid, LaTeX-formules, functieplottisaties, canvasvoorkeursinstellingen en nauwkeurige elementbewerkingen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Używaj wielu natywnych narzędzi, w tym Mermaid, formuł LaTeX, wykresów funkcji, preferencji kanwy i precyzyjnych edycji elementów."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use várias ferramentas nativas, incluindo Mermaid, fórmulas LaTeX, gráficos de funções, preferências de canvas e edições precisas de elementos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используйте несколько встроенных инструментов, включая Mermaid, формулы LaTeX, графики функций, настройки холста и точные редактирования элементов."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ใช้เครื่องมือในตัวหลายรายการ รวมถึง Mermaid, สูตร LaTeX, กราฟฟังก์ชัน, การตั้งค่าผ้าใบ และการแก้ไของค์ประกอบที่แม่นยำ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mermaid, LaTeX formülleri, fonksiyon grafikleri, tuval tercihleri ve kesin eleman düzenlemeleri dahil olmak üzere birden fazla yerel aracı kullanın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sử dụng nhiều công cụ gốc, bao gồm Mermaid, công thức LaTeX, đồ thị hàm, tùy chọn canvas và chỉnh sửa phần tử chính xác."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用多个本地工具，包括 Mermaid、LaTeX 公式、函数图、画布偏好和精确元素编辑。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用多種原生工具，包括 Mermaid、LaTeX 公式、函數圖、畫布偏好和精確的元素編輯。"
+          }
         }
       }
     },
@@ -76482,6 +79236,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Powerful tools"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدوات قوية"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leistungsstarke Werkzeuge"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herramientas potentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils puissants"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शक्तिशाली उपकरण"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strumenti potenti"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強力なツール"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "강력한 도구"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krachtige tools"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potężne narzędzia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferramentas poderosas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мощные инструменты"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เครื่องมือที่ทรงพลัง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güçlü araçlar"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Công cụ mạnh mẽ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "强大的工具"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強大的工具"
           }
         }
       }
@@ -76494,6 +79350,108 @@
             "state": "translated",
             "value": "Read the rendered canvas image after changes so the client can inspect layout, overlap, and readability."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقرأ صورة اللوحة المعروضة بعد التغييرات حتى يتمكن العميل من فحص التخطيط والتداخل وقراءة النص."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lesen Sie das gerenderte Canvas-Bild nach Änderungen, damit der Kunde Layout, Überlappung und Lesbarkeit überprüfen kann."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lee la imagen del lienzo renderizado después de los cambios para que el cliente pueda inspeccionar el diseño, la superposición y la legibilidad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisez l'image de la toile rendue après les modifications afin que le client puisse inspecter la mise en page, le chevauchement et la lisibilité."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "परिवर्तनों के बाद रेंडर की गई कैनवास छवि पढ़ें ताकि ग्राहक लेआउट, ओवरलैप और पठनीयता का निरीक्षण कर सके।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggi l'immagine della tela renderizzata dopo le modifiche in modo che il cliente possa ispezionare layout, sovrapposizione e leggibilità."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更後にレンダリングされたキャンバス画像を読み取り、クライアントがレイアウト、重なり、可読性を確認できるようにします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "변경 후 렌더링된 캔버스 이미지를 읽어 클라이언트가 레이아웃, 겹침 및 가독성을 검사할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lees de weergegeven canvasafbeelding na veranderingen zodat de cliënt de lay-out, overlap en leesbaarheid kan inspecteren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przeczytaj renderowany obraz kanwy po zmianach, aby klient mógł sprawdzić układ, nakładanie się i czytelność."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leia a imagem do canvas renderizado após as mudanças para que o cliente possa inspecionar o layout, sobreposição e legibilidade."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Просмотр изображения рендеринга холста после изменений, чтобы клиент мог проверить компоновку, перекрытие и читаемость."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "อ่านภาพผ้าใบที่เรนเดอร์หลังจากการเปลี่ยนแปลง เพื่อให้ลูกค้าสามารถตรวจสอบเลย์เอาต์ การซ้อนทับ และความสามารถในการอ่าน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değişikliklerden sonra görüntülenen tuval resmini okuyun, böylece istemci düzeni, örtüşmeyi ve okunabilirliği inceleyebilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đọc hình ảnh canvas đã được tạo ra sau khi thay đổi để khách hàng có thể kiểm tra bố cục, sự chồng chéo và độ dễ đọc."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在更改后读取渲染的画布图像，以便客户端可以检查布局、重叠和可读性。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在更改後閱讀渲染的畫布圖像，以便客戶可以檢查佈局、重疊和可讀性。"
+          }
         }
       }
     },
@@ -76504,6 +79462,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Image-based checks"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فحوصات قائمة على الصور"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildbasierte Überprüfungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobaciones basadas en imagen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifications basées sur des images"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चित्र-आधारित जाँच"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Controlli basati su immagini"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像ベースのチェック"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이미지 기반 검사"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beeldgebaseerde controles"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrola oparta na obrazie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificações baseadas em imagem"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверки на основе изображений"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การตรวจสอบโดยใช้ภาพ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görüntü tabanlı kontroller"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kiểm tra dựa trên hình ảnh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于图像的检查"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基於圖像的檢查"
           }
         }
       }
@@ -76516,6 +79576,108 @@
             "state": "translated",
             "value": "File History"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تاريخ الملف"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dateihistorie"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial de archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique des fichiers"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ाइल इतिहास"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storico file"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイル履歴"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 기록"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestandsgeschiedenis"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historia plików"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histórico de arquivos"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История файлов"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ประวัติไฟล์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya Geçmişi"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lịch sử tệp"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件历史"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檔案歷史"
+          }
         }
       }
     },
@@ -76526,6 +79688,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keeps close compatibility with clients that already support excalidraw-mcp."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يحافظ على توافق قريب مع العملاء الذين يدعمون بالفعل excalidraw-mcp."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hält enge Kompatibilität mit Klienten, die bereits excalidraw-mcp unterstützen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantiene una compatibilidad cercana con clientes que ya soportan excalidraw-mcp."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintient une compatibilité proche avec les clients qui prennent déjà en charge excalidraw-mcp."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उन ग्राहकों के साथ निकट संगतता बनाए रखता है जो पहले से excalidraw-mcp का समर्थन करते हैं।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantiene una compatibilità elevata con i clienti che supportano già excalidraw-mcp."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "excalidraw-mcpをすでにサポートしているクライアントとの互換性を保持します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이미 excalidraw-mcp를 지원하는 클라이언트와의 호환성을 유지합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behoudt nauwe compatibiliteit met cliënten die al excalidraw-mcp ondersteunen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utrzymuje bliską kompatybilność z klientami, którzy już wspierają excalidraw-mcp."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantém compatibilidade próxima com clientes que já suportam excalidraw-mcp."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поддерживает близкую совместимость с клиентами, которые уже поддерживают excalidraw-mcp."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "รักษาความเข้ากันได้ใกล้เคียงกับลูกค้าที่รองรับ excalidraw-mcp อยู่แล้ว"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excalidraw-mcp'yi zaten destekleyen istemcilerle yakın uyumluluğu korur."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giữ tính tương thích gần gũi với các khách hàng đã hỗ trợ excalidraw-mcp."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与已经支持 excalidraw-mcp 的客户端保持紧密兼容。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "與已支持 excalidraw-mcp 的客戶保持密切兼容。"
           }
         }
       }
@@ -76538,6 +79802,108 @@
             "state": "translated",
             "value": "Draws shapes, text, arrows, labels, colors, and camera framing."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يرسم الأشكال والنصوص والأسهم والتسميات والألوان وإطار الكاميرا."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeichnet Formen, Text, Pfeile, Beschriftungen, Farben und Kamerarandbereiche."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibuja formas, texto, flechas, etiquetas, colores y encuadre de cámara."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dessine des formes, du texte, des flèches, des étiquettes, des couleurs et encadrements de caméra."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आकृतियाँ, पाठ, तीर, लेबल, रंग और कैमरा फ्रेमिंग बनाता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disegna forme, testo, frecce, etichette, colori e inquadrature della telecamera."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "図形、テキスト、矢印、ラベル、色、カメラフレーミングを描画します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도형, 텍스트, 화살표, 레이블, 색상 및 카메라 구성을 그립니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekent vormen, tekst, pijlen, labels, kleuren en camerakaders."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rysuje kształty, tekst, strzałki, etykiety, kolory i kadrowanie kamery."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desenha formas, texto, setas, rótulos, cores e enquadramento da câmera."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рисует фигуры, текст, стрелки, метки, цвета и ракурсы камеры."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "วาดรูปทรง ข้อความ ลูกศร ป้าย สี และการจัดกรอบกล้อง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şekiller, metin, oklar, etiketler, renkler ve kamera çerçevesi çizer."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vẽ hình dạng, văn bản, mũi tên, nhãn, màu sắc và khung hình camera."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绘制形状、文本、箭头、标签、颜色和相机构图。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繪製形狀、文字、箭頭、標籤、顏色和相機框架。"
+          }
         }
       }
     },
@@ -76548,6 +79914,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Creates a complete Excalidraw scene from a prompt."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يخلق مشهد Excalidraw كامل من موجه."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellt eine vollständige Excalidraw-Szene aus einer Eingabeaufforderung."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea una escena completa de Excalidraw a partir de un aviso."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crée une scène Excalidraw complète à partir d'une invite."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "प्रॉम्प्ट से एक संपूर्ण Excalidraw दृश्य बनाता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea una scena completa di Excalidraw da un prompt."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロンプトから完全なExcalidrawシーンを作成します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "프롬프트에서 완전한 Excalidraw 장면을 생성합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maakt een complete Excalidraw-scène op basis van een prompt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tworzy kompletną scenę Excalidraw z podanego promptu."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cria uma cena completa de Excalidraw a partir de um prompt."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создает полную сцену Excalidraw из запроса."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สร้างฉาก Excalidraw แบบเต็มจากคำสั่ง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir istemden tam bir Excalidraw sahnesi oluşturur."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tạo ra một cảnh Excalidraw hoàn chỉnh từ một lời nhắc."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根据提示创建完整的 Excalidraw 场景。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根據提示創建完整的 Excalidraw 場景。"
           }
         }
       }
@@ -76560,6 +80028,108 @@
             "state": "translated",
             "value": "Supports simple revisions through MCP checkpoints."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يدعم المراجعات البسيطة من خلال نقاط التفتيش MCP."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unterstützt einfache Revisionen durch MCP-Kontrollpunkte."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Admite revisiones simples a través de puntos de control de MCP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supporte des révisions simples via des points de contrôle MCP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP चेकपॉइंट के माध्यम से सरल संशोधनों का समर्थन करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supporta revisioni semplici attraverso i checkpoint MCP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPチェックポイントを通じて簡単な修正をサポートします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 체크포인트를 통해 간단한 수정 사항을 지원합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ondersteunt eenvoudige revisies via MCP-controlepunten."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obsługuje proste rewizje przez punkty kontrolne MCP."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suporta revisões simples através de checagens do MCP."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поддерживает простые изменения через контрольные точки MCP."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "รองรับการแก้ไขแบบง่ายผ่านจุดตรวจสอบ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP kontrol noktaları aracılığıyla basit revizyonları destekler."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hỗ trợ các sửa đổi đơn giản thông qua các điểm kiểm tra MCP."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过 MCP 检查点支持简单的修订。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通過 MCP 之前檢查點支持簡單的修訂。"
+          }
         }
       }
     },
@@ -76570,6 +80140,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Best when the client should work like an ExcalidrawZ-aware assistant, not just a diagram generator."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أفضل عندما يجب أن يعمل العميل كمعاون على دراية بـ ExcalidrawZ، وليس فقط كمولد مخططات."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Am besten, wenn der Client wie ein ExcalidrawZ-bewusster Assistent arbeiten sollte und nicht nur als Diagrammgenerator."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mejor cuando el cliente debe funcionar como un asistente consciente de ExcalidrawZ, no solo como un generador de diagramas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meilleur lorsque le client doit fonctionner comme un assistant conscient d'ExcalidrawZ, et pas seulement comme un générateur de diagrammes."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बेस्ट जब क्लाइंट को ExcalidrawZ-साक्षर सहायक की तरह काम करना चाहिए, न कि केवल एक आरेख जेनरेटर।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ideale quando il client dovrebbe funzionare come un assistente consapevole di ExcalidrawZ, non solo come un generatore di diagrammi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クライアントが単なる図を生成するだけでなく、ExcalidrawZに対応したアシスタントのように動作すべき場合に最適です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클라이언트가 단순한 다이어그램 생성기가 아니라 ExcalidrawZ 인식 도우미처럼 작동할 때 가장 좋습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Het beste wanneer de cliënt moet werken als een ExcalidrawZ-bewuste assistent, niet alleen als een diagramgenerator."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Najlepsze, gdy klient powinien działać jak asystent świadomy ExcalidrawZ, a nie tylko generator diagramów."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melhor quando o cliente deve funcionar como um assistente ciente do ExcalidrawZ, não apenas como um gerador de diagramas."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучше, когда клиент должен работать как ассистент, осведомленный о ExcalidrawZ, а не просто как генератор диаграмм."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ดีที่สุดเมื่อไคลเอนต์ควรทำงานเหมือนผู้ช่วยที่รับรู้ ExcalidrawZ ไม่ใช่แค่เครื่องสร้างภาพ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İstemcinin yalnızca bir diyagram oluşturucu değil, ExcalidrawZ'yi bilen bir asistan gibi çalışması gerektiğinde en iyisidir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tốt nhất khi client hoạt động như một trợ lý nhận thức ExcalidrawZ, không chỉ là một trình tạo sơ đồ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当客户端应该像 ExcalidrawZ 识别助手一样工作，而不仅仅是图表生成器时最佳。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當客戶端應該像 ExcalidrawZ 知道的助手而不僅僅是圖表生成器時效果最佳。"
           }
         }
       }
@@ -76582,6 +80254,108 @@
             "state": "translated",
             "value": "Can inspect the rendered canvas, export files, change canvas preferences, navigate the view, use libraries, insert Mermaid, insert math, and patch elements."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمكنه فحص اللوحة المنبعثة، تصدير الملفات، تغيير تفضيلات اللوحة، التنقل في العرض، استخدام المكتبات، إدراج ميرميد، إدراج الرياضيات، وترقيع العناصر."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kann die gerenderte Leinwand inspizieren, Dateien exportieren, Leinwandeinstellungen ändern, die Ansicht navigieren, Bibliotheken nutzen, Mermaid einfügen, Mathematik einfügen und Elemente patchen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puede inspeccionar el lienzo renderizado, exportar archivos, cambiar preferencias del lienzo, navegar por la vista, usar bibliotecas, insertar Mermaid, insertar matemáticas y parchear elementos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peut inspecter le canevas rendu, exporter des fichiers, changer les préférences du canevas, naviguer dans la vue, utiliser des bibliothèques, insérer Mermaid, insérer des mathématiques et patcher des éléments."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभिव्यक्त किए गए कैनवास की जांच कर सकता है, फ़ाइलें निर्यात कर सकता है, कैनवास प्राथमिकताएँ बदल सकता है, दृश्य को नेविगेट कर सकता है, पुस्तकालयों का उपयोग कर सकता है, Mermaid डाल सकता है, गणित डाल सकता है, और तत्वों को पैच कर सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Può ispezionare la tela renderizzata, esportare file, modificare preferenze della tela, navigare nella vista, utilizzare librerie, inserire Mermaid, inserire matematica e patchare elementi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レンダリングされたキャンバスの検査、ファイルのエクスポート、キャンバスの設定の変更、ビューのナビゲート、ライブラリの使用、Mermaidの挿入、数学の挿入、要素のパッチなどが可能です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "렌더링된 캔버스를 검사하고 파일을 내보내며, 캔버스 기본 설정을 변경하고, 뷰를 탐색하고, 라이브러리를 사용하며, Mermaid를 삽입하고, 수학을 삽입하며, 요소를 패치할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kan het weergegeven canvas inspecteren, bestanden exporteren, canvasvoorkeuren wijzigen, de weergave navigeren, bibliotheken gebruiken, Mermaid invoegen, wiskunde invoegen en elementen patchen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Może przeglądać renderowany obszar roboczy, eksportować pliki, zmieniać preferencje obszaru roboczego, nawigować widokiem, korzystać z bibliotek, wstawiać Mermaid, wstawiać matematykę i patchować elementy."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pode inspecionar o canvas renderizado, exportar arquivos, alterar preferências do canvas, navegar na visualização, usar bibliotecas, inserir Mermaid, inserir matemática e corrigir elementos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Может инспектировать отрисованный холст, экспортировать файлы, изменять предпочтения холста, навигировать по виду, использовать библиотеки, вставлять Mermaid, вставлять математику и редактировать элементы."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สามารถตรวจสอบผืนผ้าใบที่เรนเดอร์ ส่งออกไฟล์ เปลี่ยนการตั้งค่าผืนผ้าใบ นำทางมุมมอง ใช้ไลบรารี แทรก Mermaid แทรกคณิตศาสตร์ และแพตช์องค์ประกอบ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oluşturulan kanvası inceleyebilir, dosyaları dışa aktarabilir, kanvas tercihlerini değiştirebilir, görünümü gezinebilir, kütüphaneleri kullanabilir, Mermaid ekleyebilir, matematik ekleyebilir ve öğeleri yamanız mümkündür."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Có thể kiểm tra canvas đã được hiển thị, xuất tập tin, thay đổi sở thích canvas, điều hướng xem, sử dụng thư viện, chèn Mermaid, chèn toán học và vá các phần tử."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以检查渲染的画布，导出文件，更改画布偏好，导航视图，使用库，插入 Mermaid，插入数学，和修补元素。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以檢查渲染的畫布、導出檔案、改變畫布首選項、導航視圖、使用庫、插入 Mermaid、插入數學和補丁元素。"
+          }
         }
       }
     },
@@ -76592,6 +80366,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edits the active ExcalidrawZ file directly instead of only creating a generated view."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعدل ملف ExcalidrawZ النشط مباشرة بدلاً من إنشاء عرض مولد فقط."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bearbeitet die aktive ExcalidrawZ-Datei direkt, anstatt nur eine generierte Ansicht zu erstellen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edita el archivo activo de ExcalidrawZ directamente en lugar de solo crear una vista generada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie directement le fichier ExcalidrawZ actif au lieu de créer uniquement une vue générée."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सिर्फ उत्पन्न दृश्य बनाने के बजाय सक्रिय ExcalidrawZ फ़ाइल को सीधे संपादित करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica direttamente il file ExcalidrawZ attivo invece di creare solo una vista generata."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生成されたビューを作成するだけでなく、アクティブなExcalidrawZファイルを直接編集します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "생성된 보기만 만드는 대신 활성 ExcalidrawZ 파일을 직접 편집합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bewerkt het actieve ExcalidrawZ-bestand direct in plaats van alleen een gegenereerde weergave te maken."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edytuje aktywny plik ExcalidrawZ bezpośrednio zamiast tylko tworzenia wygenerowanego widoku."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edita o arquivo ativo do ExcalidrawZ diretamente em vez de apenas criar uma visualização gerada."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редактирует активный файл ExcalidrawZ напрямую, а не только создает сгенерированный вид."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แก้ไขไฟล์ ExcalidrawZ ที่เปิดใช้งานโดยตรงแทนที่จะเพียงสร้างมุมมองที่สร้างขึ้น"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin ExcalidrawZ dosyasını doğrudan düzenler, yalnızca oluşturulmuş bir görünüm oluşturmakla kalmaz."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chỉnh sửa tệp ExcalidrawZ đang hoạt động trực tiếp thay vì chỉ tạo một chế độ xem được tạo ra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接编辑活动的 ExcalidrawZ 文件，而不仅仅是创建生成的视图。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接編輯活動的 ExcalidrawZ 檔案，而不僅僅是創建生成視圖。"
           }
         }
       }
@@ -76604,6 +80480,108 @@
             "state": "translated",
             "value": "Can list, create, open, and confirm ExcalidrawZ files and authorized local files."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمكنه سرد وإنشاء وفتح وتأكيد ملفات ExcalidrawZ والملفات المحلية المعتمدة."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kann ExcalidrawZ-Dateien und autorisierte lokale Dateien auflisten, erstellen, öffnen und bestätigen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puede listar, crear, abrir y confirmar archivos de ExcalidrawZ y archivos locales autorizados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peut lister, créer, ouvrir et confirmer des fichiers ExcalidrawZ et des fichiers locaux autorisés."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ फ़ाइलों और अधिकृत स्थानीय फ़ाइलों को सूचीबद्ध, बनाना, खोलना और पुष्टि कर सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Può elencare, creare, aprire e confermare file ExcalidrawZ e file locali autorizzati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZファイルおよび認可されたローカルファイルをリスト、作成、オープン、および確認できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ 파일 및 승인된 로컬 파일을 나열, 생성, 열고 확인할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kan ExcalidrawZ-bestanden en geautoriseerde lokale bestanden opsommen, maken, openen en bevestigen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Może wylistować, utworzyć, otworzyć i potwierdzić pliki ExcalidrawZ oraz autoryzowane pliki lokalne."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pode listar, criar, abrir e confirmar arquivos do ExcalidrawZ e arquivos locais autorizados."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Может перечислять, создавать, открывать и подтверждать файлы ExcalidrawZ и авторизованные локальные файлы."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สามารถจัดรายการ สร้าง เปิด และยืนยันไฟล์ ExcalidrawZ และไฟล์โลคัลที่ได้รับอนุญาต"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ dosyalarını ve yetkilendirilmiş yerel dosyaları listeleyebilir, oluşturabilir, açabilir ve onaylayabilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Có thể liệt kê, tạo, mở và xác nhận các tệp ExcalidrawZ và các tệp cục bộ được ủy quyền."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以列出、创建、打开和确认 ExcalidrawZ 文件及授权的本地文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以列出、創建、打開和確認 ExcalidrawZ 檔案和授權本地檔案。"
+          }
         }
       }
     },
@@ -76614,6 +80592,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Records ExcalidrawZ File History around changes and can restore saved checkpoints."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يسجل تاريخ ملف ExcalidrawZ حول التغييرات ويمكنه استعادة نقاط التفتيش المحفوظة."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufzeichnungen zur ExcalidrawZ-Dateiversionierung in Bezug auf Änderungen und kann gespeicherte Kontrollpunkte wiederherstellen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra el historial de archivos de ExcalidrawZ en torno a los cambios y puede restaurar puntos de control guardados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistre l'historique des fichiers ExcalidrawZ autour des changements et peut restaurer des points de contrôle enregistrés."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बदलावों के चारों ओर ExcalidrawZ फ़ाइल इतिहास को रिकॉर्ड करता है और सहेजे गए चेकपॉइंट को पुनर्स्थापित कर सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra la cronologia del file ExcalidrawZ attorno ai cambiamenti e può ripristinare checkpoint salvati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更にあたるExcalidrawZファイルの履歴を記録し、保存されたチェックポイントを復元できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "변경 사항 주위에 ExcalidrawZ 파일 히스토리를 기록하고 저장된 체크포인트를 복원할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registreert ExcalidrawZ-bestandgeschiedenis rond wijzigingen en kan opgeslagen controlepunten herstellen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejestruje historię plików ExcalidrawZ dotyczących zmian i może przywracać zapisane punkty kontrolne."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra o histórico de arquivos do ExcalidrawZ em torno de mudanças e pode restaurar pontos de verificação salvos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывает историю файлов ExcalidrawZ вокруг изменений и может восстанавливать сохраненные контрольные точки."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "บันทึกประวัติไฟล์ ExcalidrawZ รอบการเปลี่ยนแปลงและสามารถคืนค่าจุดตรวจสอบที่บันทึกไว้"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değişiklikler etrafında ExcalidrawZ Dosya Geçmişini kaydeder ve kaydedilmiş kontrol noktalarını geri yükleyebilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ghi lại Lịch sử Tệp ExcalidrawZ xung quanh các thay đổi và có thể khôi phục các điểm kiểm tra đã lưu."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录关于更改的 ExcalidrawZ 文件历史，并可以恢复保存的检查点。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在更改周圍記錄 ExcalidrawZ 檔案歷史並可以恢復已保存的檢查點。"
           }
         }
       }
@@ -76629,104 +80709,104 @@
         },
         "ar": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "يستخدم أدوات MCP الأصلية لـ ExcalidrawZ للحصول على تحكم أعمق في اللوحة، وسياق مستوعب للملفات، وتدفقات عمل مبنية على هذا التطبيق."
+            "state": "translated",
+            "value": "مصممة لتجارب عمل ExcalidrawZ الكاملة، بدءًا من تحرير الملفات الحالية إلى التحقق، والتصدير، وإعادة استخدام محتوى التطبيق."
           }
         },
         "de": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Verwendet ExcalidrawZ-native MCP-Tools für tiefere Steuerung der Leinwand, dateibewussten Kontext und workflows, die um diese App herum aufgebaut sind."
+            "state": "translated",
+            "value": "Entwickelt für vollständige ExcalidrawZ-Workflows, von der Bearbeitung bestehender Dateien bis hin zu Überprüfungen, Exporten und der Wiederverwendung von App-Inhalten."
           }
         },
         "es": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Utiliza herramientas MCP nativas de ExcalidrawZ para un control más profundo del lienzo, contexto consciente de archivos y flujos de trabajo construidos en torno a esta aplicación."
+            "state": "translated",
+            "value": "Diseñado para flujos de trabajo completos de ExcalidrawZ, desde la edición de archivos existentes hasta la revisión, exportación y reutilización del contenido de la aplicación."
           }
         },
         "fr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Utilise des outils MCP natifs d'ExcalidrawZ pour un contrôle plus approfondi de la toile, un contexte conscient des fichiers et des flux de travail construits autour de cette application."
+            "state": "translated",
+            "value": "Conçu pour des flux de travail complets avec ExcalidrawZ, de l'édition de fichiers existants à la vérification, l'exportation et la réutilisation du contenu de l'application."
           }
         },
         "hi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "गहरे कैनवास नियंत्रण, फ़ाइल-जानकारी संदर्भ, और इस ऐप के चारों ओर निर्मित कार्यप्रवाहों के लिए ExcalidrawZ-नैटिव MCP उपकरणों का उपयोग करता है।"
+            "state": "translated",
+            "value": "पूर्ण ExcalidrawZ कार्यप्रवाहों के लिए डिज़ाइन किया गया, जो मौजूदा फ़ाइलों को संपादित करने से लेकर, सामग्री की जाँच, निर्यात और पुनः उपयोग तक है।"
           }
         },
         "it": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Utilizza strumenti MCP nativi di ExcalidrawZ per un controllo più profondo della tela, contesto consapevole dei file e flussi di lavoro costruiti attorno a questa app."
+            "state": "translated",
+            "value": "Progettato per flussi di lavoro completi di ExcalidrawZ, dalla modifica di file esistenti al controllo, esportazione e riutilizzo del contenuto dell'app."
           }
         },
         "ja": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "ExcalidrawZネイティブのMCPツールを使用して、より深いキャンバス制御、ファイル対応のコンテキスト、およびこのアプリに基づいて構築されたワークフローを実現します。"
+            "state": "translated",
+            "value": "既存のファイルの編集からチェック、エクスポート、アプリコンテンツの再利用まで、完全なExcalidrawZワークフローに対応しています。"
           }
         },
         "ko": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "ExcalidrawZ 기본 MCP 도구를 사용하여 더 깊은 캔버스 제어, 파일 인식 контекст 및 이 앱을 중심으로 구축된 워크플로를 제공합니다."
+            "state": "translated",
+            "value": "기존 파일 편집부터 내용 확인, 내보내기 및 재사용에 이르기까지 전체 ExcalidrawZ 워크플로를 위해 설계되었습니다."
           }
         },
         "nl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Maakt gebruik van ExcalidrawZ-native MCP-tools voor diepere canvasbesturing, context bewust van bestanden, en workflows die rond deze app zijn opgebouwd."
+            "state": "translated",
+            "value": "Ontworpen voor volledige ExcalidrawZ-workflows, van het bewerken van bestaande bestanden tot het controleren, exporteren en hergebruiken van app-inhoud."
           }
         },
         "pl": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Używa natywnych narzędzi MCP ExcalidrawZ dla głębszej kontroli nad płótnem, kontekstu świadomego pliku oraz przepływów pracy zbudowanych wokół tej aplikacji."
+            "state": "translated",
+            "value": "Zaprojektowane dla pełnych przepływów pracy ExcalidrawZ, od edytowania istniejących plików po sprawdzanie, eksportowanie i ponowne używanie zawartości aplikacji."
           }
         },
         "pt": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Usa ferramentas MCP nativas do ExcalidrawZ para um controle mais profundo do canvas, contexto consciente de arquivos e fluxos de trabalho construídos em torno deste aplicativo."
+            "state": "translated",
+            "value": "Projetado para fluxos de trabalho completos do ExcalidrawZ, desde a edição de arquivos existentes até a verificação, exportação e reutilização do conteúdo do aplicativo."
           }
         },
         "ru": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Использует нативные инструменты MCP ExcalidrawZ для более глубокого контроля холста, контекста, осведомленного о файлах, и рабочих процессов, построенных вокруг этого приложения."
+            "state": "translated",
+            "value": "Создано для полной работы с ExcalidrawZ, от редактирования существующих файлов до проверки, экспорта и повторного использования контента приложения."
           }
         },
         "th": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "ใช้เครื่องมือ MCP แบบเนทีฟของ ExcalidrawZ สำหรับการควบคุมผืนผ้าใบที่ลึกซึ้งยิ่งขึ้น บริบทที่รู้จักไฟล์ และกระบวนการทำงานที่สร้างขึ้นรอบแอปนี้"
+            "state": "translated",
+            "value": "ออกแบบมาสำหรับการทำงานที่ครบถ้วนของ ExcalidrawZ ตั้งแต่การแก้ไขไฟล์ที่มีอยู่ไปจนถึงการตรวจสอบ การส่งออก และการนำเนื้อหาแอปกลับมาใช้ใหม่"
           }
         },
         "tr": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Derin tuval kontrolü, dosya bilgilendirilmiş bağlam ve bu uygulama etrafında kurulmuş iş akışları için ExcalidrawZ yerel MCP araçlarını kullanır."
+            "state": "translated",
+            "value": "Mevcut dosyaları düzenlemekten kontrol etmeye, dışa aktarmaya ve uygulama içeriğini yeniden kullanmaya kadar, tam ExcalidrawZ iş akışları için tasarlandı."
           }
         },
         "vi": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "Sử dụng các công cụ MCP bản địa của ExcalidrawZ để kiểm soát canvas sâu hơn, ngữ cảnh dựa trên tệp và quy trình làm việc được xây dựng xung quanh ứng dụng này."
+            "state": "translated",
+            "value": "Được thiết kế cho các quy trình làm việc hoàn chỉnh của ExcalidrawZ, từ việc chỉnh sửa các tệp hiện có đến kiểm tra, xuất và tái sử dụng nội dung ứng dụng."
           }
         },
         "zh-Hans": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "使用 ExcalidrawZ 本地 MCP 工具以更深层次的画布控制、文件感知上下文和围绕该应用构建的工作流。"
+            "state": "translated",
+            "value": "为完整的 ExcalidrawZ 工作流设计，从编辑现有文件到检查、导出和重用应用内容。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
-            "state": "needs_review",
-            "value": "使用 ExcalidrawZ 本地的 MCP 工具，提供更深入的畫布控制、檔案感知上下文和圍繞本應用構建的工作流程。"
+            "state": "translated",
+            "value": "設計以支持完整的 ExcalidrawZ 工作流程，從編輯現有檔案到檢查、導出和重用應用內容。"
           }
         }
       }
@@ -123073,6 +127153,108 @@
             "state": "translated",
             "value": "Create and edit LaTeX formulas and function plots with live previews, templates, colors, and AI-assisted generation."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إنشاء وتحرير صيغ LaTeX و مخططات الدوال مع معاينات حية، وقوالب، وألوان، وتوليد مساعد بالذكاء الاصطناعي."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellen und Bearbeiten von LaTeX-Formeln und Funktionsplots mit Live-Vorschauen, Vorlagen, Farben und KI-unterstützter Generierung."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea y edita fórmulas LaTeX y gráficos de funciones con vistas previas en vivo, plantillas, colores y generación asistida por IA."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créez et éditez des formules LaTeX et des graphiques de fonctions avec des aperçus en direct, des modèles, des couleurs et une génération assistée par IA."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LaTeX सूत्रों और फ़ंक्शन प्लॉट्स को लाइव पूर्वावलोकनों, टेम्पलेट्स, रंगों, और AI-सहायता उत्पन्न करने के साथ बनाएं और संपादित करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea ed edita formule LaTeX e grafici di funzioni con anteprime live, modelli, colori e generazione assistita dall'IA."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライブプレビュー、テンプレート、色、AI支援生成を使って、LaTeX数式と関数プロットを作成および編集します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실시간 미리보기, 템플릿, 색상 및 AI 지원 생성을 통해 LaTeX 수식 및 함수 플롯을 만들고 편집하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maak en bewerk LaTeX-formules en functieplots met live voorvertoningen, sjablonen, kleuren en AI-ondersteunde generatie."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Twórz i edytuj formuły LaTeX oraz wykresy funkcji z podglądem na żywo, szablonami, kolorami i generowaniem wspomaganym przez AI."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crie e edite fórmulas LaTeX e gráficos de funções com visualizações ao vivo, modelos, cores e geração assistida por IA."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создавайте и редактируйте формулы LaTeX и графики функций с живыми превью, шаблонами, цветами и генерацией с помощью ИИ."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สร้างและแก้ไขสูตร LaTeX และกราฟฟังก์ชันพร้อมการแสดงตัวอย่างสด แบบฟอร์ม สี และการสร้างที่ช่วยโดย AI"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı önizlemeler, şablonlar, renkler ve AI destekli üretim ile LaTeX formülleri ve fonksiyon grafiklerini oluşturun ve düzenleyin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tạo và chỉnh sửa các công thức LaTeX và đồ thị hàm với bản xem trước trực tiếp, mẫu, màu sắc và tạo dữ liệu hỗ trợ AI."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建和编辑 LaTeX 公式和函数图形，支持实时预览、模板、颜色和 AI 辅助生成。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "創建和編輯 LaTeX 公式和函數圖，並具有實時預覽、模板、顏色和 AI 協助生成。"
+          }
         }
       }
     },
@@ -123083,6 +127265,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Better Math Tool"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أداة رياضية أفضل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Besseres Mathematik-Tool"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mejor Herramienta de Matemáticas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meilleur Outil Mathématique"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बेहतर गणित टूल"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strumento Matematica Migliore"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "より良い数学ツール"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 나은 수학 도구"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betere Rekentool"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lepsze narzędzie matematyczne"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferramenta de Matemática Aprimorada"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Улучшенный математический инструмент"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เครื่องมือคณิตศาสตร์ที่ดีกว่า"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha İyi Matematik Aracı"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Công Cụ Toán Học Tốt Hơn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更好的数学工具"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更好的數學工具"
           }
         }
       }
@@ -123095,6 +127379,108 @@
             "state": "translated",
             "value": "Connect ExcalidrawZ to MCP clients. Basic mode matches excalidraw-mcp, while Optimized mode can edit files, inspect the canvas, use libraries, and export results."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "توصيل ExcalidrawZ بعملاء MCP. الوضع الأساسي يتطابق مع excalidraw-mcp، بينما الوضع المحسن يمكنه تحرير الملفات، وفحص اللوحة، واستخدام المكتبات، وتصدير النتائج."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinden Sie ExcalidrawZ mit MCP-Clients. Der Basismodus entspricht excalidraw-mcp, während der optimierte Modus Dateien bearbeiten, die Leinwand inspizieren, Bibliotheken verwenden und Ergebnisse exportieren kann."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecta ExcalidrawZ a clientes MCP. El modo básico coincide con excalidraw-mcp, mientras que el modo Optimizado puede editar archivos, inspeccionar el lienzo, usar bibliotecas y exportar resultados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez ExcalidrawZ aux clients MCP. Le mode de base correspond à excalidraw-mcp, tandis que le mode Optimisé permet d'éditer des fichiers, d'inspecter la toile, d'utiliser des bibliothèques et d'exporter des résultats."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ को MCP क्लाइंट्स से कनेक्ट करें। बेसिक मोड excalidraw-mcp से मेल खाता है, जबकि ऑप्टिमाइज़्ड मोड फ़ाइलों को संपादित कर सकता है, कैनवास की जांच कर सकता है, लाइब्रेरी का उपयोग कर सकता है, और परिणामों का निर्यात कर सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collega ExcalidrawZ ai client MCP. La modalità base corrisponde a excalidraw-mcp, mentre la modalità Ottimizzata può modificare file, ispezionare la tela, utilizzare librerie ed esportare risultati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZをMCPクライアントに接続します。基本モードはexcalidraw-mcpに一致し、最適化モードではファイルを編集したり、キャンバスを検査したり、ライブラリを使用したり、結果をエクスポートしたりできます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ를 MCP 클라이언트에 연결하세요. 기본 모드는 excalidraw-mcp와 일치하며, 최적화된 모드는 파일 편집, 캔버스 검사, 라이브러리 사용 및 결과 내보내기가 가능합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbind ExcalidrawZ met MCP-klanten. De basismodus komt overeen met excalidraw-mcp, terwijl de geoptimaliseerde modus bestanden kan bewerken, het canvas kan inspecteren, bibliotheken kan gebruiken en resultaten kan exporteren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podłącz ExcalidrawZ do klientów MCP. Tryb podstawowy odpowiada excalidraw-mcp, podczas gdy tryb zoptymalizowany może edytować pliki, inspekcjonować płótno, korzystać z bibliotek i eksportować wyniki."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecte o ExcalidrawZ aos clientes MCP. O modo básico combina com excalidraw-mcp, enquanto o modo otimizado pode editar arquivos, inspecionar o canvas, usar bibliotecas e exportar resultados."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Соедините ExcalidrawZ с клиентами MCP. Базовый режим соответствует excalidraw-mcp, в то время как Оптимизированный режим может редактировать файлы, проверять холст, использовать библиотеки и экспортировать результаты."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เชื่อมต่อ ExcalidrawZ กับลูกค้า MCP โหมดพื้นฐานตรงกับ excalidraw-mcp ขณะที่โหมดที่ปรับแต่งแล้วสามารถแก้ไขไฟล์ ตรวจสอบผืนผ้าใบ ใช้ไลบรารี และส่งออกผลลัพธ์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ'yi MCP istemcilerine bağlayın. Temel mod excalidraw-mcp ile eşleşir, Optimize edilmiş mod ise dosyaları düzenleyebilir, tuvali inceleyebilir, kütüphaneleri kullanabilir ve sonuçları dışa aktarabilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kết nối ExcalidrawZ với các khách hàng MCP. Chế độ cơ bản tương ứng với excalidraw-mcp, trong khi chế độ Tối ưu hóa có thể chỉnh sửa tệp, kiểm tra canvas, sử dụng thư viện và xuất kết quả."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 ExcalidrawZ 连接到 MCP 客户端。基本模式与 excalidraw-mcp 匹配，而优化模式则可以编辑文件、检查画布、使用库和导出结果。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將 ExcalidrawZ 連接到 MCP 客戶端。基本模式匹配 excalidraw-mcp，而優化模式則可以編輯文件、檢查畫布、使用庫和導出結果。"
+          }
         }
       }
     },
@@ -123105,6 +127491,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "MCP Services"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-Dienste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicios MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Services MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP सेवाएँ"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servizi MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPサービス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 서비스"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-diensten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usługi MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serviços MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сервисы MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "บริการ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Hizmetleri"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dịch Vụ MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 服务"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 服務"
           }
         }
       }
@@ -123117,6 +127605,108 @@
             "state": "translated",
             "value": "Reorder drawing tools in Settings. The toolbar layout and number shortcuts follow your custom order."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعادة ترتيب أدوات الرسم في الإعدادات. تصميم شريط الأدوات وعدد الاختصارات يتبع ترتيبك المخصص."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordnen Sie die Zeichenwerkzeuge in den Einstellungen neu an. Das Layout der Symbolleiste und die Tastenkombinationen folgen Ihrer benutzerdefinierten Reihenfolge."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reordena las herramientas de dibujo en Configuración. La disposición de la barra de herramientas y los atajos numéricos siguen tu orden personalizado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réorganisez les outils de dessin dans les paramètres. La disposition de la barre d'outils et les raccourcis numériques suivent votre ordre personnalisé."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सेटिंग्स में ड्राइंग टूल्स को पुनर्व्यवस्थित करें। टूलबार लेआउट और संख्या शॉर्टकट आपके कस्टम क्रम का पालन करते हैं।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riordina gli strumenti di disegno nelle Impostazioni. Il layout della barra degli strumenti e i collegamenti numerici seguono il tuo ordine personalizzato."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定で描画ツールの順序を変更します。ツールバーのレイアウトとショートカットの番号は、あなたのカスタム順序に従います。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정에서 그리기 도구의 순서를 재배치하세요. 툴바 레이아웃과 번호 단축키는 사용자 지정 순서를 따릅니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herordenen van tekengereedschappen in Instellingen. De indeling van de werkbalk en de nummering van sneltoetsen volgen jouw aangepaste volgorde."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zmień kolejność narzędzi rysunkowych w Ustawieniach. Układ paska narzędzi i skróty klawiszowe będą podążać za Twoją niestandardową kolejnością."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reordene as ferramentas de desenho nas Configurações. O layout da barra de ferramentas e os atalhos de número seguem sua ordem personalizada."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Измените порядок инструментов рисования в настройках. Расположение панели инструментов и номера горячих клавиш соответствуют вашему пользовательскому порядку."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "จัดเรียงเครื่องมือวาดในการตั้งค่า เลย์เอาต์ของแถบเครื่องมือและหมายเลขลัดจะตามลำดับที่กำหนดเองของคุณ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar bölümünde çizim araçlarını yeniden sıralayın. Araç çubuğu düzeni ve kısayol numaraları, sizin özel sıralamanızı takip eder."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sắp xếp lại công cụ vẽ trong Cài đặt. Bố cục thanh công cụ và số phím tắt theo thứ tự tùy chỉnh của bạn."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在设置中重新排列绘图工具。工具栏布局和数字快捷键遵循您的自定义顺序。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在設置中重新排序繪圖工具。工具欄佈局和快捷鍵數字遵循您的自定義順序。"
+          }
         }
       }
     },
@@ -123127,6 +127717,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Custom Tool Order"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترتيب أدوات مخصص"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benutzerdefinierte Werkzeugreihenfolge"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orden Personalizado de Herramientas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordre des Outils Personnalisé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कस्टम टूल क्रम"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordine Strumenti Personalizzato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カスタムツールの順序"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용자 지정 도구 순서"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aangepaste Gereedschapsvolgorde"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niestandardowa kolejność narzędzi"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordem Personalizada de Ferramentas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пользовательский порядок инструментов"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ลำดับเครื่องมือแบบกำหนดเอง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özel Araç Sıralaması"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thứ Tự Công Cụ Tùy Chỉnh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义工具顺序"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定義工具順序"
           }
         }
       }
