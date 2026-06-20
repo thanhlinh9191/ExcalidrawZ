@@ -468,7 +468,11 @@ extension AISettingsView {
     var mcpServiceModeBinding: Binding<ExcalidrawMCPServiceMode> {
         Binding(
             get: { displayedMCPServiceMode },
-            set: { selectMCPServiceMode($0) }
+            set: { mode in
+                Task { @MainActor in
+                    selectMCPServiceMode(mode)
+                }
+            }
         )
     }
 

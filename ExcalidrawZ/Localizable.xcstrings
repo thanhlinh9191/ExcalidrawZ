@@ -76987,7 +76987,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Basic canvas content generation."
+            "value" : "Matches the upstream excalidraw-mcp tool set: read the guide, create a view, and exchange MCP checkpoints."
           }
         },
         "es" : {
@@ -77071,13 +77071,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "与上游的 excalidraw-mcp 工具流程一致，以实现与 MCP 客户端的广泛兼容性。"
+            "value" : "与上游 excalidraw-mcp 工具集一致：读取指南、创建视图，并交换 MCP 检查点。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "基本畫布內容生成。"
+            "value" : "與上游 excalidraw-mcp 工具集一致：讀取指南、建立視圖，並交換 MCP 檢查點。"
           }
         }
       }
@@ -77213,7 +77213,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keeps close compatibility with clients that already support excalidraw-mcp."
+            "value" : "Best for clients that already support excalidraw-mcp and only need basic canvas generation."
           }
         },
         "es" : {
@@ -77297,13 +77297,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "与已经支持 excalidraw-mcp 的客户端保持紧密兼容。"
+            "value" : "适合已经支持 excalidraw-mcp、且只需要基础画布生成的客户端。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "與已支持 excalidraw-mcp 的客戶保持密切兼容。"
+            "value" : "適合已支援 excalidraw-mcp，且只需要基礎畫布生成的客戶端。"
           }
         }
       }
@@ -77326,7 +77326,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Draws shapes, text, arrows, labels, colors, and camera framing."
+            "value" : "Supports standard Excalidraw shapes, text, arrows, labels, colors, and camera framing."
           }
         },
         "es" : {
@@ -77410,13 +77410,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "绘制形状、文本、箭头、标签、颜色和相机构图。"
+            "value" : "支持标准 Excalidraw 形状、文本、箭头、标签、颜色和相机构图。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "繪製形狀、文字、箭頭、標籤、顏色和相機框架。"
+            "value" : "支援標準 Excalidraw 形狀、文字、箭頭、標籤、顏色和相機框架。"
           }
         }
       }
@@ -77439,7 +77439,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Creates a complete Excalidraw scene from a prompt."
+            "value" : "Creates a complete Excalidraw scene from the elements sent by the MCP client."
           }
         },
         "es" : {
@@ -77523,13 +77523,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "根据提示创建完整的 Excalidraw 场景。"
+            "value" : "根据 MCP 客户端发送的元素创建完整的 Excalidraw 场景。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "根據提示創建完整的 Excalidraw 場景。"
+            "value" : "根據 MCP 客戶端傳送的元素建立完整的 Excalidraw 場景。"
           }
         }
       }
@@ -77552,7 +77552,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supports simple revisions through MCP checkpoints."
+            "value" : "Revises by sending another create_view payload or restoring MCP checkpoints; it does not edit existing files incrementally."
           }
         },
         "es" : {
@@ -77636,13 +77636,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通过 MCP 检查点支持简单的修订。"
+            "value" : "通过再次发送 create_view 内容或恢复 MCP 检查点来修订；不会增量编辑现有文件。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通過 MCP 之前檢查點支持簡單的修訂。"
+            "value" : "透過再次傳送 create_view 內容或恢復 MCP 檢查點來修訂；不會增量編輯既有檔案。"
           }
         }
       }
@@ -78343,7 +78343,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Canvas drawing"
+            "value" : "Standard drawing"
           }
         },
         "es" : {
@@ -78427,13 +78427,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画布绘制"
+            "value" : "标准绘制"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "畫布繪製"
+            "value" : "標準繪製"
           }
         }
       }
@@ -78456,7 +78456,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Canvas generation"
+            "value" : "Upstream tools"
           }
         },
         "es" : {
@@ -78540,13 +78540,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画布生成"
+            "value" : "上游工具集"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "畫布生成"
+            "value" : "上游工具集"
           }
         }
       }
@@ -78569,7 +78569,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Simple revisions"
+            "value" : "Checkpoint revisions"
           }
         },
         "es" : {
@@ -78653,13 +78653,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "简单修订"
+            "value" : "检查点修订"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "簡單修訂"
+            "value" : "檢查點修訂"
           }
         }
       }
@@ -78682,7 +78682,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scene generation"
+            "value" : "Single scene output"
           }
         },
         "es" : {
@@ -78766,13 +78766,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "场景生成"
+            "value" : "单场景输出"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "場景生成"
+            "value" : "單場景輸出"
           }
         }
       }

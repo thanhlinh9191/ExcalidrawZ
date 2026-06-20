@@ -153,18 +153,6 @@ enum ExcalidrawMCPToolSchemas {
                 "description": .string(
                     "JSON array string of Excalidraw elements. Must be valid JSON — no comments, no trailing commas. Keep compact.\nCall read_me first for format reference."
                 )
-            ]),
-            "name": .object([
-                "type": .string("string"),
-                "description": .string("Optional ExcalidrawZ file name. Passing this explicitly creates a new file before applying the view.")
-            ]),
-            "group_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional ExcalidrawZ library group UUID from list_groups. Passing this explicitly creates a new file in that group before applying the view.")
-            ]),
-            "local_folder_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional local folder id from list_local_folders. Passing this explicitly creates a new local .excalidraw file in that folder before applying the view. Do not use together with group_id.")
             ])
         ]),
         "required": .array([.string("elements")]),

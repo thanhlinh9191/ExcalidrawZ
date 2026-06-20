@@ -781,7 +781,7 @@ final class ExcalidrawMCPAppBridge {
         return .object([
             "groups": .array(groups),
             "returned": .number(Double(groups.count)),
-            "id_policy": .string("Pass a non-trash group id to create_file.group_id or create_view.group_id. Local folders are not included in this tool.")
+            "id_policy": .string("Pass a non-trash group id to create_file.group_id. Local folders are not included in this tool.")
         ])
     }
 
@@ -835,7 +835,7 @@ final class ExcalidrawMCPAppBridge {
         return .object([
             "local_folders": .array(folders),
             "returned": .number(Double(folders.count)),
-            "id_policy": .string("Pass local_folder_id to list_local_files, create_local_file, or create_view.local_folder_id.")
+            "id_policy": .string("Pass local_folder_id to list_local_files or create_local_file.")
         ])
     }
 
