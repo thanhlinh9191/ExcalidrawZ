@@ -87,7 +87,6 @@ extension ExcalidrawCore {
             };
 
             helper.setCamera(camera);
-            await new Promise((resolve) => requestAnimationFrame(resolve));
             return JSON.stringify(helper.getCamera());
             """,
             arguments: [:],
