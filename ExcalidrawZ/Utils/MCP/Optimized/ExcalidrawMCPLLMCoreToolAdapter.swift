@@ -36,8 +36,12 @@ struct ExcalidrawMCPLLMCoreToolAdapter: Sendable {
         self.tool = tool
         self.exposedName = exposedName ?? tool.name
         self.title = title ?? tool.displayName
-        self.description = description ?? tool.description
-        self.schemaOverride = schemaOverride
+        self.description = description ?? ExcalidrawMCPOptimizedResources.description(
+            named: exposedName ?? tool.name
+        )
+        self.schemaOverride = schemaOverride ?? ExcalidrawMCPOptimizedResources.schema(
+            named: exposedName ?? tool.name
+        )
         self.annotations = annotations
         self.contextProvider = contextProvider
         self.normalizeArguments = normalizeArguments
@@ -49,7 +53,7 @@ struct ExcalidrawMCPLLMCoreToolAdapter: Sendable {
             name: exposedName,
             title: title,
             description: description,
-            inputSchema: schemaOverride ?? Self.inputSchema(for: tool),
+            inputSchema: schemaOverride ?? ExcalidrawMCPToolSchemas.emptyObject,
             annotations: annotations
         )
     }
@@ -94,47 +98,6 @@ struct ExcalidrawMCPLLMCoreToolAdapter: Sendable {
             return false
         }
         return isDryRun
-    }
-
-    private static func inputSchema(for tool: any Tool) -> MCPJSONValue {
-        switch tool.inputSchema {
-            case .parameters(let parameters):
-                return inputSchema(from: parameters)
-            case .bundleResource(let name, let bundle, let ext):
-                guard let url = bundle.url(forResource: name, withExtension: ext),
-                      let data = try? Data(contentsOf: url),
-                      let schema = try? MCPJSONValue.parse(from: data) else {
-                    return ExcalidrawMCPToolSchemas.emptyObject
-                }
-                return schema
-            case .raw(_):
-                return ExcalidrawMCPToolSchemas.emptyObject
-        }
-    }
-
-    private static func inputSchema(from parameters: ToolParameters) -> MCPJSONValue {
-        let properties = parameters.properties.mapValues { property in
-            var object: [String: MCPJSONValue] = [
-                "type": .string(property.type),
-                "description": .string(property.description)
-            ]
-            if let cases = property.`enum` {
-                object["enum"] = .array(cases.map(MCPJSONValue.string))
-            }
-            if property.type == "array" {
-                object["items"] = .object([
-                    "type": .string("string")
-                ])
-            }
-            return MCPJSONValue.object(object)
-        }
-
-        return .object([
-            "type": .string(parameters.type),
-            "properties": .object(properties),
-            "required": .array(parameters.required.map(MCPJSONValue.string)),
-            "additionalProperties": .bool(false)
-        ])
     }
 
     private static func mcpResult(from result: ToolResult) -> ExcalidrawMCPToolResult {

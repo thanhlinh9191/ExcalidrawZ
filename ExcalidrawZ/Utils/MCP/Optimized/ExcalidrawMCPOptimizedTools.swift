@@ -9,23 +9,10 @@ import Foundation
 import LLMCore
 
 enum ExcalidrawMCPOptimizedContract {
-    static let instructions = """
-    Use read_me first. It includes the full excalidraw-mcp drawing guide
-    plus ExcalidrawZ Optimized notes. Open or create a file first, then use
-    replace_view with Excalidraw raw elements JSON. replace_view replaces the
-    current file's complete raw elements array.
-    After replace_view changes visible content, call read_canvas_image once to
-    inspect the rendered canvas before giving the user a final answer.
-    Use get_app_context, get_current_file, file_access_status, list_groups,
-    list_files, list_local_folders, list_local_files, create_file,
-    create_local_file, open_file, open_local_file, read_file, read_view,
-    set_canvas_preferences, export, navigate_canvas,
-    get_current_file_checkpoints, rename_file, restore_file_history,
-    list_libraries, list_library_items, query_library_item,
-    add_library_item_to_canvas, insert_math, read_canvas_image, and
-    adjust_elements when you need app, file, history, library, math, visual,
-    export, or canvas context.
-    """
+    static let instructions = ExcalidrawMCPOptimizedResources.text(
+        named: "ExcalidrawMCPOptimizedInstructions",
+        fallback: "Use read_me first. Optimized MCP resources are unavailable in this build."
+    )
 
     enum ToolName {
         static let readMe = ExcalidrawMCPUpstreamContract.ToolName.readMe
@@ -47,426 +34,26 @@ enum ExcalidrawMCPOptimizedContract {
 }
 
 enum ExcalidrawMCPOptimizedRecall {
-    static let guide = """
-    # ExcalidrawZ Optimized MCP
-
-    This mode uses the excalidraw-mcp raw Excalidraw element workflow
-    as its drawing foundation. The full guide is included below and
-    remains the primary reference for colors, cameraUpdate, examples, animation,
-    and common mistakes.
-
-    Default flow:
-    1. Read the drawing guide below.
-    2. Generate raw Excalidraw elements using the same format.
-    3. If no file is open, call list_files and open_file, or call create_file.
-       Use list_groups first when the user asks to create the file in a
-       particular ExcalidrawZ group. Use list_local_folders / create_local_file
-       / open_local_file when the target should be a user-authorized local
-       folder file.
-    4. Call replace_view, not create_view.
-    5. After replace_view changes visible content, call read_canvas_image once
-       before the final answer.
-    6. Inspect the image for obvious layout, spacing, overlap, text, contrast,
-       and rendering issues. If you have only used raw elements so far, fix
-       broad layout issues with replace_view. After using native insertion tools
-       such as insert_math, prefer adjust_elements for targeted fixes, or call
-       read_view and include the complete current elements array in replace_view.
-
-    ExcalidrawZ differences:
-    - replace_view replaces the user's current ExcalidrawZ raw elements array.
-      Any existing element omitted from the submitted array is removed. This
-      includes image elements inserted by native tools such as insert_math.
-    - replace_view does not create or open files. If no file is open, call
-      list_files and open_file, call create_file, or use the local-folder tools
-      for local files. Pass create_file.group_id when the user wants the new
-      library file in a specific ExcalidrawZ group. list_files omits locked or
-      protected files that MCP cannot access.
-    - get_current_file is the quickest way to confirm the current file and its
-      location before a mutation. get_app_context.currentFile is the broader
-      app-context source of truth for whether a file is open/readable/writable.
-      canvas.loadedFileId is only populated when the WebView loaded file is
-      aligned with currentFile.
-    - replace_view records ExcalidrawZ File History checkpoints around the
-      mutation when the target supports history: mcp_pre before the update and
-      mcp_post after the update. replace_view does not return checkpoint ids.
-      Call get_current_file_checkpoints when you need current-file App
-      checkpoint ids for context or rollback, then use restore_file_history
-      only when the user asks to roll back a saved library file state.
-    - Pass client_update_id to replace_view when available. ExcalidrawZ stores it
-      in File History checkpoint descriptions and treats repeated requests with
-      the same current file + client_update_id as idempotent retries.
-    - If the user asks to change canvas-level preferences such as theme,
-      background color, grid, zen mode, view mode, snap settings, arrow
-      binding, lasso selection, or canvas stats, call set_canvas_preferences.
-      Do not add a giant background rectangle to simulate canvas theme.
-      Theme and viewBackgroundColor are separate canvas preferences; dark
-      theme may still report a white viewBackgroundColor. Use
-      read_canvas_image to inspect the actual rendered appearance.
-
-    Optional app tools:
-    - Use read_file for targeted structural reads of the current canvas.
-    - Use read_canvas_image as the normal visual self-check after replace_view
-      or after a series of visible native/tool edits. Skip it only when the user
-      explicitly asks for speed/no visual check, when no visible canvas content
-      changed, or when the tool reports that the canvas cannot be captured.
-    - Use export when the user asks for an artifact: kind=image for PNG/SVG,
-      kind=file for an .excalidraw file, or kind=pdf for vector/lossless PDF.
-      For visual inspection, normally use read_canvas_image. Use export
-      kind=pdf for inspection only when the canvas is too large or detailed for
-      read_canvas_image and the MCP client/model can inspect PDF documents or
-      specific PDF regions.
-    - Use read_view only when you need the broader Excalidraw payload.
-    - Use set_canvas_preferences for canvas-level preferences such as
-      theme, viewBackgroundColor, gridModeEnabled, zenModeEnabled,
-      viewModeEnabled, objectsSnapModeEnabled, isMidpointSnappingEnabled,
-      bindingPreference, preferredSelectionTool, boxSelectionMode, and stats.
-    - replace_view is the primary raw-element replacement tool. Use it for new
-      drawings, full-scene replacement, or any edit where you can provide the
-      complete revised raw elements array. It replaces the complete raw scene;
-      missing elements are deleted.
-    - Use insert_math for LaTeX formulas and function plots. It renders the
-      math as a canvas image and inserts it into the currently open file.
-      After insert_math returns elementId, move/resize/refine that math image
-      with adjust_elements, or include the returned image element when you later
-      call replace_view.
-    - Use adjust_elements only for small targeted patches to the currently open
-      file, such as adding a few elements, editing known element ids, deleting a
-      small set, or inserting Mermaid content. Do not use adjust_elements for
-      math insertion, whole-scene creation, or replacement.
-    - Use navigate_canvas for viewport/camera changes.
-    - Use list_groups, list_files, create_file, open_file, list_local_folders,
-      list_local_files, create_local_file, open_local_file, and
-      get_current_file_checkpoints for file, group, folder, and history
-      context.
-    - Use list_libraries, list_library_items, query_library_item, and
-      add_library_item_to_canvas for reusable library content.
-    - Use rename_file and restore_file_history only when the user explicitly
-      asks for those file-level changes.
-
-    Important:
-    - Do not replace the upstream layout/camera guidance with these notes.
-      These notes only tell you which ExcalidrawZ tool to use.
-    - The raw element examples below should be sent through replace_view in this
-      Optimized mode.
-
-    \(upstreamGuideForOptimizedMode)
-    """
-
-    private static let upstreamGuideForOptimizedMode = optimizedUpstreamGuide()
-
-    private static func optimizedUpstreamGuide() -> String {
-        var guide = ExcalidrawMCPUpstreamRecall.cheatSheet
-        guide = guide.replacingOccurrences(
-            of: "Now use create_view to draw.",
-            with: "Now use replace_view to draw."
-        )
-        .replacingOccurrences(
-            of: "using create_view for the first time.",
-            with: "using replace_view for the first time."
-        )
-        .replacingOccurrences(
-            of: "Every create_view call returns a `checkpointId` in its response. To continue from a previous diagram state, start your elements array with a restoreCheckpoint element:",
-            with: "Optimized replace_view records ExcalidrawZ File History checkpoints instead of returning a restoreCheckpoint id. To inspect current-file history, call get_current_file_checkpoints. To roll back a library file, use restore_file_history with an App checkpoint id. For ordinary revisions, inspect the current result with read_view or read_canvas_image, then send the complete revised elements array to replace_view."
-        )
-        .replacingOccurrences(
-            of: "`[{\"type\":\"restoreCheckpoint\",\"id\":\"<checkpointId>\"}, ...additional new elements...]`",
-            with: "Do not rely on replace_view to return a `checkpointId` in Optimized mode."
-        )
-        .replacingOccurrences(
-            of: "The saved state (including any user edits made in fullscreen) is loaded from the client, and your new elements are appended on top. This saves tokens — you don't need to re-send the entire diagram.",
-            with: "ExcalidrawZ owns File History checkpoints. Use get_current_file_checkpoints when the user asks about current-file history, rollback, or previous states."
-        )
-        .replacingOccurrences(
-            of: "- **With restoreCheckpoint**: restore a saved state, then surgically remove specific elements before adding new ones",
-            with: "- **Optimized revision**: read the current elements if needed, then send the complete desired final array to replace_view. Omit elements you want removed; use inline delete only for animation-style removals"
-        )
-        .replacingOccurrences(
-            of: "If the user asks to revise, call create_view again",
-            with: "If the user asks to revise a raw-only scene, call replace_view with the complete revised elements array. For targeted changes, or after using native insertion tools such as insert_math, use adjust_elements unless you intentionally replace the whole scene."
-        )
-        return replacingDarkModeWorkaround(in: guide)
-    }
-
-    private static func replacingDarkModeWorkaround(in guide: String) -> String {
-        guard let darkModeTitle = guide.range(of: "## Dark Mode"),
-              let tipsTitle = guide.range(
-                of: "## Tips",
-                range: darkModeTitle.upperBound..<guide.endIndex
-              )
-        else {
-            return guide
-        }
-
-        let start = guide[..<darkModeTitle.lowerBound].lastIndex(of: "\n")
-            ?? guide.startIndex
-        let end = guide[..<tipsTitle.lowerBound].lastIndex(of: "\n")
-            ?? tipsTitle.lowerBound
-        var result = guide
-        result.replaceSubrange(
-            start..<end,
-            with: """
-
-            ## Canvas Preferences
-
-            In Optimized mode, use set_canvas_preferences for canvas-level
-            preferences such as theme, background color, grid, zen mode, view
-            mode, snapping, arrow binding, selection mode, or stats. Do not
-            simulate canvas theme with a giant background rectangle.
-            When changing theme or canvas background, choose text and stroke
-            colors that contrast with the resulting background. Do not rely on
-            Excalidraw's default text/stroke color unless it remains readable.
-
-            """
-        )
-        return result
-    }
+    static let guide = ExcalidrawMCPOptimizedResources.text(
+        named: "ExcalidrawMCPOptimizedReadMe",
+        fallback: "Optimized MCP guide resource is unavailable in this build."
+    )
 }
 
 extension ExcalidrawMCPToolSchemas {
-    static let optimizedReadView: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "include_elements": .object([
-                "type": .string("boolean"),
-                "description": .string("Include the current Excalidraw elements array. Defaults to true.")
-            ]),
-            "include_app_state": .object([
-                "type": .string("boolean"),
-                "description": .string("Include the current Excalidraw appState object. Defaults to true.")
-            ]),
-            "include_files": .object([
-                "type": .string("boolean"),
-                "description": .string("Include Excalidraw binary file metadata/data. Defaults to false to keep responses compact.")
-            ])
-        ]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedReplaceView: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "elements": .object([
-                "type": .string("string"),
-                "description": .string(
-                    "JSON array string of Excalidraw raw elements. Must be valid JSON — no comments, no trailing commas. Keep compact.\nCall read_me first for format reference."
-                )
-            ]),
-            "client_update_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional MCP client request/message id. ExcalidrawZ stores it in App file-history checkpoint descriptions for easier client-side correlation.")
-            ])
-        ]),
-        "required": .array([.string("elements")]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedCreateFile: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "name": .object([
-                "type": .string("string"),
-                "description": .string("Optional name for the new ExcalidrawZ file. The new file is opened immediately.")
-            ]),
-            "group_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional UUID of a non-trash ExcalidrawZ library group returned by list_groups. If omitted, ExcalidrawZ uses the current active group or the default group.")
-            ])
-        ]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedListGroups: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([:]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedListLocalFolders: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([:]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedListLocalFiles: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "local_folder_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional local folder id returned by list_local_folders. If omitted, searches all registered local folders.")
-            ]),
-            "deep": .object([
-                "type": .string("boolean"),
-                "description": .string("Whether to include nested subfolders. Defaults to true.")
-            ]),
-            "limit": .object([
-                "type": .string("integer"),
-                "description": .string("Maximum local files to return, capped at 200. Defaults to 100.")
-            ])
-        ]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedCreateLocalFile: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "local_folder_id": .object([
-                "type": .string("string"),
-                "description": .string("Local folder id returned by list_local_folders. The folder must still be accessible.")
-            ]),
-            "name": .object([
-                "type": .string("string"),
-                "description": .string("Optional file name. `.excalidraw` is added automatically when omitted.")
-            ])
-        ]),
-        "required": .array([.string("local_folder_id")]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedOpenLocalFile: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "file_url": .object([
-                "type": .string("string"),
-                "description": .string("Local file URL returned by list_local_files. Plain absolute paths are also accepted when they are inside a registered local folder.")
-            ])
-        ]),
-        "required": .array([.string("file_url")]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedOpenFile: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "file_id": .object([
-                "type": .string("string"),
-                "description": .string("UUID of a readable library file returned by list_files. Locked or protected files are omitted by list_files and cannot be opened for MCP.")
-            ])
-        ]),
-        "required": .array([.string("file_id")]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedSetCanvasPreferences: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "theme": .object([
-                "type": .string("string"),
-                "description": .string("Canvas theme."),
-                "enum": .array([.string("light"), .string("dark")])
-            ]),
-            "viewBackgroundColor": .object([
-                "type": .string("string"),
-                "description": .string("Canvas background color as a hex color such as #ffffff or #1e1e2e."),
-                "pattern": .string(#"^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$"#)
-            ]),
-            "gridModeEnabled": .object([
-                "type": .string("boolean"),
-                "description": .string("Show or hide the canvas grid.")
-            ]),
-            "zenModeEnabled": .object([
-                "type": .string("boolean"),
-                "description": .string("Enable or disable Excalidraw zen mode.")
-            ]),
-            "viewModeEnabled": .object([
-                "type": .string("boolean"),
-                "description": .string("Enable or disable view mode.")
-            ]),
-            "objectsSnapModeEnabled": .object([
-                "type": .string("boolean"),
-                "description": .string("Enable or disable object snapping.")
-            ]),
-            "isMidpointSnappingEnabled": .object([
-                "type": .string("boolean"),
-                "description": .string("Enable or disable midpoint snapping.")
-            ]),
-            "bindingPreference": .object([
-                "type": .string("string"),
-                "description": .string("Arrow binding preference."),
-                "enum": .array([.string("enabled"), .string("disabled")])
-            ]),
-            "preferredSelectionTool": .object([
-                "type": .string("string"),
-                "description": .string("Selection tool preference."),
-                "enum": .array([.string("selection"), .string("lasso")])
-            ]),
-            "boxSelectionMode": .object([
-                "type": .string("string"),
-                "description": .string("Box selection behavior: contain requires full containment; overlap selects intersecting elements."),
-                "enum": .array([.string("contain"), .string("overlap")])
-            ]),
-            "stats": .object([
-                "type": .string("boolean"),
-                "description": .string("Show or hide Excalidraw canvas stats.")
-            ])
-        ]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedExport: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "kind": .object([
-                "type": .string("string"),
-                "description": .string("Export artifact kind: image, file, or pdf."),
-                "enum": .array([.string("image"), .string("file"), .string("pdf")])
-            ]),
-            "format": .object([
-                "type": .string("string"),
-                "description": .string("Image format when kind is image. Defaults to png."),
-                "enum": .array([.string("png"), .string("svg")])
-            ]),
-            "editable": .object([
-                "type": .string("boolean"),
-                "description": .string("For image export, embed the Excalidraw scene in PNG/SVG so it remains editable. Defaults to false.")
-            ]),
-            "with_background": .object([
-                "type": .string("boolean"),
-                "description": .string("Whether image/PDF export includes the canvas background. Defaults to true.")
-            ]),
-            "color_scheme": .object([
-                "type": .string("string"),
-                "description": .string("Export color scheme for image/PDF. Defaults to light."),
-                "enum": .array([.string("light"), .string("dark")])
-            ]),
-            "export_scale": .object([
-                "type": .string("integer"),
-                "description": .string("PNG scale, 1, 2, or 3. Only applies to image png export. Defaults to 1.")
-            ])
-        ]),
-        "required": .array([.string("kind")]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedGetCurrentFileCheckpoints: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "limit": .object([
-                "type": .string("integer"),
-                "description": .string("Maximum checkpoints to return, capped at 200. Defaults to 50.")
-            ]),
-            "ai_only": .object([
-                "type": .string("boolean"),
-                "description": .string("If true, only return automated checkpoints. Defaults to false.")
-            ])
-        ]),
-        "additionalProperties": .bool(false)
-    ])
-
-    static let optimizedRenameFile: MCPJSONValue = .object([
-        "type": .string("object"),
-        "properties": .object([
-            "new_name": .object([
-                "type": .string("string"),
-                "description": .string("New visible filename, without `.excalidraw`.")
-            ]),
-            "file_id": .object([
-                "type": .string("string"),
-                "description": .string("Optional UUID of a library file returned by list_files. If omitted, uses the current library file.")
-            ])
-        ]),
-        "required": .array([.string("new_name")]),
-        "additionalProperties": .bool(false)
-    ])
+    static let optimizedReadView = ExcalidrawMCPOptimizedResources.schema(named: "read_view")
+    static let optimizedReplaceView = ExcalidrawMCPOptimizedResources.schema(named: "replace_view")
+    static let optimizedCreateFile = ExcalidrawMCPOptimizedResources.schema(named: "create_file")
+    static let optimizedListGroups = ExcalidrawMCPOptimizedResources.schema(named: "list_groups")
+    static let optimizedListLocalFolders = ExcalidrawMCPOptimizedResources.schema(named: "list_local_folders")
+    static let optimizedListLocalFiles = ExcalidrawMCPOptimizedResources.schema(named: "list_local_files")
+    static let optimizedCreateLocalFile = ExcalidrawMCPOptimizedResources.schema(named: "create_local_file")
+    static let optimizedOpenLocalFile = ExcalidrawMCPOptimizedResources.schema(named: "open_local_file")
+    static let optimizedOpenFile = ExcalidrawMCPOptimizedResources.schema(named: "open_file")
+    static let optimizedSetCanvasPreferences = ExcalidrawMCPOptimizedResources.schema(named: "set_canvas_preferences")
+    static let optimizedExport = ExcalidrawMCPOptimizedResources.schema(named: "export")
+    static let optimizedGetCurrentFileCheckpoints = ExcalidrawMCPOptimizedResources.schema(named: "get_current_file_checkpoints")
+    static let optimizedRenameFile = ExcalidrawMCPOptimizedResources.schema(named: "rename_file")
 }
 
 enum ExcalidrawMCPOptimizedToolCatalog {
@@ -496,7 +83,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: ReadCanvasImageTool(),
             title: "Read Canvas Image",
-            description: "Exports the active ExcalidrawZ canvas as a PNG image. After replace_view changes visible content, call this once before the final answer to inspect layout, colors, spacing, text, and rendering quality.",
+            description: description("read_canvas_image"),
             annotations: ["readOnlyHint": .bool(true)],
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
@@ -507,7 +94,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: ExportTool(),
             title: "Export",
-            description: "Exports the active ExcalidrawZ canvas as an artifact. Use kind=image for PNG/SVG, kind=file for .excalidraw, or kind=pdf for lossless PDF. Use read_canvas_image for ordinary visual inspection.",
+            description: description("export"),
             schemaOverride: ExcalidrawMCPToolSchemas.optimizedExport,
             annotations: ["readOnlyHint": .bool(true)],
             contextProvider: {
@@ -529,7 +116,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: InsertMathTool(),
             title: "Math",
-            description: "Insert math content into the active ExcalidrawZ file. Use mode=formula for LaTeX equations and mode=function for plotted function graphs. After insertion, use adjust_elements with the returned elementId for targeted move/resize/refinement.",
+            description: description("insert_math"),
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
                     requiresMutation: true,
@@ -541,7 +128,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: AdjustElementsTool(),
             title: "Adjust Elements",
-            description: "Targeted patch tool for the currently open ExcalidrawZ file. Use replace_view for new drawings, full-scene replacement, or complete raw-elements replacement. Use adjust_elements for small incremental add/update/delete/Mermaid edits, especially after insert_math or other native insertion tools.",
+            description: description("adjust_elements"),
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
                     requiresMutation: true,
@@ -553,7 +140,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: RenameFileTool(),
             title: "Rename File",
-            description: "Rename a drawing file in the user's iCloud-synced library. If file_id is omitted, this renames the currently open library file. Use list_files first when the user wants to rename a different file.",
+            description: description("rename_file"),
             schemaOverride: ExcalidrawMCPToolSchemas.optimizedRenameFile,
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
@@ -565,14 +152,14 @@ enum ExcalidrawMCPOptimizedToolCatalog {
             tool: ListAllFilesTool(),
             exposedName: ExcalidrawMCPOptimizedContract.ToolName.listFiles,
             title: "List Files",
-            description: "Lists readable library files so the MCP client can choose a file for follow-up work.",
+            description: description("list_files"),
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: QueryFileHistoryTool(),
             exposedName: ExcalidrawMCPOptimizedContract.ToolName.getCurrentFileCheckpoints,
             title: "Get Current File Checkpoints",
-            description: "Lists checkpoint metadata for the currently open library or local file.",
+            description: description("get_current_file_checkpoints"),
             schemaOverride: ExcalidrawMCPToolSchemas.optimizedGetCurrentFileCheckpoints,
             annotations: ["readOnlyHint": .bool(true)],
             normalizeArguments: { arguments in
@@ -593,7 +180,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: ListLibraryItemsTool(),
             title: "List Library Items",
-            description: "List items inside a library. Get library_id values from list_libraries. Use query_library_item when you need one item's full raw element payload.",
+            description: description("list_library_items"),
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPLLMCoreToolAdapter(
@@ -613,7 +200,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPLLMCoreToolAdapter(
             tool: RestoreFileHistoryTool(),
             title: "Restore File History",
-            description: "Restore the current library file to a specific checkpoint. Get checkpoint_id from get_current_file_checkpoints. This overwrites the file's current content.",
+            description: description("restore_file_history"),
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
                     requiresMutation: true
@@ -626,80 +213,80 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.readMe,
             title: "Read ExcalidrawZ Optimized MCP Guide",
-            description: "Returns the full excalidraw-mcp drawing guide plus ExcalidrawZ Optimized replacement workflow notes. Call this first when using Optimized MCP.",
+            description: description("read_me"),
             inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.getAppContext,
             title: "Get App Context",
-            description: "Returns the current window, file, canvas, and access state for MCP clients.",
+            description: description("get_app_context"),
             inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.getCurrentFile,
             title: "Get Current File",
-            description: "Returns the currently open ExcalidrawZ file, its library/local-folder location, writable state, and canvas loaded-file alignment.",
+            description: description("get_current_file"),
             inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.listGroups,
             title: "List Groups",
-            description: "Lists ExcalidrawZ library groups. Pass a non-trash group id to create_file.group_id when creating a new library file in a specific group.",
+            description: description("list_groups"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedListGroups,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.listLocalFolders,
             title: "List Local Folders",
-            description: "Lists user-authorized local folders. Use local_folder_id with list_local_files or create_local_file.",
+            description: description("list_local_folders"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedListLocalFolders,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.listLocalFiles,
             title: "List Local Files",
-            description: "Lists .excalidraw files inside user-authorized local folders. Use file_url with open_local_file.",
+            description: description("list_local_files"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedListLocalFiles,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.createFile,
             title: "Create File",
-            description: "Creates and opens a new ExcalidrawZ library file. Use group_id from list_groups when the user wants the file in a specific group.",
+            description: description("create_file"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedCreateFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.createLocalFile,
             title: "Create Local File",
-            description: "Creates and opens a new .excalidraw file inside a user-authorized local folder.",
+            description: description("create_local_file"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedCreateLocalFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.openFile,
             title: "Open File",
-            description: "Opens a readable ExcalidrawZ library file by id. Use list_files first; locked or protected files are omitted and cannot be opened for MCP.",
+            description: description("open_file"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedOpenFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.openLocalFile,
             title: "Open Local File",
-            description: "Opens a .excalidraw file inside a user-authorized local folder. Use list_local_files first.",
+            description: description("open_local_file"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedOpenLocalFile
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.readView,
             title: "Read View",
-            description: "Reads the active ExcalidrawZ canvas when the current file allows AI/MCP access.",
+            description: description("read_view"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedReadView,
             annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.setCanvasPreferences,
             title: "Set Canvas Preferences",
-            description: "Updates canvas-level preferences for the currently open ExcalidrawZ file, such as theme, background color, grid, zen mode, view mode, snapping, arrow binding, selection mode, and stats.",
+            description: description("set_canvas_preferences"),
             inputSchema: ExcalidrawMCPToolSchemas.optimizedSetCanvasPreferences
         )
     ]
@@ -707,9 +294,13 @@ enum ExcalidrawMCPOptimizedToolCatalog {
     private static let replaceViewTool = ExcalidrawMCPTool(
         name: ExcalidrawMCPOptimizedContract.ToolName.replaceView,
         title: "Replace View",
-        description: "Replaces the currently open ExcalidrawZ file's complete raw elements array. This is full-scene replacement: any existing element omitted from elements is removed. Call list_files/open_file, list_local_files/open_local_file, create_file, or create_local_file first when no file is open.",
+        description: description("replace_view"),
         inputSchema: ExcalidrawMCPToolSchemas.optimizedReplaceView
     )
+
+    private static func description(_ key: String) -> String {
+        ExcalidrawMCPOptimizedResources.description(named: key)
+    }
 }
 
 struct ExcalidrawMCPOptimizedToolHandler {
