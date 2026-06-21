@@ -126,6 +126,7 @@ extension AISettingsView {
         .pickerStyle(.segmented)
         .mcpServiceModePickerShape()
         .fixedSize(horizontal: true, vertical: true)
+        .id(mcpServiceModePickerID)
     }
 
     @ViewBuilder
@@ -469,9 +470,7 @@ extension AISettingsView {
         Binding(
             get: { displayedMCPServiceMode },
             set: { mode in
-                Task { @MainActor in
-                    selectMCPServiceMode(mode)
-                }
+                selectMCPServiceMode(mode)
             }
         )
     }
@@ -482,6 +481,7 @@ extension AISettingsView {
         if mode == .optimized,
            !store.canUseOptimizedMCPServices {
             mcpServerController.setServiceMode(.basic)
+            mcpServiceModePickerID = UUID()
             store.togglePaywall(reason: .optimizedMCPServices)
             return
         }
