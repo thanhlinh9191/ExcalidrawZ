@@ -78444,109 +78444,109 @@
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "توليد القماش"
+            "value": "أدوات excalidraw-mcp"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Canvas-Generierung"
+            "value": "excalidraw-mcp Werkzeuge"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Upstream tools"
+            "value": "excalidraw-mcp tools"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Generación del lienzo"
+            "value": "herramientas excalidraw-mcp"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Génération de canvas"
+            "value": "outils excalidraw-mcp"
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "कैनवास सृजन"
+            "value": "एक्स्कैलिड्रॉ-एमसीपी उपकरण"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Generazione canvas"
+            "value": "strumenti excalidraw-mcp"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "キャンバス生成"
+            "value": "excalidraw-mcpツール"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "캔버스 생성"
+            "value": "엑스칼리드로우-MCP 도구"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Canvas generatie"
+            "value": "excalidraw-mcp gereedschappen"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Generowanie płótna"
+            "value": "narzędzia excalidraw-mcp"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geração de canvas"
+            "value": "ferramentas excalidraw-mcp"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Создание холста"
+            "value": "инструменты excalidraw-mcp"
           }
         },
         "th": {
           "stringUnit": {
             "state": "translated",
-            "value": "การสร้างผืนผ้าใบ"
+            "value": "เครื่องมือ excalidraw-mcp"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tuval üretimi"
+            "value": "excalidraw-mcp araçları"
           }
         },
         "vi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tạo canvas"
+            "value": "công cụ excalidraw-mcp"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "上游工具集"
+            "value": "excalidraw-mcp 工具集"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "上游工具集"
+            "value": "excalidraw-mcp 工具集"
           }
         }
       }
