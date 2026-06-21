@@ -187,12 +187,12 @@ struct ExcalidrawTrailingControls: View {
                 )
 
 #if DEBUG
-                InspectorTabButton(
-                    tab: .debug,
-                    icon: .ladybug,
-                    title: "Debug",
-                    isDisabled: isDisabled(tab: .debug)
-                )
+//                InspectorTabButton(
+//                    tab: .debug,
+//                    icon: .ladybug,
+//                    title: "Debug",
+//                    isDisabled: isDisabled(tab: .debug)
+//                )
 #endif
             }
             .padding(.top, topPadding)
