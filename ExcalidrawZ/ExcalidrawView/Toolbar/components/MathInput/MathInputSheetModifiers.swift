@@ -55,7 +55,7 @@ struct MathInputSheetViewModifier: ViewModifier {
                     )
                 }
             }
-            .onChange(of: paywallPresentation.isPresented) { isPaywallPresented in
+            .watch(value: paywallPresentation.isPresented) { isPaywallPresented in
                 guard !isPaywallPresented,
                       shouldRestoreAfterPaywall,
                       restoredSnapshot != nil else {
@@ -156,7 +156,7 @@ struct MathImageEditSheetViewModifier: ViewModifier {
                     )
                 }
             }
-            .onChange(of: paywallPresentation.isPresented) { isPaywallPresented in
+            .watch(value: paywallPresentation.isPresented) { isPaywallPresented in
                 guard !isPaywallPresented,
                       shouldRestoreAfterPaywall,
                       let editRequest = restoredEditRequest else {
