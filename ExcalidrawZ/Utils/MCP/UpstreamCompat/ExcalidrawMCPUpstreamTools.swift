@@ -210,7 +210,8 @@ enum ExcalidrawMCPUpstreamToolCatalog {
             name: ExcalidrawMCPUpstreamContract.ToolName.createView,
             title: "Draw Diagram",
             description: "Renders a hand-drawn diagram using Excalidraw elements. Elements stream in one by one with draw-on animations. Call read_me first to learn the element format.",
-            inputSchema: ExcalidrawMCPToolSchemas.createView
+            inputSchema: ExcalidrawMCPToolSchemas.createView,
+            annotations: ["readOnlyHint": .bool(true)]
         ),
         ExcalidrawMCPTool(
             name: ExcalidrawMCPUpstreamContract.ToolName.saveCheckpoint,
