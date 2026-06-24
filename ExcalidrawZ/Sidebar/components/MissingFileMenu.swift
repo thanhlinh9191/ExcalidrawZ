@@ -170,13 +170,11 @@ struct MissingFileMenuProvider: View {
         }
         Task.detached {
             do {
-                for fileID in fileIDsToDelete {
-                    try await PersistenceController.shared.fileRepository.delete(
-                        fileObjectID: fileID,
-                        forcePermanently: false,
-                        save: true
-                    )
-                }
+                try await PersistenceController.shared.fileRepository.delete(
+                    fileObjectIDs: fileIDsToDelete,
+                    forcePermanently: false,
+                    save: true
+                )
                 await MainActor.run {
                     fileState.resetSelections()
                 }

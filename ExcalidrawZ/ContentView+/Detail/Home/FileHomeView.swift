@@ -596,9 +596,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
                 )
             }
         }
-        .transaction { transaction in
-            transaction.animation = nil
-        }
+        .animation(.smooth(duration: 0.22), value: files.map(\.id))
     }
     
 }

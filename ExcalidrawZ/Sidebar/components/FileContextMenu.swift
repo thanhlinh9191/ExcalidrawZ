@@ -87,13 +87,11 @@ struct FileMenuProvider: View {
 
         Task.detached {
             do {
-                for fileID in fileIDsToDelete {
-                    try await PersistenceController.shared.fileRepository.delete(
-                        fileObjectID: fileID,
-                        forcePermanently: false,
-                        save: true
-                    )
-                }
+                try await PersistenceController.shared.fileRepository.delete(
+                    fileObjectIDs: fileIDsToDelete,
+                    forcePermanently: false,
+                    save: true
+                )
                 await MainActor.run {
                     if shouldClearActiveFile {
                         fileState.setActiveFile(nil)
@@ -491,12 +489,9 @@ struct FileMenuItems: View {
             let fileIDsToDelete = files.map { $0.objectID }
             let shouldClearActiveFile = containsCurrentActiveFile(fileIDsToDelete)
 
-            for fileID in fileIDsToDelete {
-                try await PersistenceController.shared.fileRepository.delete(
-                    fileObjectID: fileID
-                )
-            }
-            try viewContext.save()
+            try await PersistenceController.shared.fileRepository.delete(
+                fileObjectIDs: fileIDsToDelete
+            )
 
             // If the current file was deleted, clear it
             if shouldClearActiveFile {

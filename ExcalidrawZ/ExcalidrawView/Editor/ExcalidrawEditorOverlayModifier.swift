@@ -49,11 +49,7 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
                 loadingOverlayBackground
 
                 if isProgressViewPresented {
-                    VStack {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                        Text(.localizable(.webViewLoadingText))
-                    }
+                    loadingIndicatorView
                 }
             } else if case .file(let file) = fileState.currentActiveFile, file.inTrash {
                 recoverOverlayView
@@ -67,6 +63,28 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
             progressPresentationTask = nil
             loadingOverlayDismissTask?.cancel()
             loadingOverlayDismissTask = nil
+        }
+    }
+
+    private var loadingIndicatorView: some View {
+        VStack(spacing: 8) {
+            ProgressView()
+                .progressViewStyle(.circular)
+            Text(.localizable(.webViewLoadingText))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background {
+            if #available(macOS 26.0, iOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.clear)
+                    .glassEffect(.clear, in: .rect(cornerRadius: 16))
+            } else {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.regularMaterial)
+            }
         }
     }
 

@@ -37,7 +37,7 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
     private let minimumLoadingDuration: TimeInterval = 0.45
 
     private var isVisible: Bool {
-        request != nil && phase != .hidden
+        request?.fileID == activeFile?.id && phase != .hidden
     }
 
     private var isLoading: Bool {
@@ -73,7 +73,7 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
 
     @ViewBuilder
     private var overlay: some View {
-        if let request {
+        if let request, request.fileID == activeFile?.id {
             LockedFileUnlockView(
                 request: request,
                 isLoadingUnlockedContent: isLoading
@@ -93,7 +93,7 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
                 presentIfNeeded()
             case .plaintext, .temporarilyUnlocked:
                 guard phase != .loading,
-                      let fileID = activeFile?.id else { return }
+                      let fileID = request?.fileID else { return }
                 hide(fileID: fileID)
         }
     }
@@ -113,6 +113,7 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
         guard lockedContentState.activeFileLockState == .locked,
               phase != .loading,
               let activeFile,
+              lockedContentState.lockState(for: activeFile) == .locked,
               case .file(let file) = activeFile else { return }
 
         if request?.fileID == activeFile.id, phase != .hidden {

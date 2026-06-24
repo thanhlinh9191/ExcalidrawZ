@@ -547,6 +547,104 @@ actor FileRepository {
 
     // MARK: - Delete File
 
+    private struct DeletedFileStorageInfo: Sendable {
+        let relativePath: String
+        let fileID: UUID
+    }
+
+    private struct DeletedCheckpointStorageInfo: Sendable {
+        let relativePath: String
+        let checkpointID: UUID
+    }
+
+    private struct FileDeletionSideEffects: Sendable {
+        var files: [DeletedFileStorageInfo] = []
+        var checkpoints: [DeletedCheckpointStorageInfo] = []
+        var spotlightFileIDs: [UUID] = []
+        var fileScopeIDs: [String] = []
+    }
+
+    /// Delete multiple files in one Core Data transaction.
+    ///
+    /// This keeps multi-selection delete as an actual batch operation instead
+    /// of repeatedly creating contexts and saving once per file.
+    func delete(
+        fileObjectIDs: [NSManagedObjectID],
+        forcePermanently: Bool = false,
+        save: Bool = true
+    ) async throws {
+        guard !fileObjectIDs.isEmpty else { return }
+
+        let context = PersistenceController.shared.newTaskContext()
+
+        let sideEffects: FileDeletionSideEffects = try await context.perform {
+            var sideEffects = FileDeletionSideEffects()
+            var checkpointObjectIDsToDelete: [NSManagedObjectID] = []
+
+            for fileObjectID in fileObjectIDs {
+                guard let file = context.object(with: fileObjectID) as? File else {
+                    continue
+                }
+
+                if file.inTrash || forcePermanently {
+                    let checkpointsFetchRequest = NSFetchRequest<FileCheckpoint>(entityName: "FileCheckpoint")
+                    checkpointsFetchRequest.predicate = NSPredicate(format: "file = %@", file)
+                    let fileCheckpoints = try context.fetch(checkpointsFetchRequest)
+
+                    for checkpoint in fileCheckpoints {
+                        checkpointObjectIDsToDelete.append(checkpoint.objectID)
+                        guard let path = checkpoint.filePath,
+                              let id = checkpoint.id else { continue }
+                        sideEffects.checkpoints.append(
+                            DeletedCheckpointStorageInfo(
+                                relativePath: path,
+                                checkpointID: id
+                            )
+                        )
+                    }
+
+                    if let path = file.filePath,
+                       let id = file.id {
+                        sideEffects.files.append(
+                            DeletedFileStorageInfo(
+                                relativePath: path,
+                                fileID: id
+                            )
+                        )
+                    }
+
+                    if let id = file.id {
+                        sideEffects.spotlightFileIDs.append(id)
+                        sideEffects.fileScopeIDs.append(id.uuidString)
+                    } else {
+                        sideEffects.fileScopeIDs.append(file.objectID.uriRepresentation().absoluteString)
+                    }
+
+                    context.delete(file)
+                } else {
+                    if let id = file.id {
+                        sideEffects.spotlightFileIDs.append(id)
+                    }
+                    file.inTrash = true
+                    file.deletedAt = .now
+                }
+            }
+
+            if !checkpointObjectIDsToDelete.isEmpty {
+                let batchDeleteRequest = NSBatchDeleteRequest(objectIDs: checkpointObjectIDsToDelete)
+                try context.executeAndMergeChanges(using: batchDeleteRequest)
+            }
+
+            if save {
+                try context.save()
+            }
+
+            return sideEffects
+        }
+
+        await runDeletionSideEffects(sideEffects)
+    }
+
     /// Delete file (move to trash or permanently delete)
     /// - Parameters:
     ///   - fileObjectID: The NSManagedObjectID of the file
@@ -557,82 +655,41 @@ actor FileRepository {
         forcePermanently: Bool = false,
         save: Bool = true
     ) async throws {
-        let context = PersistenceController.shared.newTaskContext()
+        try await delete(
+            fileObjectIDs: [fileObjectID],
+            forcePermanently: forcePermanently,
+            save: save
+        )
+    }
 
-        // Extract file info before deletion (for permanent deletion only)
-        let (filePath, fileID, fileScopeID, spotlightFileID, checkpointPaths): (String?, UUID?, String?, UUID?, [(String, UUID)]) = try await context.perform {
-            guard let file = context.object(with: fileObjectID) as? File else {
-                return (nil, nil, nil, nil, [])
-            }
-
-            if file.inTrash || forcePermanently {
-                // Permanent deletion: collect file info and checkpoint info
-                let checkpointsFetchRequest = NSFetchRequest<FileCheckpoint>(entityName: "FileCheckpoint")
-                checkpointsFetchRequest.predicate = NSPredicate(format: "file = %@", file)
-                let fileCheckpoints = try context.fetch(checkpointsFetchRequest)
-
-                // Collect checkpoint paths for deletion
-                let checkpointInfo = fileCheckpoints.compactMap { checkpoint -> (String, UUID)? in
-                    guard let path = checkpoint.filePath, let id = checkpoint.id else { return nil }
-                    return (path, id)
-                }
-
-                // Delete checkpoints from database
-                if !fileCheckpoints.isEmpty {
-                    let batchDeleteRequest = NSBatchDeleteRequest(objectIDs: fileCheckpoints.map { $0.objectID })
-                    try context.executeAndMergeChanges(using: batchDeleteRequest)
-                }
-
-                let path = file.filePath
-                let id = file.id
-                let scopeID = file.id?.uuidString ?? file.objectID.uriRepresentation().absoluteString
-
-                // Delete file from database
-                context.delete(file)
-
-                if save {
-                    try context.save()
-                }
-
-                return (path, id, scopeID, id, checkpointInfo)
-            } else {
-                // Soft deletion: move to trash
-                let id = file.id
-                file.inTrash = true
-                file.deletedAt = .now
-
-                if save {
-                    try context.save()
-                }
-
-                return (nil, nil, nil, id, [])
-            }
-        }
-
-        if let spotlightFileID {
+    private func runDeletionSideEffects(_ sideEffects: FileDeletionSideEffects) async {
+        for spotlightFileID in sideEffects.spotlightFileIDs {
             await PersistenceController.shared.spotlightIndexingService.deleteFile(id: spotlightFileID)
         }
 
-        // Delete physical files from storage (local + iCloud) - only for permanent deletion
-        if let relativePath = filePath, let fileUUID = fileID {
-            // Delete checkpoint files
-            for (checkpointPath, checkpointID) in checkpointPaths {
-                do {
-                    try await FileStorageManager.shared.deleteContent(relativePath: checkpointPath, fileID: checkpointID.uuidString)
-                } catch {
-                    logger.warning("Failed to delete checkpoint file from storage: \(error)")
-                }
-            }
-
-            // Delete main file
+        for checkpoint in sideEffects.checkpoints {
             do {
-                try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: fileUUID.uuidString)
+                try await FileStorageManager.shared.deleteContent(
+                    relativePath: checkpoint.relativePath,
+                    fileID: checkpoint.checkpointID.uuidString
+                )
+            } catch {
+                logger.warning("Failed to delete checkpoint file from storage: \(error)")
+            }
+        }
+
+        for file in sideEffects.files {
+            do {
+                try await FileStorageManager.shared.deleteContent(
+                    relativePath: file.relativePath,
+                    fileID: file.fileID.uuidString
+                )
             } catch {
                 logger.warning("Failed to delete file from storage: \(error)")
             }
         }
 
-        if let fileScopeID {
+        for fileScopeID in sideEffects.fileScopeIDs {
             let scope = AIConversationFileScope(
                 kind: .libraryFile,
                 id: fileScopeID

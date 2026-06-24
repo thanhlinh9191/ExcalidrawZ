@@ -29,7 +29,6 @@ struct NewFileButton: View {
     
     
     var usesFileHomeOpenTransition: Bool
-    private let newFileOpenDuration: TimeInterval = 0.25
     
     init(
         usesFileHomeOpenTransition: Bool = false
@@ -196,10 +195,7 @@ struct NewFileButton: View {
                                 localFolderState.itemCreatedPublisher.send(url.filePath)
 
                                 if usesFileHomeOpenTransition {
-                                    fileState.setActiveFile(
-                                        .localFile(url),
-                                        openDurationOverride: newFileOpenDuration
-                                    )
+                                    fileState.setActiveFile(.localFile(url))
                                 }
                                 isCreatingFile = false
                             }
@@ -244,10 +240,7 @@ struct NewFileButton: View {
                 if usesFileHomeOpenTransition, delay > 0 {
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                         if let file = viewContext.object(with: fileID) as? File {
-                            fileState.setActiveFile(
-                                .file(file),
-                                openDurationOverride: newFileOpenDuration
-                            )
+                            fileState.setActiveFile(.file(file))
                         }
                         isCreatingFile = false
                     }
@@ -255,10 +248,7 @@ struct NewFileButton: View {
                     await MainActor.run {
                         if usesFileHomeOpenTransition,
                            let file = viewContext.object(with: fileID) as? File {
-                            fileState.setActiveFile(
-                                .file(file),
-                                openDurationOverride: newFileOpenDuration
-                            )
+                            fileState.setActiveFile(.file(file))
                         }
                         isCreatingFile = false
                     }

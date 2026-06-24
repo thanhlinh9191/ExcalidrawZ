@@ -218,13 +218,11 @@ struct FileHomeItemView: View {
 private struct FileHomeItemContentView: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.scenePhase) var scenePhase
 #if os(iOS)
     @Environment(\.editMode) var editMode
 #endif
 
     @EnvironmentObject private var layoutState: LayoutState
-    @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var fileHomeItemTransitionItemState: FileHomeItemTransitionItemState
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
 
@@ -431,10 +429,6 @@ private struct FileHomeItemContentView: View {
 
     private var lockOverlayIconSize: CGFloat {
         style == .file && layoutState.compactBrowserLayout == .list ? 22 : 34
-    }
-
-    private var titleUnlockedBadgeIconSize: CGFloat {
-        style == .file && layoutState.compactBrowserLayout == .list ? 20 : 22
     }
 
     @ViewBuilder

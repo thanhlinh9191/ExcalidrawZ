@@ -85,39 +85,12 @@ struct FileHomeItemSelectModifier: ViewModifier {
     }
     
     func body(content: Content) -> some View {
-        ZStack {
-            switch file {
-                case .file(let file):
-                    content
-                        .modifier(
-                            FileSelectionModifier(
-                                file: file,
-                                files: fileSiblings,
-                                canMultiSelect: canMultiSelect
-                            )
-                        )
-                case .localFile(let url):
-                    content
-                        .modifier(
-                            LocalFileSelectionModifier(
-                                file: url,
-                                files: localFileSiblings,
-                                canMultiSelect: canMultiSelect
-                            )
-                        )
-                case .temporaryFile(let url):
-                    content
-                        .modifier(
-                            TemporaryFileSelectionModifier(
-                                file: url,
-                                files: temporaryFileSiblings,
-                                canMultiSelect: canMultiSelect
-                            )
-                        )
-                case .collaborationFile:
-                    content
-            }
-        }
+        content
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    performSelect()
+                }
+            )
 #if os(iOS)
         .overlay {
             if editMode?.wrappedValue.isEditing == true {
@@ -159,52 +132,34 @@ struct FileHomeItemSelectModifier: ViewModifier {
             }
         }
     }
-}
-
-struct FileSelectionModifier: ViewModifier {
-#if os(iOS)
-    @Environment(\.editMode) private var editMode
-#endif
-    @EnvironmentObject var fileState: FileState
-    
-    var file: File
-    var files: [File]
-    var canMultiSelect: Bool
-    
-    init(file: File, files: [File], canMultiSelect: Bool) {
-        self.file = file
-        self.files = files
-        self.canMultiSelect = canMultiSelect
-    }
- 
-    func body(content: Content) -> some View {
-        content
-            .simultaneousGesture(
-                TapGesture().onEnded {
-                    performSelect()
-                }
-            )
-    }
 
     private func performSelect() {
+        switch file {
+            case .file(let file):
+                performFileSelect(file)
+            case .localFile(let url):
+                performLocalFileSelect(url)
+            case .temporaryFile(let url):
+                performTemporaryFileSelect(url)
+            case .collaborationFile:
+                break
+        }
+    }
+
+    private func performFileSelect(_ file: File) {
 #if os(macOS)
         if NSEvent.modifierFlags.contains(.shift), canMultiSelect {
-            // 1. If this is the first shift-click, remember it and select that file.
-            // Shift don't change the start file.
             if fileState.selectedFiles.isEmpty {
                 fileState.selectedFiles.insert(file)
             } else {
+                let siblings = fileSiblings
                 guard let startFile = fileState.selectedStartFile,
-                      let startIdx = files.firstIndex(of: startFile),
-                      let endIdx = files.firstIndex(of: file) else {
+                      let startIdx = siblings.firstIndex(of: startFile),
+                      let endIdx = siblings.firstIndex(of: file) else {
                     return
                 }
-                let range = startIdx <= endIdx
-                ? startIdx...endIdx
-                : endIdx...startIdx
-                let sliceItems = files[range]
-                let sliceSet = Set(sliceItems)
-                fileState.selectedFiles = sliceSet
+                let range = startIdx <= endIdx ? startIdx...endIdx : endIdx...startIdx
+                fileState.selectedFiles = Set(siblings[range])
                 if fileState.selectedStartFile == nil {
                     fileState.selectedStartFile = file
                 }
@@ -226,126 +181,76 @@ struct FileSelectionModifier: ViewModifier {
         }
 #endif
     }
-}
 
-struct LocalFileSelectionModifier: ViewModifier {
-#if os(iOS)
-    @Environment(\.editMode) private var editMode
-#endif
-    @EnvironmentObject var fileState: FileState
-    
-    var file: URL
-    var files: [URL]
-    var canMultiSelect: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .simultaneousGesture(
-                TapGesture().onEnded {
-                    performSelect()
-                }
-            )
-    }
-    
-    private func performSelect() {
+    private func performLocalFileSelect(_ url: URL) {
 #if os(macOS)
         if NSEvent.modifierFlags.contains(.shift), canMultiSelect {
-            // 1. If this is the first shift-click, remember it and select that file.
             if fileState.selectedLocalFiles.isEmpty {
-                fileState.selectedLocalFiles.insert(file)
+                fileState.selectedLocalFiles.insert(url)
             } else {
+                let siblings = localFileSiblings
                 guard let startFile = fileState.selectedStartLocalFile,
-                      let startIdx = files.firstIndex(of: startFile),
-                      let endIdx = files.firstIndex(of: file) else {
+                      let startIdx = siblings.firstIndex(of: startFile),
+                      let endIdx = siblings.firstIndex(of: url) else {
                     return
                 }
-                let range = startIdx <= endIdx
-                ? startIdx...endIdx
-                : endIdx...startIdx
-                let sliceItems = files[range]
-                let sliceSet = Set(sliceItems)
-                fileState.selectedLocalFiles = sliceSet
+                let range = startIdx <= endIdx ? startIdx...endIdx : endIdx...startIdx
+                fileState.selectedLocalFiles = Set(siblings[range])
                 if fileState.selectedStartLocalFile == nil {
-                    fileState.selectedStartLocalFile = file
+                    fileState.selectedStartLocalFile = url
                 }
             }
         } else if NSEvent.modifierFlags.contains(.command), canMultiSelect {
-            fileState.selectedLocalFiles.insertOrRemove(file)
-            fileState.selectedStartLocalFile = file
+            fileState.selectedLocalFiles.insertOrRemove(url)
+            fileState.selectedStartLocalFile = url
         } else {
             if !canMultiSelect {
                 fileState.resetSelections()
             }
-            fileState.selectedLocalFiles = [file]
-            fileState.selectedStartLocalFile = file
+            fileState.selectedLocalFiles = [url]
+            fileState.selectedStartLocalFile = url
         }
 #else
         if editMode?.wrappedValue.isEditing == true {
-            fileState.selectedLocalFiles = [file]
-            fileState.selectedStartLocalFile = file
+            fileState.selectedLocalFiles = [url]
+            fileState.selectedStartLocalFile = url
         }
 #endif
     }
-    
-}
 
-struct TemporaryFileSelectionModifier: ViewModifier {
-#if os(iOS)
-    @Environment(\.editMode) private var editMode
-#endif
-    @EnvironmentObject var fileState: FileState
-    
-    var file: URL
-    var files: [URL]?
-    var canMultiSelect: Bool
-    
-    func body(content: Content) -> some View {
-        content
-            .simultaneousGesture(
-                TapGesture().onEnded {
-                    performSelect()
-                }
-            )
-    }
-    
-    private func performSelect() {
+    private func performTemporaryFileSelect(_ url: URL) {
 #if os(macOS)
-            if NSEvent.modifierFlags.contains(.shift), canMultiSelect {
-                let files = files ?? fileState.temporaryFiles
-                if fileState.selectedTemporaryFiles.isEmpty {
-                    fileState.selectedTemporaryFiles.insert(file)
-                } else {
-                    guard let startFile = fileState.selectedStartTemporaryFile,
-                          let startIdx = files.firstIndex(of: startFile),
-                          let endIdx = files.firstIndex(of: file) else {
-                        return
-                    }
-                    let range = startIdx <= endIdx
-                    ? startIdx...endIdx
-                    : endIdx...startIdx
-                    let sliceItems = files[range]
-                    let sliceSet = Set(sliceItems)
-                    fileState.selectedTemporaryFiles = sliceSet
-                    if fileState.selectedStartTemporaryFile == nil {
-                        fileState.selectedStartTemporaryFile = file
-                    }
-                }
-            } else if NSEvent.modifierFlags.contains(.command), canMultiSelect {
-                fileState.selectedTemporaryFiles.insertOrRemove(file)
-                fileState.selectedStartTemporaryFile = file
+        if NSEvent.modifierFlags.contains(.shift), canMultiSelect {
+            if fileState.selectedTemporaryFiles.isEmpty {
+                fileState.selectedTemporaryFiles.insert(url)
             } else {
-                if !canMultiSelect {
-                    fileState.resetSelections()
+                let siblings = temporaryFileSiblings
+                guard let startFile = fileState.selectedStartTemporaryFile,
+                      let startIdx = siblings.firstIndex(of: startFile),
+                      let endIdx = siblings.firstIndex(of: url) else {
+                    return
                 }
-                fileState.selectedTemporaryFiles = [file]
-                fileState.selectedStartTemporaryFile = file
+                let range = startIdx <= endIdx ? startIdx...endIdx : endIdx...startIdx
+                fileState.selectedTemporaryFiles = Set(siblings[range])
+                if fileState.selectedStartTemporaryFile == nil {
+                    fileState.selectedStartTemporaryFile = url
+                }
             }
+        } else if NSEvent.modifierFlags.contains(.command), canMultiSelect {
+            fileState.selectedTemporaryFiles.insertOrRemove(url)
+            fileState.selectedStartTemporaryFile = url
+        } else {
+            if !canMultiSelect {
+                fileState.resetSelections()
+            }
+            fileState.selectedTemporaryFiles = [url]
+            fileState.selectedStartTemporaryFile = url
+        }
 #else
-        if editMode?.wrappedValue.isEditing == true {   
-            fileState.selectedTemporaryFiles = [file]
-            fileState.selectedStartTemporaryFile = file
+        if editMode?.wrappedValue.isEditing == true {
+            fileState.selectedTemporaryFiles = [url]
+            fileState.selectedStartTemporaryFile = url
         }
 #endif
     }
-    
 }

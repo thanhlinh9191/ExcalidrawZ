@@ -37,6 +37,7 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
             }
             .animation(.smooth(duration: 0.26), value: lockOverlayState)
             .task(id: file.id) {
+                guard lockedContentState.previewLockState(for: file) == nil else { return }
                 await lockedContentState.refresh(file: file)
             }
             .onAppear {
