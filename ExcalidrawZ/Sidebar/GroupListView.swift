@@ -20,59 +20,11 @@ struct GroupListView: View {
 
     @EnvironmentObject var fileState: FileState
     
-    @FetchRequest
-    var groups: FetchedResults<Group>
-    
     init(sortField: ExcalidrawFileSortField) {
-        /// Put the important things first.
-        let sortDescriptors: [SortDescriptor<Group>] = {
-            switch sortField {
-                case .updatedAt:
-                    [
-                        // SortDescriptor(\.updatedAt, order: .reverse),
-                        SortDescriptor(\.createdAt, order: .reverse)
-                    ]
-                case .name:
-                    [
-                        SortDescriptor(\.name, order: .reverse),
-                        SortDescriptor(\.updatedAt, order: .reverse),
-                        SortDescriptor(\.createdAt, order: .reverse),
-                    ]
-                case .rank:
-                    [
-                        SortDescriptor(\.rank, order: .forward),
-                        // SortDescriptor(\.updatedAt, order: .reverse),
-                        SortDescriptor(\.createdAt, order: .reverse),
-                    ]
-            }
-        }()
-        
-        self._groups = FetchRequest(
-            sortDescriptors: sortDescriptors,
-            predicate: NSPredicate(format: "parent = nil"),
-            animation: .smooth
-        )
-    }
-    
-    var displayedGroups: [Group] {
-        groups
-            .filter {
-                $0.groupType != .trash || ($0.groupType == .trash && self.trashedFilesCount > 0)
-            }
-            .sorted { a, b in
-                a.groupType == .default && b.groupType != .default ||
-                a.groupType == b.groupType && b.groupType == .normal && a.createdAt ?? .distantPast < b.createdAt ?? .distantPast  ||
-                a.groupType != .trash && b.groupType == .trash
-            }
+        self.sortField = sortField
     }
 
-    @FetchRequest(
-        sortDescriptors: [],
-        predicate: NSPredicate(format: "inTrash == YES")
-    )
-    private var trashedFiles: FetchedResults<File>
-    
-    var trashedFilesCount: Int { trashedFiles.count }
+    private var sortField: ExcalidrawFileSortField
     
     @State private var isCreateICloudFolderDialogPresented = false
     @State private var isCreateLocalFolderDialogPresented = false
@@ -96,7 +48,7 @@ struct GroupListView: View {
                             VStack(spacing: 0) {
                                 Button {
                                     fileState.setActiveFile(nil)
-                                    fileState.currentActiveGroup = nil
+                                    fileState.setActiveGroupIfNeeded(nil)
                                 } label: {
                                     HStack {
                                         Image(systemSymbol: .house)
@@ -114,7 +66,7 @@ struct GroupListView: View {
                                 
                                 Button {
                                     fileState.setActiveFile(nil)
-                                    fileState.currentActiveGroup = .collaboration
+                                    fileState.setActiveGroupIfNeeded(.collaboration)
                                 } label: {
                                     HStack {
                                         Image(systemSymbol: .person3)
@@ -149,7 +101,7 @@ struct GroupListView: View {
                             Divider()
                             
                             // iCloud
-                            databaseGroupsList()
+                            DatabaseGroupsListView(sortField: sortField, fileState: fileState)
                                 .modifier(
                                     ContentHeaderCreateButtonHoverModifier(
                                         groupType: .group,
@@ -215,27 +167,6 @@ struct GroupListView: View {
     }
     
     @ViewBuilder
-    private func databaseGroupsList() -> some View {
-        // ❕❕❕use `LazyVStack` will cause crash with error:
-        //        FAULT: NSGenericException: The window has been marked as needing another Update Constraints in Window pass,
-        //        but it has already had more Update Constraints in Window passes than there are views in the window.
-        VStack(alignment: .leading, spacing: 0) {
-            /// ❕❕❕use `id: \.self` can avoid multi-thread access crash when closing create-room-sheet...
-            ForEach(displayedGroups, id: \.self) { group in
-                GroupsView(group: group, sortField: fileState.sortField)
-            }
-        }
-        .watch(value: trashedFilesCount) { count in
-            if count == 0,
-               case .group(let group) = fileState.currentActiveGroup,
-               group.groupType == .trash {
-                fileState.setActiveFile(nil)
-                fileState.currentActiveGroup = nil
-            }
-        }
-    }
-    
-    @ViewBuilder
     private func contentToolbar() -> some View {
         HStack {
             SettingsViewButton()
@@ -287,6 +218,88 @@ struct GroupListView: View {
         .fixedSize()
     }
     
+}
+
+private struct DatabaseGroupsListView: View {
+    @FetchRequest
+    private var groups: FetchedResults<Group>
+
+    @FetchRequest(
+        sortDescriptors: [],
+        predicate: NSPredicate(format: "inTrash == YES")
+    )
+    private var trashedFiles: FetchedResults<File>
+
+    private var sortField: ExcalidrawFileSortField
+    private var fileState: FileState
+
+    init(sortField: ExcalidrawFileSortField, fileState: FileState) {
+        /// Put the important things first.
+        let sortDescriptors: [SortDescriptor<Group>] = {
+            switch sortField {
+                case .updatedAt:
+                    [
+                        // SortDescriptor(\.updatedAt, order: .reverse),
+                        SortDescriptor(\.createdAt, order: .reverse)
+                    ]
+                case .name:
+                    [
+                        SortDescriptor(\.name, order: .reverse),
+                        SortDescriptor(\.updatedAt, order: .reverse),
+                        SortDescriptor(\.createdAt, order: .reverse),
+                    ]
+                case .rank:
+                    [
+                        SortDescriptor(\.rank, order: .forward),
+                        // SortDescriptor(\.updatedAt, order: .reverse),
+                        SortDescriptor(\.createdAt, order: .reverse),
+                    ]
+            }
+        }()
+
+        self.sortField = sortField
+        self.fileState = fileState
+        self._groups = FetchRequest(
+            sortDescriptors: sortDescriptors,
+            predicate: NSPredicate(format: "parent = nil")
+        )
+    }
+
+    private var trashedFilesCount: Int {
+        trashedFiles.count
+    }
+
+    private var displayedGroups: [Group] {
+        groups
+            .filter {
+                $0.groupType != .trash || ($0.groupType == .trash && trashedFilesCount > 0)
+            }
+            .sorted { a, b in
+                a.groupType == .default && b.groupType != .default ||
+                a.groupType == b.groupType && b.groupType == .normal && a.createdAt ?? .distantPast < b.createdAt ?? .distantPast  ||
+                a.groupType != .trash && b.groupType == .trash
+            }
+    }
+
+    var body: some View {
+        // ❕❕❕use `LazyVStack` will cause crash with error:
+        //        FAULT: NSGenericException: The window has been marked as needing another Update Constraints in Window pass,
+        //        but it has already had more Update Constraints in Window passes than there are views in the window.
+        VStack(alignment: .leading, spacing: 0) {
+            /// ❕❕❕use `id: \.self` can avoid multi-thread access crash when closing create-room-sheet...
+            ForEach(displayedGroups, id: \.self) { group in
+                GroupsView(group: group, sortField: sortField, fileState: fileState)
+            }
+        }
+        .watch(value: trashedFilesCount) { count in
+            if count == 0,
+               case .group(let group) = fileState.currentActiveGroup,
+               group.groupType == .trash {
+                fileState.setActiveFile(nil)
+                fileState.setActiveGroupIfNeeded(nil)
+            }
+        }
+    }
 }
 
 fileprivate struct ContentHeaderCreateButtonHoverModifier: ViewModifier {

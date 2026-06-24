@@ -16,12 +16,12 @@ struct GroupsView: View {
     @AppStorage("FolderStructureStyle") var folderStructStyle: FolderStructureStyle = .disclosureGroup
 
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject var fileState: FileState
     @EnvironmentObject var sidebarDragState: ItemDragState
 
     var group: Group
     var sortField: ExcalidrawFileSortField
     var showFiles: Bool
+    var fileState: FileState
     
     @FetchRequest
     private var children: FetchedResults<Group>
@@ -30,17 +30,20 @@ struct GroupsView: View {
     private var files: FetchedResults<File>
     
     @State private var refreshKey = UUID()
+    @StateObject private var selectionState = SidebarGroupRowSelectionState()
     
     init(
         group: Group,
         sortField: ExcalidrawFileSortField,
-        showFiles: Bool = true
+        showFiles: Bool = true,
+        fileState: FileState
     ) {
         self.group = group
+        self.fileState = fileState
         let fetchRequest = NSFetchRequest<Group>(entityName: "Group")
         fetchRequest.predicate = NSPredicate(format: "parent = %@", group)
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Group.name, ascending: true)]
-        self._children = FetchRequest(fetchRequest: fetchRequest, animation: .default)
+        self._children = FetchRequest(fetchRequest: fetchRequest)
         
         /// Put the important things first.
         let sortDescriptors: [SortDescriptor<File>] = {
@@ -72,23 +75,18 @@ struct GroupsView: View {
                 format: "inTrash == YES"
             ) : NSPredicate(
                 format: "group == %@ AND inTrash == NO", group
-            ),
-            animation: .smooth
+            )
         )
         self.showFiles = showFiles
     }
     
     var isSelectedBinding: Binding<Bool> {
         Binding {
-            (
-                fileState.currentActiveGroup == .group(group) &&
-                fileState.currentActiveFile == nil
-            ) ||
-            isBeingDropped
+            selectionState.isSelected || isBeingDropped
         } set: { val in
             DispatchQueue.main.async {
                 if val {
-                    fileState.currentActiveGroup = .group(group)
+                    fileState.setActiveGroupIfNeeded(.group(group))
                     fileState.setActiveFile(nil)
                 }
             }
@@ -102,6 +100,9 @@ struct GroupsView: View {
     var body: some View {
         content()
             .animation(.smooth, value: folderStructStyle)
+            .onAppear {
+                selectionState.bind(group: group, fileState: fileState)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .didImportToExcalidrawZ)) { notification in
                 guard let fileID = notification.object as? UUID else { return }
                 if let file = files.first(where: {$0.id == fileID}) {
@@ -173,7 +174,7 @@ struct GroupsView: View {
             isExpanded: $isExpanded
         ) {
             ForEach(children) { group in
-                GroupsView(group: group, sortField: sortField, showFiles: showFiles)
+                GroupsView(group: group, sortField: sortField, showFiles: showFiles, fileState: fileState)
             }
             
             if showFiles {
@@ -186,6 +187,7 @@ struct GroupsView: View {
                         FileRowView(
                             file: file,
                             files: files,
+                            fileState: fileState
                         )
                     }
                     // ⬇️ cause `com.apple.SwiftUI.AsyncRenderer (22): EXC_BREAKPOINT` on iOS
@@ -212,7 +214,8 @@ struct GroupsView: View {
                 group: group,
                 isSelected: isSelectedBinding.wrappedValue,
                 isExpanded: $isExpanded,
-                isBeingDropped: $isBeingDropped
+                isBeingDropped: $isBeingDropped,
+                fileState: fileState
             )
             .modifier(GroupRowDragModifier(group: group))
             .simultaneousGesture(TapGesture(count: 2).onEnded {
@@ -273,7 +276,8 @@ struct GroupsView: View {
                 group: group,
                 isSelected: isSelectedBinding.wrappedValue,
                 isExpanded: $isExpanded,
-                isBeingDropped: $isBeingDropped
+                isBeingDropped: $isBeingDropped,
+                fileState: fileState
             )
             .modifier(
                 GroupContextMenuViewModifier(
@@ -294,9 +298,8 @@ struct GroupsView: View {
                 }
             }
         } childView: { child in
-            GroupsView(group: child, sortField: sortField)
+            GroupsView(group: child, sortField: sortField, fileState: fileState)
             // No need to show files in tree view, it is too crowded.
         }
     }
 }
-

@@ -45,8 +45,7 @@ struct GroupFileHomeView: View {
             sortDescriptors: sortDescriptors,
             predicate: group.groupType == .trash
             ? NSPredicate(format: "inTrash == true")
-            : NSPredicate(format: "inTrash == false AND group == %@", group),
-            animation: .default
+            : NSPredicate(format: "inTrash == false AND group == %@", group)
         )
     }
     
@@ -308,10 +307,11 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
 #if os(iOS)
         .overlay(alignment: .bottom) {
             if #available(iOS 18.0, *), editMode.isEditing == true {
-                FileMenuProvider(file: nil) { triggers in
+                FileMenuProvider(file: nil, fileState: fileState) { triggers in
                     HStack(spacing: 20) {
                         FileMenuItems(
-                            file: nil
+                            file: nil,
+                            fileState: fileState
                         ) {
                             triggers.onToggleRename()
                         } onTogglePermanentlyDelete: {
@@ -514,7 +514,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
         } else {
             // Quick Actions
             HStack(spacing: 10) {
-                NewFileButton(openWithDelay: true)
+                NewFileButton(usesFileHomeOpenTransition: true)
                 
                 NewGroupButton(parentID: group.objectID)
                 
@@ -595,6 +595,9 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
                     selectionSiblings: files
                 )
             }
+        }
+        .transaction { transaction in
+            transaction.animation = nil
         }
     }
     

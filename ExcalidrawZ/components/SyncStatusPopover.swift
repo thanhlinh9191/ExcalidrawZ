@@ -26,8 +26,8 @@ struct SyncStatusPopover: View {
                 content()
             }
         }
-        .onChange(of: syncState.hasActiveSyncOperations, initial: true, throttle: 0.2, latest: true) { newVal in
-            handleActiveSyncOperationsChanged(newVal)
+        .onChange(of: syncState.shouldShowGlobalSyncStatus, initial: true, throttle: 0.2, latest: true) { newVal in
+            handleGlobalSyncStatusVisibilityChanged(newVal)
         }
         .onDisappear {
             showTask?.cancel()
@@ -35,14 +35,14 @@ struct SyncStatusPopover: View {
         }
     }
 
-    private func handleActiveSyncOperationsChanged(_ isActive: Bool) {
-        guard isActive else {
+    private func handleGlobalSyncStatusVisibilityChanged(_ shouldShow: Bool) {
+        guard shouldShow else {
             showTask?.cancel()
             hideTask?.cancel()
             hideTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard !Task.isCancelled,
-                      !syncState.hasActiveSyncOperations else { return }
+                      !syncState.shouldShowGlobalSyncStatus else { return }
 
                 withAnimation(.smooth) {
                     isPresented = false
@@ -56,7 +56,7 @@ struct SyncStatusPopover: View {
         showTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             guard !Task.isCancelled,
-                  syncState.hasActiveSyncOperations else { return }
+                  syncState.shouldShowGlobalSyncStatus else { return }
 
             withAnimation(.smooth) {
                 isPresented = true

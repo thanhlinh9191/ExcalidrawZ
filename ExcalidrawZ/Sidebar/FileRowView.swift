@@ -15,39 +15,32 @@ struct FileRowView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.alertToast) private var alertToast
-    @EnvironmentObject var fileState: FileState
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
     
     var file: File
     var files: FetchedResults<File>
+    var fileState: FileState
     
-    init(file: File, sameGroupFiles files: FetchedResults<File>) {
+    init(file: File, sameGroupFiles files: FetchedResults<File>, fileState: FileState) {
         self.file = file
         self.files = files
+        self.fileState = fileState
     }
-    
-    @FetchRequest(
-        sortDescriptors: [SortDescriptor(\.createdAt, order: .forward)],
-        predicate: NSPredicate(format: "parent = nil"),
-        animation: .default
-    )
-    var topLevelGroups: FetchedResults<Group>
     
     init(
         file: File,
         files: FetchedResults<File>,
+        fileState: FileState
     ) {
         self.file = file
         self.files = files
+        self.fileState = fileState
     }
     
     @State private var showPermanentlyDeleteAlert: Bool = false
     @State private var fileStatus: FileStatus?
+    @StateObject private var selectionState = SidebarFileRowSelectionState()
     @FocusState private var isFocused: Bool
-    
-    var isSelected: Bool {
-        fileState.currentActiveFile == .file(file)
-    }
     
     var body: some View {
         if fileStatus?.contentAvailability == .missing {
@@ -55,7 +48,7 @@ struct FileRowView: View {
                 .modifier(MissingFileContextMenuModifier(file: .file(file)))
         } else {
             content()
-                .modifier(FileContextMenuModifier(file: file))
+                .modifier(FileContextMenuWithFileStateModifier(file: file, fileState: fileState))
         }
     }
     
@@ -63,8 +56,8 @@ struct FileRowView: View {
     private func content() -> some View {
         MissingFileMenuProvider(file: .file(file)) { triggers in
             FileRowButton(
-                isSelected: isSelected,
-                isMultiSelected: fileState.selectedFiles.contains(file)
+                isSelected: selectionState.isSelected,
+                isMultiSelected: selectionState.isMultiSelected
             ) {
 #if os(macOS)
                 if NSEvent.modifierFlags.contains(.shift) {
@@ -128,6 +121,9 @@ struct FileRowView: View {
         }
         .modifier(FileRowDragDropModifier(file: file, sameGroupFiles: files))
         .bindFileStatus(for: .file(file), status: $fileStatus)
+        .onAppear {
+            selectionState.bind(file: file, fileState: fileState)
+        }
         .task(id: file.objectID.uriRepresentation()) {
             await lockedContentState.refresh(file: .file(file))
         }
@@ -143,10 +139,10 @@ struct FileRowView: View {
                     fetchRequest.predicate = NSPredicate(format: "type == 'trash'")
                     return (try? viewContext.fetch(fetchRequest))?.first
                 }() {
-                    fileState.currentActiveGroup = .group(trashGroup)
+                    fileState.setActiveGroupIfNeeded(.group(trashGroup))
                 }
             } else if let group = file.group {
-                fileState.currentActiveGroup = .group(group)
+                fileState.setActiveGroupIfNeeded(.group(group))
             }
         }
     }

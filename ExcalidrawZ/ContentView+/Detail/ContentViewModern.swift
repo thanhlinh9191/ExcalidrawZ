@@ -85,7 +85,7 @@ struct ContentViewModern: View {
     private func sidebarToolbar() -> some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             // create
-            NewFileButton(openWithDelay: fileState.currentActiveGroup != nil)
+            NewFileButton(usesFileHomeOpenTransition: fileState.currentActiveGroup != nil)
         }
         
 #if os(macOS)

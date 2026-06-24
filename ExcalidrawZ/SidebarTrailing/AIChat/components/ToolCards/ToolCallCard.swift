@@ -81,6 +81,12 @@ private struct ToolCallVisualStyle {
                 return ToolCallVisualStyle(icon: .globe, accent: .cyan)
             case "adjust_elements":
                 return ToolCallVisualStyle(icon: .hammerFill, accent: .purple)
+            case "navigate_canvas":
+                return ToolCallVisualStyle(icon: .arrowUpLeftAndArrowDownRight, accent: .blue)
+            case "set_canvas_preferences":
+                return ToolCallVisualStyle(icon: .sliderHorizontal3, accent: .orange)
+            case "get_current_file":
+                return ToolCallVisualStyle(icon: .docText, accent: .indigo)
             case "read_file":
                 return ToolCallVisualStyle(icon: .docText, accent: .indigo)
             case "read_canvas_image":
@@ -91,7 +97,7 @@ private struct ToolCallVisualStyle {
                 return ToolCallVisualStyle(icon: .eye, accent: .gray)
             case "rename_file":
                 return ToolCallVisualStyle(icon: .pencil, accent: .orange)
-            case "list_all_files":
+            case "list_groups", "list_all_files", "list_local_folders", "list_local_files":
                 return ToolCallVisualStyle(icon: .listBulletIndent, accent: .indigo)
             case "query_file_history":
                 return ToolCallVisualStyle(icon: .clock, accent: .orange)

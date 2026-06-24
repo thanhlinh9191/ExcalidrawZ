@@ -33,17 +33,29 @@ struct ReadCanvasImageTool: Tool {
         is available and return it as an image. Use this when you need to
         visually inspect the canvas: layout, spatial relationships, hand-drawn
         details, colors, or anything the structural `read_file` tool cannot
-        capture. No arguments required; always returns the full canvas at the
-        user's current viewport scale.
+        capture. Defaults to the current visible viewport so it matches what
+        the user is currently looking at. Set `scope` to `full` only when you
+        need a whole-canvas overview beyond the visible viewport.
         """
     }
 
     var inputSchema: ToolInputSchema {
-        .parameters(ToolParameters(properties: [:], required: []))
+        .parameters(ToolParameters(
+            properties: [
+                "scope": ParameterProperty(
+                    type: "string",
+                    description: "Image capture scope. Defaults to viewport for ordinary visual checks; use full only for a whole-canvas overview.",
+                    enum: ["viewport", "full"]
+                )
+            ],
+            required: []
+        ))
     }
 
     func execute(_ input: String, context: (any ChatInvocationContext)?) async throws -> ToolResult {
         try AIChatToolExecutionGate.ensureAIEnabled()
+        let params = try parseInput(input)
+        let scope = params.scope ?? .viewport
 
         guard let context else {
             throw ToolError.executionFailed("Missing ReadCanvasImageContext")
@@ -75,34 +87,114 @@ struct ReadCanvasImageTool: Tool {
         }
 
         let preferences = try? await coordinator.fetchCanvasPreferences()
-        let colorScheme = Self.colorScheme(from: preferences?.theme)
-        let rawPNG: Data
+        let export = try await exportImage(
+            scope: scope,
+            coordinator: coordinator,
+            preferences: preferences
+        )
+        let pngData = CanvasImageToolImageBounds.boundedPNG(export.data)
+        let caption = caption(
+            scope: scope,
+            elementCount: elementCount,
+            export: export.metadata,
+            preferences: preferences
+        )
+        return .parts([
+            .text(caption),
+            .image(.data(pngData, mediaType: "image/png"))
+        ])
+    }
+}
+
+private extension ReadCanvasImageTool {
+    struct Input: Decodable {
+        var scope: Scope? = nil
+    }
+
+    enum Scope: String, Decodable {
+        case viewport
+        case full
+    }
+
+    struct ExportedImage {
+        var data: Data
+        var metadata: ExcalidrawCore.ViewportImageExportResult?
+    }
+
+    func parseInput(_ input: String) throws -> Input {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return Input() }
+        guard let data = trimmed.data(using: .utf8) else {
+            throw ToolError.invalidInput("Expected JSON object.")
+        }
         do {
-            guard let file = await coordinator.parent?.file else {
-                throw ToolError.executionFailed("No active file to export.")
+            return try JSONDecoder().decode(Input.self, from: data)
+        } catch {
+            throw ToolError.invalidInput("Expected read_canvas_image parameters JSON object: \(error.localizedDescription)")
+        }
+    }
+
+    func exportImage(
+        scope: Scope,
+        coordinator: ExcalidrawCanvasView.Coordinator,
+        preferences: CanvasPreferencesSnapshot?
+    ) async throws -> ExportedImage {
+        do {
+            switch scope {
+                case .viewport:
+                    let result = try await coordinator.exportCurrentViewportToPNGData()
+                    return ExportedImage(data: result.data, metadata: result)
+                case .full:
+                    guard let file = await coordinator.parent?.file else {
+                        throw ToolError.executionFailed("No active file to export.")
+                    }
+                    let data = try await coordinator.exportElementsToPNGData(
+                        elements: file.elements,
+                        files: file.files,
+                        colorScheme: Self.colorScheme(from: preferences?.theme)
+                    )
+                    return ExportedImage(data: data, metadata: nil)
             }
-            let data = try await coordinator.exportElementsToPNGData(
-                elements: file.elements,
-                files: file.files,
-                colorScheme: colorScheme
-            )
-            rawPNG = data
         } catch let error as ToolError {
             throw error
         } catch {
             throw ToolError.executionFailed("Failed to export canvas: \(error.localizedDescription)")
         }
+    }
 
-        let pngData = Self.boundedPNG(rawPNG)
-        let caption = [
-            "Canvas snapshot (\(elementCount) element\(elementCount == 1 ? "" : "s")).",
-            "renderedTheme=\(colorScheme == .dark ? "dark" : "light").",
+    func caption(
+        scope: Scope,
+        elementCount: Int,
+        export: ExcalidrawCore.ViewportImageExportResult?,
+        preferences: CanvasPreferencesSnapshot?
+    ) -> String {
+        var parts: [String] = [
+            scope == .viewport ? "Canvas viewport snapshot." : "Canvas full overview snapshot.",
+            "fileElements=\(elementCount).",
+            "renderedTheme=\(Self.themeDescription(preferences?.theme)).",
             "viewBackgroundColor=\(preferences?.viewBackgroundColor ?? "unknown")."
-        ].joined(separator: " ")
-        return .parts([
-            .text(caption),
-            .image(.data(pngData, mediaType: "image/png"))
-        ])
+        ]
+
+        if let export {
+            parts.insert(
+                "exportedElements=\(export.elementCount.map { String($0) } ?? "unknown").",
+                at: 2
+            )
+            parts.insert(
+                "size=\(Self.sizeDescription(width: export.width, height: export.height)).",
+                at: 3
+            )
+            parts.insert(
+                "actualScale=\(export.actualScale.map { String(format: "%.2f", $0) } ?? "unknown").",
+                at: 4
+            )
+            parts.insert(
+                "scaleClamped=\(export.scaleClamped.map { String($0) } ?? "unknown").",
+                at: 5
+            )
+        }
+
+        return parts.joined(separator: " ")
     }
 
     private static func colorScheme(from theme: CanvasPreferencesState.Theme?) -> ColorScheme {
@@ -114,7 +206,27 @@ struct ReadCanvasImageTool: Tool {
         }
     }
 
-    /// Anthropic's documented "best efficiency" longest edge — anything bigger
+    private static func themeDescription(_ theme: CanvasPreferencesState.Theme?) -> String {
+        switch theme {
+            case .some(.dark):
+                return "dark"
+            case .some(.light):
+                return "light"
+            case nil:
+                return "unknown"
+        }
+    }
+
+    private static func sizeDescription(width: Double?, height: Double?) -> String {
+        guard let width, let height else {
+            return "unknown"
+        }
+        return "\(Int(width))x\(Int(height))"
+    }
+}
+
+private enum CanvasImageToolImageBounds {
+    /// Anthropic's documented "best efficiency" longest edge - anything bigger
     /// gets server-side resized anyway, but we still pay the upload cost. Cap
     /// locally so the wire payload stays compact and predictable.
     private static let maxImageEdge: CGFloat = 1568
@@ -123,7 +235,7 @@ struct ReadCanvasImageTool: Tool {
     /// If the original is already small enough, return it unchanged.
     /// On any decode/encode failure, fall back to the original — better to ship
     /// a too-large image than to fail the tool call.
-    private static func boundedPNG(_ data: Data) -> Data {
+    static func boundedPNG(_ data: Data) -> Data {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
             return data
         }

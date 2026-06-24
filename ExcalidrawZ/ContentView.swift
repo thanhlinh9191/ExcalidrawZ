@@ -97,8 +97,13 @@ struct ContentView: View {
                 }
             }
             .watch(value: aiChatPreferences.isAIEnabled) { isEnabled in
-                guard !isEnabled else { return }
-                cancelActiveAIGenerationForDisabledAI()
+                if isEnabled {
+                    Task {
+                        await llmState.refreshConversations()
+                    }
+                } else {
+                    cancelActiveAIGenerationForDisabledAI()
+                }
             }
             .watch(value: colorScheme) { newValue in
                 FileCoverCacheCoordinator.shared.scheduleLibraryPrewarm(colorScheme: newValue)

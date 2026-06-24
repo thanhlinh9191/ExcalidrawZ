@@ -25,8 +25,7 @@ struct CompactRecentlyView: View {
                 SortDescriptor(\.updatedAt, order: .reverse),
                 SortDescriptor(\.createdAt, order: .reverse)
             ],
-            predicate: NSPredicate(format: "inTrash == false AND group != nil"),
-            animation: .default
+            predicate: NSPredicate(format: "inTrash == false AND group != nil")
         )
     }
     
@@ -80,7 +79,7 @@ struct CompactRecentlyView: View {
                     }
                 }
                 ToolbarItemGroup(placement: .automatic) {
-                    NewFileButton(openWithDelay: true)
+                    NewFileButton(usesFileHomeOpenTransition: true)
                     CompactContentMoreMenu()
                 }
             }

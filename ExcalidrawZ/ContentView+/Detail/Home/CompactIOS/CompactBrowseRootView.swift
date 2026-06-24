@@ -267,12 +267,12 @@ struct CompactBrowserDestinationView: View {
                     if group.groupType == .trash {
                         
                     } else {
-                        NewFileButton(openWithDelay: true)
+                        NewFileButton(usesFileHomeOpenTransition: true)
 
                         CompactContentMoreMenu(group: group)
                     }
                 } else if let group = group as? LocalFolder {
-                    NewFileButton(openWithDelay: true)
+                    NewFileButton(usesFileHomeOpenTransition: true)
 
                     CompactContentMoreMenu(group: group)
                 }
@@ -352,10 +352,11 @@ struct CompactBrowserDestinationView: View {
             
             ToolbarItemGroup(placement: .bottomBar) {
                 if #available(iOS 18.0, *), editMode?.wrappedValue.isEditing == true {
-                    FileMenuProvider(file: nil) { triggers in
+                    FileMenuProvider(file: nil, fileState: fileState) { triggers in
                         HStack(spacing: 16) {
                             FileMenuItems(
-                                file: nil
+                                file: nil,
+                                fileState: fileState
                             ) {
                                 triggers.onToggleRename()
                             } onTogglePermanentlyDelete: {
@@ -374,9 +375,10 @@ struct CompactBrowserDestinationView: View {
     @ViewBuilder
     private func editModeToolbarContent() -> some View {
         HStack(spacing: 16) {
-            FileMenuProvider(file: nil) { triggers in
+            FileMenuProvider(file: nil, fileState: fileState) { triggers in
                 FileMenuItems(
-                    file: nil
+                    file: nil,
+                    fileState: fileState
                 ) {
                     triggers.onToggleRename()
                 } onTogglePermanentlyDelete: {

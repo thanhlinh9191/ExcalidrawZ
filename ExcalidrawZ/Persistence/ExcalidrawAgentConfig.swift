@@ -37,6 +37,7 @@ enum ExcalidrawAgentConfig {
     static let toolNames: [String] = [
         "web_search",
         "web_fetch",
+        "get_current_file",
         "read_file",
         "read_canvas_image",
         "export",
@@ -44,8 +45,13 @@ enum ExcalidrawAgentConfig {
         "calculator",
         "datetime",
         "adjust_elements",
+        "navigate_canvas",
+        "set_canvas_preferences",
         "rename_file",
+        "list_groups",
         "list_all_files",
+        "list_local_folders",
+        "list_local_files",
         "query_file_history",
         "restore_file_history",
         "list_libraries",
@@ -58,6 +64,7 @@ enum ExcalidrawAgentConfig {
     static let askToolNames: [String] = [
         "web_search",
         "web_fetch",
+        "get_current_file",
         "read_file",
         "read_canvas_image",
         "export",
@@ -65,6 +72,10 @@ enum ExcalidrawAgentConfig {
         "calculator",
         "datetime",
         "adjust_elements",
+        "navigate_canvas",
+        "list_groups",
+        "list_local_folders",
+        "list_local_files",
         "final_answer"
     ]
 
@@ -76,6 +87,8 @@ enum ExcalidrawAgentConfig {
         "web_search",
         "web_fetch",
         "file_access_status",
+        "get_current_file",
+        "navigate_canvas",
         "insert_math",
         "calculator",
         "datetime",

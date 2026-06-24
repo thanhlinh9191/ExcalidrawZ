@@ -9382,6 +9382,61 @@
         }
       }
     },
+    "aiChatToolGetCurrentFileName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Current File"
+          }
+        }
+      }
+    },
+    "aiChatToolListGroupsName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List Groups"
+          }
+        }
+      }
+    },
+    "aiChatToolListLocalFilesName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List Local Files"
+          }
+        }
+      }
+    },
+    "aiChatToolListLocalFoldersName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List Local Folders"
+          }
+        }
+      }
+    },
+    "aiChatToolSetCanvasPreferencesName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Canvas Preferences"
+          }
+        }
+      }
+    },
     "aiChatToolQueryFileHistoryName": {
       "extractionState": "manual",
       "localizations": {

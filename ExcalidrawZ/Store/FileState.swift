@@ -51,6 +51,12 @@ final class FileState: ObservableObject {
             resetCurrentGroupChangesListener()
         }
     }
+
+    @MainActor
+    func setActiveGroupIfNeeded(_ group: ActiveGroup?) {
+        guard currentActiveGroup != group else { return }
+        currentActiveGroup = group
+    }
     
     enum ActiveFile: Identifiable, Hashable {
         case file(File)
@@ -197,6 +203,8 @@ final class FileState: ObservableObject {
 
     @MainActor
     private var activeFileChangeGeneration = 0
+    @MainActor
+    private var pendingActiveFileOpenDurationOverrides: [String: TimeInterval] = [:]
     private let homeOpenNavigationUpdateDelay: UInt64 = 650_000_000
 
     @MainActor
@@ -270,7 +278,13 @@ final class FileState: ObservableObject {
     /// - Parameter file: The file to activate
     /// - Throws: FileAccessError if download fails
     @MainActor
-    func setActiveFile(_ file: ActiveFile?) {
+    func setActiveFile(
+        _ file: ActiveFile?,
+        openDurationOverride: TimeInterval? = nil
+    ) {
+        if let file, let openDurationOverride {
+            pendingActiveFileOpenDurationOverrides[file.id] = openDurationOverride
+        }
         activeFileChangeGeneration += 1
         let generation = activeFileChangeGeneration
         Task { @MainActor in
@@ -280,10 +294,21 @@ final class FileState: ObservableObject {
 
     @MainActor
     @discardableResult
-    func requestActiveFileChange(_ file: ActiveFile?) async -> Bool {
+    func requestActiveFileChange(
+        _ file: ActiveFile?,
+        openDurationOverride: TimeInterval? = nil
+    ) async -> Bool {
+        if let file, let openDurationOverride {
+            pendingActiveFileOpenDurationOverrides[file.id] = openDurationOverride
+        }
         activeFileChangeGeneration += 1
         let generation = activeFileChangeGeneration
         return await performActiveFileChange(file, generation: generation)
+    }
+
+    @MainActor
+    func consumeActiveFileOpenDurationOverride(for fileID: String) -> TimeInterval? {
+        pendingActiveFileOpenDurationOverrides.removeValue(forKey: fileID)
     }
 
     @MainActor
@@ -398,11 +423,11 @@ final class FileState: ObservableObject {
                             return try context.fetch(fetchRequest)
                         }
                         if let folder = folders.first {
-                            currentActiveGroup = .localFolder(folder)
+                            setActiveGroupIfNeeded(.localFolder(folder))
                             expandToGroup(folder.objectID)
                         } else {
                             // Handle case where local folder is not found
-                            currentActiveGroup = nil
+                            setActiveGroupIfNeeded(nil)
                         }
                     } catch {}
                 }
@@ -436,7 +461,7 @@ final class FileState: ObservableObject {
                     }
 
                     if dbFile.group == nil {
-                        currentActiveGroup = nil
+                        setActiveGroupIfNeeded(nil)
                     } else if dbFile.inTrash {
                         let trashGroup = await context.perform {
                             let trashGroupFetchRequest = NSFetchRequest<Group>(entityName: "Group")
@@ -444,9 +469,9 @@ final class FileState: ObservableObject {
                             return try? context.fetch(trashGroupFetchRequest).first
                         }
                         
-                        currentActiveGroup = .group(trashGroup ?? dbFile.group!)
+                        setActiveGroupIfNeeded(.group(trashGroup ?? dbFile.group!))
                     } else {
-                        currentActiveGroup = .group(dbFile.group!)
+                        setActiveGroupIfNeeded(.group(dbFile.group!))
                     }
                     if let groupID = dbFile.group?.objectID, dbFile.inTrash == false {
                         expandToGroup(groupID)
@@ -468,7 +493,7 @@ final class FileState: ObservableObject {
                     if !temporaryFiles.contains(where: {$0 == url}) {
                         temporaryFiles.append(url)
                     }
-                    currentActiveGroup = .temporary
+                    setActiveGroupIfNeeded(.temporary)
                 }
             case .collaborationFile(let room):
                 let store = Store.shared
@@ -477,7 +502,7 @@ final class FileState: ObservableObject {
                    !collaboratingFiles.contains(room) {
                     store.togglePaywall(reason: .roomLimit)
                 } else {
-                    currentActiveGroup = .collaboration
+                    setActiveGroupIfNeeded(.collaboration)
                     if !collaboratingFiles.contains(room) {
                         collaboratingFiles.append(room)
                     }

@@ -253,7 +253,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
 
         isMacOSToolPickerToolbarContentPresented = false
         macOSToolPickerToolbarContentPresentationTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
             guard !Task.isCancelled,
                   fileState.currentActiveFile?.id == activeFileID else {
                 return

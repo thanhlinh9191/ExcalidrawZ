@@ -147,13 +147,19 @@ struct ExcalidrawZApp: App {
             CalculatorTool(),
             DateTimeTool(),
             FileAccessStatusTool(),
+            GetCurrentFileTool(),
             ReadFileTool(),
             ReadCanvasImageTool(),
             ExportTool(),
             InsertMathTool(),
             AdjustElementsTool(),
+            NavigateCanvasTool(),
+            SetCanvasPreferencesTool(),
             RenameFileTool(),
+            ListGroupsTool(),
             ListAllFilesTool(),
+            ListLocalFoldersTool(),
+            ListLocalFilesTool(),
             QueryFileHistoryTool(),
             RestoreFileHistoryTool(),
             ListLibrariesTool(),
@@ -232,6 +238,7 @@ struct ExcalidrawZApp: App {
     @StateObject private var lockedContentState = LockedContentStateStore()
 
     @State private var isArchiveFilesExporterPresented = false
+    @State private var didScheduleAIConversationCacheWarmup = false
 
 
     let server = ExcalidrawServer()
@@ -256,6 +263,7 @@ struct ExcalidrawZApp: App {
 #if os(macOS) && !APP_STORE
                     updateChecker.assignUpdater(updater: updaterController.updater)
 #endif
+                    scheduleAIConversationCacheWarmupIfNeeded()
                 }
         }
         // prevent window being open by urls.
@@ -382,6 +390,21 @@ struct ExcalidrawZApp: App {
 #endif
         }
 #endif
+    }
+
+    @MainActor
+    private func scheduleAIConversationCacheWarmupIfNeeded() {
+        guard !didScheduleAIConversationCacheWarmup else { return }
+        didScheduleAIConversationCacheWarmup = true
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            guard AIChatAvailability.canUseAI else { return }
+            guard case .loaded = llmState.conversations else {
+                await llmState.refreshConversations()
+                return
+            }
+        }
     }
 }
 

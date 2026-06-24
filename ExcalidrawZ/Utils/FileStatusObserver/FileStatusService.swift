@@ -15,6 +15,8 @@ import Combine
 /// This is observed by UI components to display sync progress
 @MainActor
 class SyncState: ObservableObject {
+    private static let globalSyncStatusBatchThreshold = 3
+
     /// Files currently syncing
     @Published var syncingFiles: [FileStatusBox] = []
 
@@ -33,6 +35,26 @@ class SyncState: ObservableObject {
                mediaItemsDownloadProgress != nil ||
                overallProgress != nil ||
                syncProgressMessage != nil
+    }
+
+    /// Whether the global bottom sync popover should be shown.
+    ///
+    /// Keep incidental one-file saves quiet. Opening/closing a file can enqueue a
+    /// small upload pair, and showing the global sync popover for that makes the
+    /// navigation transition feel noisy. Batch progress appears only when the
+    /// operation is large enough to be worth surfacing.
+    var shouldShowGlobalSyncStatus: Bool {
+        if let progress = mediaItemsDownloadProgress,
+           progress.total >= Self.globalSyncStatusBatchThreshold {
+            return true
+        }
+
+        if let progress = overallProgress,
+           progress.total >= Self.globalSyncStatusBatchThreshold {
+            return true
+        }
+
+        return syncingFiles.count >= Self.globalSyncStatusBatchThreshold
     }
 
     /// Count of files currently syncing

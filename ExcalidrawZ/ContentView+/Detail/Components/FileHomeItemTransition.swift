@@ -120,6 +120,8 @@ struct FileHomeItemTransitionModifier: ViewModifier {
 //                }
                 
                 if oldValue == nil, let newValue { // open
+                    let animationDuration = fileState.consumeActiveFileOpenDurationOverride(for: newValue.id)
+                        ?? openDuration
                     self.file = newValue
                     itemState.setSourceFileID(newValue.id)
                     itemState.setShouldHideItem(nil)
@@ -131,7 +133,7 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     if #available(macOS 14.0, iOS 17.0, *) {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: openDuration)) {
+                            withAnimation(.smooth(duration: animationDuration)) {
                                 self.animateFlag = true
                             } completion: {
                                 guard revision == transitionRevision else { return }
@@ -141,10 +143,10 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     } else {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: openDuration)) {
+                            withAnimation(.smooth(duration: animationDuration)) {
                                 self.animateFlag = true
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + openDuration + 0.15) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration + 0.15) {
                                 guard revision == transitionRevision else { return }
                                 completeOpenTransition()
                             }

@@ -28,12 +28,13 @@ struct NewFileButton: View {
     @EnvironmentObject private var localFolderState: LocalFolderState
     
     
-    var openWithDelay: Bool
+    var usesFileHomeOpenTransition: Bool
+    private let newFileOpenDuration: TimeInterval = 0.25
     
     init(
-        openWithDelay: Bool = false
+        usesFileHomeOpenTransition: Bool = false
     ) {
-        self.openWithDelay = openWithDelay
+        self.usesFileHomeOpenTransition = usesFileHomeOpenTransition
     }
 
     
@@ -172,44 +173,55 @@ struct NewFileButton: View {
     
     private func createNewFile() {
         guard !isCreatingFile else { return }
-        let delay: Double = 0.7
         
         isCreatingFile = true
         
         Task {
             do {
                 if case .group(let group) = fileState.currentActiveGroup {
-                    createFile(in: group.objectID, delay: delay)
+                    createFile(in: group.objectID, delay: 0)
                 } else if case .localFolder(let folder) = fileState.currentActiveGroup {
                     try await folder.withSecurityScopedURL { scopedURL in
                         do {
                             guard let url = try await fileState.createNewLocalFile(
-                                active: !openWithDelay,
+                                active: !usesFileHomeOpenTransition,
                                 folderURL: scopedURL
                             ) else {
-                                isCreatingFile = false
-                                return
-                            }
-                            localFolderState.itemCreatedPublisher.send(url.filePath)
-                            
-                            if openWithDelay {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                                    fileState.setActiveFile(.localFile(url))
+                                await MainActor.run {
                                     isCreatingFile = false
                                 }
-                            } else {
+                                return
+                            }
+                            await MainActor.run {
+                                localFolderState.itemCreatedPublisher.send(url.filePath)
+
+                                if usesFileHomeOpenTransition {
+                                    fileState.setActiveFile(
+                                        .localFile(url),
+                                        openDurationOverride: newFileOpenDuration
+                                    )
+                                }
                                 isCreatingFile = false
                             }
                         } catch {
-                            isCreatingFile = false
-                            alertToast(error)
+                            await MainActor.run {
+                                isCreatingFile = false
+                                alertToast(error)
+                            }
                         }
                     }
                 } else if let defaultGroup = try PersistenceController.shared.getDefaultGroup(context: viewContext) {
-                    createFile(in: defaultGroup.objectID, delay: delay)
+                    createFile(in: defaultGroup.objectID, delay: 0)
+                } else {
+                    await MainActor.run {
+                        isCreatingFile = false
+                    }
                 }
             } catch {
-                alertToast(error)
+                await MainActor.run {
+                    isCreatingFile = false
+                    alertToast(error)
+                }
             }
         }
     }
@@ -218,7 +230,7 @@ struct NewFileButton: View {
         Task {
             do {
                 let fileID = try await fileState.createNewFile(
-                    active: !openWithDelay,
+                    active: !usesFileHomeOpenTransition,
                     in: groupID,
                     context: viewContext
                 )
@@ -229,26 +241,40 @@ struct NewFileButton: View {
                     try viewContext.save()
                 }
                 
-                if openWithDelay {
+                if usesFileHomeOpenTransition, delay > 0 {
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                         if let file = viewContext.object(with: fileID) as? File {
-                            fileState.setActiveFile(.file(file))
+                            fileState.setActiveFile(
+                                .file(file),
+                                openDurationOverride: newFileOpenDuration
+                            )
                         }
                         isCreatingFile = false
                     }
                 } else {
-                    isCreatingFile = false
+                    await MainActor.run {
+                        if usesFileHomeOpenTransition,
+                           let file = viewContext.object(with: fileID) as? File {
+                            fileState.setActiveFile(
+                                .file(file),
+                                openDurationOverride: newFileOpenDuration
+                            )
+                        }
+                        isCreatingFile = false
+                    }
                 }
                 
-                DispatchQueue.main.asyncAfter(
-                    deadline: .now() + (openWithDelay ? delay : 0) + 0.2
-                ) {
+                let activeGroupUpdateDelay = (usesFileHomeOpenTransition ? delay : 0) + 0.2
+                DispatchQueue.main.asyncAfter(deadline: .now() + activeGroupUpdateDelay) {
                     if let group = viewContext.object(with: groupID) as? Group {
                         fileState.currentActiveGroup = .group(group)
                     }
                 }
             } catch {
-                alertToast(error)
+                await MainActor.run {
+                    isCreatingFile = false
+                    alertToast(error)
+                }
             }
         }
     }

@@ -393,6 +393,20 @@ final class FileCoverCacheCoordinator: ObservableObject {
                     switch activeFile {
                         case .file(let file):
                             mediaHydrationFileObjectID = file.objectID
+                            if let lockedContentState {
+                                await lockedContentState.refresh(
+                                    fileObjectID: file.objectID,
+                                    fileID: activeFile.id
+                                )
+                                if lockedContentState.previewLockState(for: activeFile) == .locked {
+                                    cache.removePreviewCache(forID: activeFile.id)
+                                    NotificationCenter.default.post(
+                                        name: .filePreviewDidUpdate,
+                                        object: activeFile.id
+                                    )
+                                    return .completed
+                                }
+                            }
                             let content = try await file.loadContent()
                             excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
 

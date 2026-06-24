@@ -11,16 +11,18 @@ import CoreData
 struct FileMenuProvider: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.alertToast) var alertToast
-    @EnvironmentObject var fileState: FileState
     
     var file: File?
+    var fileState: FileState
     var content: (Triggers) -> AnyView
 
     init<Content: View>(
         file: File?,
+        fileState: FileState,
         content: @escaping (Triggers) -> Content
     ) {
         self.file = file
+        self.fileState = fileState
         self.content = { AnyView(content($0)) }
     }
     
@@ -114,6 +116,8 @@ struct FileMenuProvider: View {
 }
 
 struct FileContextMenuModifier: ViewModifier {
+    @EnvironmentObject private var fileState: FileState
+
     var file: File
 
     init(file: File) {
@@ -121,11 +125,34 @@ struct FileContextMenuModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        FileMenuProvider(file: file) { triggers in
+        FileMenuProvider(file: file, fileState: fileState) { triggers in
             content
                 .contextMenu {
                     FileMenuItems(
-                        file: file
+                        file: file,
+                        fileState: fileState
+                    ) {
+                        triggers.onToggleRename()
+                    } onTogglePermanentlyDelete: {
+                        triggers.onTogglePermanentlyDelete()
+                    }
+                    .labelStyle(.titleAndIcon)
+                }
+        }
+    }
+}
+
+struct FileContextMenuWithFileStateModifier: ViewModifier {
+    var file: File
+    var fileState: FileState
+
+    func body(content: Content) -> some View {
+        FileMenuProvider(file: file, fileState: fileState) { triggers in
+            content
+                .contextMenu {
+                    FileMenuItems(
+                        file: file,
+                        fileState: fileState
                     ) {
                         triggers.onToggleRename()
                     } onTogglePermanentlyDelete: {
@@ -138,6 +165,8 @@ struct FileContextMenuModifier: ViewModifier {
 }
 
 struct FileMenu: View {
+    @EnvironmentObject private var fileState: FileState
+
     var file: File?
     var label: AnyView
 
@@ -150,10 +179,11 @@ struct FileMenu: View {
     }
 
     var body: some View {
-        FileMenuProvider(file: file) { triggers in
+        FileMenuProvider(file: file, fileState: fileState) { triggers in
             Menu {
                 FileMenuItems(
-                    file: file
+                    file: file,
+                    fileState: fileState
                 ) {
                     triggers.onToggleRename()
                 } onTogglePermanentlyDelete: {
@@ -174,9 +204,8 @@ struct FileMenuItems: View {
 #if os(iOS)
     @Environment(\.editMode) private var editMode
 #endif
-    @EnvironmentObject var fileState: FileState
-
     var file: File?
+    var fileState: FileState
     var onToggleRename: () -> Void
     var onTogglePermanentlyDelete: () -> Void
 

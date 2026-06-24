@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ExcalidrawGroupBrowser: View {
+    @EnvironmentObject private var fileState: FileState
+
     @FetchRequest(
         sortDescriptors: [
             SortDescriptor(\.type, order: .forward),
@@ -28,7 +30,7 @@ struct ExcalidrawGroupBrowser: View {
                         .font(.headline)
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(groups) { group in
-                            GroupsView(group: group, sortField: .updatedAt, showFiles: false)
+                            GroupsView(group: group, sortField: .updatedAt, showFiles: false, fileState: fileState)
                         }
                     }
                 }
