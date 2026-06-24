@@ -55,6 +55,7 @@ class ExcalidrawCore: NSObject, ObservableObject {
     @Published private(set) var mathImageEditRequest: MathImageEditRequest?
     
     let documentSyncController = ExcalidrawDocumentSyncController()
+    let currentFileSaveStreamBridge = ExcalidrawCore.CurrentFileSaveStreamBridge()
     private var lastVersion: Int = 0
 
     var hasInjectIndexedDBData = false

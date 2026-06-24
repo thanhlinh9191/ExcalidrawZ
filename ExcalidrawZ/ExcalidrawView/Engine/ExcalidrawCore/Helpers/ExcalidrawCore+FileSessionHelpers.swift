@@ -29,16 +29,56 @@ extension ExcalidrawCore {
     /// and debug reads that need editor state newer than the throttled
     /// `onStateChanged` broadcast.
     @MainActor
-    func getCurrentFileSnapshot() async throws -> CurrentFileSnapshot {
+    func getCurrentFileSnapshot(preferSaveStream: Bool = true) async throws -> CurrentFileSnapshot {
         guard !self.webView.isLoading else {
             throw InvalidJavaScriptResult()
         }
+        if preferSaveStream {
+            do {
+                return try await getCurrentFileSnapshotUsingSaveStream()
+            } catch CurrentFileSaveStreamError.unsupported {
+                logger.debug("Current file save stream is not supported; falling back to direct snapshot.")
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                logger.warning("Current file save stream failed; falling back to direct snapshot: \(error)")
+            }
+        }
+
         let result = try await self.webView.callAsyncJavaScript(
-            "return JSON.stringify(await window.excalidrawZHelper.getCurrentFileSnapshot());",
+            "return await window.excalidrawZHelper.getCurrentFileSnapshot();",
             arguments: [:],
             contentWorld: .page
         )
-        return try decodeJavaScriptResult(result, as: CurrentFileSnapshot.self)
+        return try CurrentFileSnapshot.fromJavaScriptResult(result)
+    }
+
+    @MainActor
+    private func getCurrentFileSnapshotUsingSaveStream() async throws -> CurrentFileSnapshot {
+        let result = try await requestCurrentFileSaveStream(includeFiles: true)
+        return CurrentFileSnapshot(saveStreamResult: result)
+    }
+
+    /// Low-level stream request wrapper. The stream protocol itself lives in
+    /// `CurrentFileSaveStreamBridge`; callers should normally use
+    /// `getCurrentFileSnapshot()`, which streams by default and falls back to a
+    /// direct bridge read when needed.
+    @MainActor
+    func requestCurrentFileSaveStream(
+        includeFiles: Bool,
+        chunkSize: Int = 65_536,
+        timeoutNanoseconds: UInt64 = 30_000_000_000
+    ) async throws -> CurrentFileSaveStreamResult {
+        guard !self.webView.isLoading else {
+            throw InvalidJavaScriptResult()
+        }
+
+        return try await currentFileSaveStreamBridge.request(
+            webView: webView,
+            includeFiles: includeFiles,
+            chunkSize: chunkSize,
+            timeoutNanoseconds: timeoutNanoseconds
+        )
     }
 
     /// `true` if is dark mode.

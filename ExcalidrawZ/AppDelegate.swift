@@ -16,11 +16,44 @@ extension Notification.Name {
 
 #if os(macOS)
 import AppKit
+
+@MainActor
+final class ApplicationTerminationCanvasFlushCoordinator {
+    static let shared = ApplicationTerminationCanvasFlushCoordinator()
+
+    private weak var fileState: FileState?
+
+    private init() {}
+
+    func register(fileState: FileState) {
+        self.fileState = fileState
+    }
+
+    func flushPendingCanvasSnapshot() async {
+        await fileState?.flushPendingCanvasSnapshotBeforeTermination()
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     let logger = Logger(label: "AppDelegate")
+    private var isHandlingApplicationTermination = false
     
     func applicationWillTerminate(_ notification: Notification) {
         PersistenceController.shared.save()
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard !isHandlingApplicationTermination else {
+            return .terminateLater
+        }
+
+        isHandlingApplicationTermination = true
+        Task { @MainActor in
+            await ApplicationTerminationCanvasFlushCoordinator.shared.flushPendingCanvasSnapshot()
+            PersistenceController.shared.save()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

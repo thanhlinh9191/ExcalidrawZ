@@ -1,5 +1,5 @@
 {
-  "originHash" : "55f823d3ea73498a121b786cb5e5ccc5758f0f6f12c043154e4dafa3a38ed403",
+  "originHash" : "7298fb82f631bdc0397433ef69623962890b608e1f115ec2a827e5335b9b6ad9",
   "pins" : [
     {
       "identity" : "alerttoast",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/chocoford/ChocofordKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "24c935b8868d17f36d0a1869747a33eff45b5d5e"
+        "revision" : "23c57ee2564aa4b287c432d3d0f64919a5d255e7"
       }
     },
     {

@@ -28,7 +28,7 @@ struct CompactExcalidrawHomeView: View {
         ZStack {
             NavigationStack {
                 ExcalidrawEditor(
-                    activeFile: $fileState.currentActiveFile,
+                    activeFile: fileState.activeFileBinding,
                     interactionEnabled: !disableInteration
                 )
                 .ignoresSafeArea()

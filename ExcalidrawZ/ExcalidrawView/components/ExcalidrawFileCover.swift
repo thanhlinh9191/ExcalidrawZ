@@ -6,9 +6,7 @@
 //
 
 import SwiftUI
-import CoreData
 import ChocofordUI
-import Logging
 
 #if canImport(UIKit)
 typealias PlatformImage = UIImage
@@ -41,11 +39,6 @@ class FileItemPreviewCache: NSCache<NSString, PlatformImage> {
 
 struct ExcalidrawFileCover: View {
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.scenePhase) var scenePhase
-    
-    @EnvironmentObject private var fileState: FileState
-    
-    let logger = Logger(label: "ExcalidrawFileCover")
     
     // Support two initialization modes
     private enum Source {
@@ -88,32 +81,21 @@ struct ExcalidrawFileCover: View {
     
     let cache = FileItemPreviewCache.shared
     
-    var cacheKey: String {
-        colorScheme == .light ? fileID + "_light" : fileID + "_dark"
-    }
-
-    private var coverTaskID: String {
-        [
-            cacheKey,
-            refreshToken ?? "default",
-            allowsGeneration ? "enabled" : "disabled"
-        ].joined(separator: "|")
-    }
-    
     @State private var coverImage: Image? = nil
-    @State private var error: Error?
-    @State private var generationTask: Task<Void, Never>?
-    @State private var generatingCacheKey: String?
-    @State private var generationToken = UUID()
     
     var body: some View {
         previewContent
             .apply { view in
                 applyListeners(to: view)
             }
-            .task(id: coverTaskID) {
-                guard allowsGeneration else { return }
-                loadCover()
+            .onAppear {
+                updateCoverFromCache()
+            }
+            .watch(value: colorScheme) { _ in
+                updateCoverFromCache()
+            }
+            .watch(value: refreshToken ?? "default") { _ in
+                updateCoverFromCache()
             }
             .onReceive(
                 NotificationCenter.default.publisher(for: .filePreviewShouldRefresh)
@@ -121,14 +103,15 @@ struct ExcalidrawFileCover: View {
                 guard let fileID = notification.object as? String,
                       self.fileID == fileID else { return }
 
-                cache.removePreviewCache(forID: fileID)
-                self.generateCover(forceRefresh: true)
+                requestCoverRefresh(forceRefresh: true)
             }
-            .watch(value: scenePhase) { newValue in
-                guard fileState.currentActiveFile == nil else { return }
-                if newValue == .active {
-                    self.loadCover(delay: 0.5)
-                }
+            .onReceive(
+                NotificationCenter.default.publisher(for: .filePreviewDidUpdate)
+            ) { notification in
+                guard let fileID = notification.object as? String,
+                      self.fileID == fileID else { return }
+
+                updateCoverFromCache()
             }
     }
     
@@ -138,14 +121,21 @@ struct ExcalidrawFileCover: View {
             if let coverImage {
                 coverImage
                     .resizable()
-            } else if error != nil {
-                Image(systemSymbol: .exclamationmarkTriangle)
-                    .foregroundStyle(.secondary)
+            } else if let cachedImage {
+                cachedImage
+                    .resizable()
             } else {
-                ProgressView()
-                    .controlSize(.small)
+                Rectangle()
+                    .fill(Color.secondary.opacity(colorScheme == .dark ? 0.08 : 0.06))
             }
         }
+    }
+
+    private var cachedImage: Image? {
+        guard let image = cache.getPreviewCache(forID: fileID, colorScheme: colorScheme) else {
+            return nil
+        }
+        return Image(platformImage: image)
     }
     
     @ViewBuilder
@@ -157,30 +147,12 @@ struct ExcalidrawFileCover: View {
                     .observeFileStatus(for: file) { status in
 #if os(macOS)
                         if status.iCloudStatus == .outdated {
-                            cache.removePreviewCache(forID: file.id)
-                            self.generateCover(forceRefresh: true)
+                            self.requestCoverRefresh(forceRefresh: true)
                         }
 #endif
                     }
             case .excalidrawFile:
                 view
-        }
-    }
-    
-    private func loadCover(delay: TimeInterval = 0) {
-        if showCachedCoverIfAvailable() {
-            return
-        }
-
-        guard delay > 0 else {
-            generateCover()
-            return
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            if !showCachedCoverIfAvailable() {
-                generateCover()
-            }
         }
     }
 
@@ -190,180 +162,34 @@ struct ExcalidrawFileCover: View {
             return false
         }
 
-        generationTask?.cancel()
-        generationToken = UUID()
-        generatingCacheKey = nil
         coverImage = Image(platformImage: image)
-        error = nil
         return true
     }
 
-    private func generateCover(forceRefresh: Bool = false) {
+    private func updateCoverFromCache() {
+        if !showCachedCoverIfAvailable() {
+            coverImage = nil
+        }
+    }
+
+    private func requestCoverRefresh(forceRefresh: Bool) {
         guard allowsGeneration else { return }
 
-        let fileID = self.fileID
-        let colorScheme = self.colorScheme
-        let cacheKey = self.cacheKey
-
-        if !forceRefresh, showCachedCoverIfAvailable() {
-            return
-        }
-
-        guard forceRefresh || generatingCacheKey != cacheKey else {
-            return
-        }
-
-        generationTask?.cancel()
-        error = nil
-        generatingCacheKey = cacheKey
-        let generationToken = UUID()
-        self.generationToken = generationToken
-        generationTask = Task {
-            do {
-                // Load ExcalidrawFile based on source
-                var excalidrawFile: ExcalidrawFile
-                let mediaHydrationFileObjectID: NSManagedObjectID?
-                
-                switch source {
-                    case .activeFile(let activeFile):
-                        // Load from ActiveFile
-                        switch activeFile {
-                            case .file(let file):
-                                mediaHydrationFileObjectID = file.objectID
-                                let content = try await file.loadContent()
-                                excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
-                            case .localFile(let url):
-                                mediaHydrationFileObjectID = nil
-                                excalidrawFile = try await loadLocalFileForPreview(at: url)
-                            case .temporaryFile(let url):
-                                mediaHydrationFileObjectID = nil
-                                excalidrawFile = try ExcalidrawFile(contentsOf: url)
-                            case .collaborationFile(let collaborationFile):
-                                mediaHydrationFileObjectID = nil
-                                let content = try await collaborationFile.loadContent()
-                                excalidrawFile = try ExcalidrawFile(data: content, id: collaborationFile.id?.uuidString)
-                        }
-                        
-                    case .excalidrawFile(let file):
-                        mediaHydrationFileObjectID = nil
-                        // Use provided ExcalidrawFile directly
-                        excalidrawFile = file
-                }
-
-                excalidrawFile = await hydrateMediaForPreview(
-                    excalidrawFile,
-                    fileObjectID: mediaHydrationFileObjectID
-                )
-                
-                // Wait for coordinator to be ready
-                while fileState.excalidrawWebCoordinator?.isLoading == true {
-                    try? await Task.sleep(nanoseconds: UInt64(1e+9 * 1))
-                }
-                
-                // Generate preview image
-                if let image = try? await fileState.excalidrawWebCoordinator?.exportElementsToPNG(
-                    elements: excalidrawFile.elements,
-                    files: excalidrawFile.files.isEmpty ? nil : excalidrawFile.files,
-                    colorScheme: colorScheme
-                ) {
-                    guard !Task.isCancelled else {
-                        finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                        return
-                    }
-                    Task.detached {
-                        guard let cgThumb = image.downsampledCGImage(maxPixelSize: 720) else {
-                            await MainActor.run {
-                                self.finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                            }
-                            return
-                        }
-#if canImport(UIKit)
-                        let thumbnail = UIImage(cgImage: cgThumb)
-#elseif canImport(AppKit)
-                        let thumbnail = NSImage(cgImage: cgThumb, size: .zero)
-#endif
-                        await MainActor.run {
-                            guard self.generationToken == generationToken,
-                                  self.fileID == fileID,
-                                  self.colorScheme == colorScheme else { return }
-                            cache.setObject(thumbnail, forKey: cacheKey as NSString)
-                            let image = Image(platformImage: thumbnail)
-                            self.coverImage = image
-                            self.error = nil
-                            self.finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                        }
-                    }
-                } else {
-                    finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                }
-            } catch {
-                guard !Task.isCancelled else {
-                    finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                    return
-                }
-                self.logger.error("Failed to load excalidraw file for preview: \(error)")
-                await MainActor.run {
-                    guard self.generationToken == generationToken else { return }
-                    self.error = error
-                    self.finishGeneration(cacheKey: cacheKey, generationToken: generationToken)
-                }
+        let coordinatorSource: FileCoverCacheCoordinator.Source = {
+            switch source {
+                case .activeFile(let file):
+                    return .activeFile(file)
+                case .excalidrawFile(let file):
+                    return .excalidrawFile(file)
             }
-        }
-    }
+        }()
 
-    private func loadLocalFileForPreview(at url: URL) async throws -> ExcalidrawFile {
-        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
-            try await FileCoordinator.shared.downloadFile(url: url)
-            return try ExcalidrawFile(contentsOf: url)
-        }
-    }
-
-    private func hydrateMediaForPreview(
-        _ excalidrawFile: ExcalidrawFile,
-        fileObjectID: NSManagedObjectID?
-    ) async -> ExcalidrawFile {
-        guard let fileObjectID,
-              excalidrawFile.files.isEmpty,
-              excalidrawFile.elements.contains(where: \.isImageElement) else {
-            return excalidrawFile
-        }
-
-        do {
-            let resources = try await PersistenceController.shared
-                .mediaItemRepository
-                .getResourceFiles(forFile: fileObjectID)
-            guard !resources.isEmpty else { return excalidrawFile }
-
-            var hydratedFile = excalidrawFile
-            let resourceFiles = Dictionary(
-                resources.map { ($0.id, $0) },
-                uniquingKeysWith: { existing, _ in existing }
-            )
-            hydratedFile.files = resourceFiles.merging(hydratedFile.files) { _, fileResource in
-                fileResource
-            }
-            return hydratedFile
-        } catch {
-            logger.warning("Failed to hydrate media for preview \(fileID): \(error)")
-            return excalidrawFile
-        }
-    }
-
-    @MainActor
-    private func finishGeneration(cacheKey: String, generationToken: UUID) {
-        guard self.generationToken == generationToken,
-              generatingCacheKey == cacheKey else { return }
-        generatingCacheKey = nil
-        generationTask = nil
-    }
-}
-
-private extension ExcalidrawElement {
-    var isImageElement: Bool {
-        if case .image = self {
-            return true
-        }
-        return false
+        FileCoverCacheCoordinator.shared.request(
+            source: coordinatorSource,
+            colorScheme: colorScheme,
+            priority: .userInitiated,
+            forceRefresh: forceRefresh
+        )
     }
 }
 

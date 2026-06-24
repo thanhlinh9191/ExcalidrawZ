@@ -35,6 +35,10 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @State private var lockedFileAccessRequest: LockedFileAccessRequest?
     @State private var existingRecoveryKeyLockRequest: LockedFileAccessRequest?
     @State private var isLockingFile = false
+#if os(macOS)
+    @State private var isMacOSToolPickerToolbarContentPresented = false
+    @State private var macOSToolPickerToolbarContentPresentationTask: Task<Void, Never>?
+#endif
 
     private var shouldFloatNavigationToolbarOverCanvas: Bool {
 #if os(iOS)
@@ -114,6 +118,18 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         .task(id: fileState.currentActiveFile?.id) {
             await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
         }
+#if os(macOS)
+        .watch(value: fileState.currentActiveFile?.id, initial: true) { previousActiveFileID, activeFileID in
+            updateMacOSToolPickerToolbarContentPresentation(
+                previousActiveFileID: previousActiveFileID,
+                activeFileID: activeFileID
+            )
+        }
+        .onDisappear {
+            macOSToolPickerToolbarContentPresentationTask?.cancel()
+            macOSToolPickerToolbarContentPresentationTask = nil
+        }
+#endif
 #if os(iOS)
         .modifier(
             HideToolbarModifier(
@@ -169,7 +185,9 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         ToolbarItemGroup(placement: .navigation) {
             sharedNavigationToolbarContent()
         }
-        macOSToolPickerToolbarContent()
+        if isMacOSToolPickerToolbarContentPresented {
+            macOSToolPickerToolbarContent()
+        }
         sharedPrimaryActionToolbarContent()
     }
 #endif
@@ -209,10 +227,39 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 ExcalidrawToolbar()
             } else if #available(macOS 13.0, iOS 16.0, *) {
                 ExcalidrawToolbar()
-                .padding(.vertical, 2)
+                    .padding(.vertical, 2)
             } else {
                 ExcalidrawToolbar()
             }
+        }
+    }
+
+    private func updateMacOSToolPickerToolbarContentPresentation(
+        previousActiveFileID: String?,
+        activeFileID: String?
+    ) {
+        macOSToolPickerToolbarContentPresentationTask?.cancel()
+        macOSToolPickerToolbarContentPresentationTask = nil
+
+        guard let activeFileID else {
+            isMacOSToolPickerToolbarContentPresented = false
+            return
+        }
+
+        if previousActiveFileID != nil {
+            isMacOSToolPickerToolbarContentPresented = true
+            return
+        }
+
+        isMacOSToolPickerToolbarContentPresented = false
+        macOSToolPickerToolbarContentPresentationTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            guard !Task.isCancelled,
+                  fileState.currentActiveFile?.id == activeFileID else {
+                return
+            }
+            isMacOSToolPickerToolbarContentPresented = true
+            macOSToolPickerToolbarContentPresentationTask = nil
         }
     }
 #endif

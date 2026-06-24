@@ -33,7 +33,8 @@ struct FileHomeItemTransitionModifier: ViewModifier {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var fileState: FileState
     
-    var duration: Double = 0.5
+    var openDuration: Double = 0.5
+    var dismissDuration: Double = 0.3
     
     @State private var show: Bool = true
     @State private var animateFlag: Bool = false
@@ -64,7 +65,7 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                             sourceAnchor: sAnchor,
                             destinationAnchor: dAnchor
                         )
-                        .transition(.opacity.animation(.smooth(duration: 0.3)))
+                        .transition(.identity)
                         // .id(currentItem.id) // <-- important, cannot be `currentItem`
                     }
                 }
@@ -125,39 +126,27 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     state.canShowItemContainerView = true
                     self.animateFlag = false
                     self.show = true
-                    state.canShowExcalidrawCanvas = false
+                    state.canShowExcalidrawCanvas = true
                     
                     if #available(macOS 14.0, iOS 17.0, *) {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: duration)) {
+                            withAnimation(.smooth(duration: openDuration)) {
                                 self.animateFlag = true
                             } completion: {
                                 guard revision == transitionRevision else { return }
-                                withAnimation {
-                                    self.show = false
-                                    state.canShowExcalidrawCanvas = true
-                                }
-
-                                state.canShowItemContainerView = false
-                                itemState.setSourceFileID(nil)
+                                completeOpenTransition()
                             }
                         }
                     } else {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: duration)) {
+                            withAnimation(.smooth(duration: openDuration)) {
                                 self.animateFlag = true
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.15) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + openDuration + 0.15) {
                                 guard revision == transitionRevision else { return }
-                                withAnimation {
-                                    self.show = false
-                                    state.canShowExcalidrawCanvas = true
-                                }
-                                // self.file = newValue
-                                state.canShowItemContainerView = false
-                                itemState.setSourceFileID(nil)
+                                completeOpenTransition()
                             }
                         }
                     }
@@ -173,28 +162,25 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     if #available(macOS 14.0, iOS 17.0, *) {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: duration)) {
+                            withAnimation(
+                                .smooth(duration: dismissDuration),
+                                completionCriteria: .removed
+                            ) {
                                 self.animateFlag = false
                             } completion: {
                                 guard revision == transitionRevision else { return }
-                                self.show = true
-                                self.file = nil
-                                itemState.setSourceFileID(nil)
-                                itemState.setShouldHideItem(nil)
+                                completeDismissTransition()
                             }
                         }
                     } else {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
-                            withAnimation(.smooth(duration: duration)) {
+                            withAnimation(.smooth(duration: dismissDuration)) {
                                 self.animateFlag = false
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.15) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + dismissDuration + 0.15) {
                                 guard revision == transitionRevision else { return }
-                                self.show = true
-                                self.file = nil
-                                itemState.setSourceFileID(nil)
-                                itemState.setShouldHideItem(nil)
+                                completeDismissTransition()
                             }
                         }
                     }
@@ -203,6 +189,28 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     itemState.setSourceFileID(nil)
                 }
             }
+    }
+
+    private func completeOpenTransition() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            self.show = false
+            state.canShowExcalidrawCanvas = true
+            state.canShowItemContainerView = false
+            itemState.setSourceFileID(nil)
+        }
+    }
+
+    private func completeDismissTransition() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            itemState.setShouldHideItem(nil)
+            self.show = true
+            self.file = nil
+            itemState.setSourceFileID(nil)
+        }
     }
     
     // private func onCurrentFileChanged
@@ -351,11 +359,15 @@ private struct FileHomeItemHeroSurface: View, Animatable {
     }
 
     private var shadowRadius: CGFloat {
-        4 * (1 - progress)
+        8 * transitionLift
     }
 
     private var shadowOpacity: CGFloat {
-        0.2 * (1 - progress)
+        0.18 * transitionLift
+    }
+
+    private var transitionLift: CGFloat {
+        max(0, 1 - abs(progress * 2 - 1))
     }
 
     private var lockIconSize: CGFloat {

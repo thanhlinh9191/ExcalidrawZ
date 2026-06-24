@@ -38,7 +38,7 @@ extension File {
         if let filePath = filePath, let fileID = fileID {
             do {
                 let data = try await FileStorageManager.shared.loadContent(relativePath: filePath, fileID: fileID.uuidString)
-                Self.logger.debug("Loaded file content from storage id=\(fileID.uuidString) bytes=\(data.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(data))")
+                Self.logger.debug("Loaded file content from storage id=\(fileID.uuidString) bytes=\(data.count.formatted(.byteCount(style: .file)))")
                 if EncryptedContentService.isEncryptedEnvelope(data) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                     return try await LockedContentUnlockSession.shared.decrypt(
@@ -58,7 +58,7 @@ extension File {
         // Fallback to CoreData content
         if let content = content {
             if let fileID {
-                Self.logger.warning("Falling back to Core Data file content id=\(fileID.uuidString) bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
+                Self.logger.warning("Falling back to Core Data file content id=\(fileID.uuidString) bytes=\(content.count.formatted(.byteCount(style: .file)))")
                 if EncryptedContentService.isEncryptedEnvelope(content) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                     return try await LockedContentUnlockSession.shared.decrypt(
@@ -68,7 +68,7 @@ extension File {
                     )
                 }
             } else {
-                Self.logger.warning("Falling back to Core Data file content id=nil bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
+                Self.logger.warning("Falling back to Core Data file content id=nil bytes=\(content.count.formatted(.byteCount(style: .file)))")
             }
             return content
         }

@@ -350,9 +350,8 @@ private enum MermaidPreviewRenderer {
     private static func currentFile(
         from coordinator: ExcalidrawCanvasView.Coordinator
     ) async throws -> ExcalidrawFile {
-        if let snapshot = try? await coordinator.getCurrentFileSnapshot(),
-           let data = snapshot.dataString.data(using: .utf8) {
-            return try file(fromSceneData: data)
+        if let snapshot = try? await coordinator.getCurrentFileSnapshot() {
+            return try file(fromSceneData: snapshot.documentData())
         }
 
         guard let result = try await coordinator.saveCurrentFile(),

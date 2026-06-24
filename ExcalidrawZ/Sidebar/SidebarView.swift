@@ -43,7 +43,7 @@ struct SidebarView: View {
             .border(.top, color: .separatorColor)
 #if os(iOS)
             .background {
-                List(selection: $fileState.currentActiveFile) {}
+                List(selection: fileState.activeFileBinding) {}
             }
 #endif
             // Not working

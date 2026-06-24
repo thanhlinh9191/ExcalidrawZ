@@ -19,6 +19,7 @@ import LLMKit
 struct ContentView: View {
     @Environment(\.managedObjectContext) var viewContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var appPreference: AppPreference
     /// Pulled from the app-level environment (see `ExcalidrawZApp`).
     /// Both are needed here because we trigger conversation
@@ -28,6 +29,7 @@ struct ContentView: View {
     /// each having to refresh on appear.
     @EnvironmentObject private var llmState: LLMStateObject
     @EnvironmentObject private var aiChatState: AIChatState
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
     
     @AppStorage("DisableCloudSync") var isICloudDisabled: Bool = false
@@ -59,22 +61,22 @@ struct ContentView: View {
             .modifier(StoreKitEntitlementRefreshModifier())
             .modifier(PaywallModifier())
             .modifier(SearchableModifier())
-            .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
             .modifier(OpenFromURLModifier())
             .modifier(UserActivityHandlerModifier())
             .modifier(ShareFileModifier())
             .modifier(LocalFolderMonitorModifier())
             .modifier(PDFViewerModifier())
             .modifier(MenuBarImportHandlerModifier())
+            .modifier(DragStateModifier())
+            .modifier(StartupSyncModifier())
+            .modifier(CoreDataMigrationModifier())
+            .modifier(ActiveFileSwitchBlockedToastModifier(fileState: fileState))
             .environmentObject(fileState)
             .environmentObject(exportState)
             .environmentObject(layoutState)
             .environmentObject(shareFileState)
             .environmentObject(canvasPreferencesState)
-            .modifier(DragStateModifier())
-            .modifier(StartupSyncModifier())
-            .modifier(CoreDataMigrationModifier())
-            .modifier(ActiveFileSwitchBlockedToastModifier(fileState: fileState))
+            .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
             .swiftyAlert(logs: true)
             .bindWindow($window)
             .containerSizeClassInjection()
@@ -98,16 +100,14 @@ struct ContentView: View {
                 guard !isEnabled else { return }
                 cancelActiveAIGenerationForDisabledAI()
             }
-            // Pre-load the chat conversation tied to the active file
-            // *as soon as the file changes*, not lazily when the user
-            // opens the chat panel. The id-based `.task` fires on
-            // first appear and on every subsequent change — empty
-            // ActiveFile keeps the previous selection nil, so the
-            // panel still opens with a clean slate when no file is
-            // loaded. Multi-conversation per file isn't surfaced in
-            // the UI yet (single-thread feel), but the persistence
-            // layer is already file-scoped, so this is just picking
-            // the latest from that file's bin.
+            .watch(value: colorScheme) { newValue in
+                FileCoverCacheCoordinator.shared.scheduleLibraryPrewarm(colorScheme: newValue)
+            }
+            // Pre-select the chat conversation tied to the active file
+            // without restoring the full LLM conversation cache. The id-based
+            // `.task` fires on first appear and on every subsequent change;
+            // AI surfaces restore message content lazily when they appear.
+            // This keeps file transitions away from historical attachment IO.
             .task(id: fileState.currentActiveFile?.id) {
                 let activeFileID = fileState.currentActiveFile?.id
                 if activeFileID != nil {
@@ -116,17 +116,27 @@ struct ContentView: View {
                           fileState.currentActiveFile?.id == activeFileID else { return }
                 }
                 await aiChatState.loadConversationForActiveFile(
-                    in: llmState,
                     fileState: fileState
                 )
             }
             .withContainerSize()
             .task {
+#if os(macOS)
+                await MainActor.run {
+                    ApplicationTerminationCanvasFlushCoordinator.shared.register(fileState: fileState)
+                }
+#endif
                 await MainActor.run {
                     ExcalidrawMCPAppBridge.shared.register(
                         fileState: fileState,
                         context: viewContext
                     )
+                    FileCoverCacheCoordinator.shared.register(
+                        fileState: fileState,
+                        lockedContentState: lockedContentState,
+                        context: viewContext
+                    )
+                    FileCoverCacheCoordinator.shared.scheduleLibraryPrewarm(colorScheme: colorScheme)
                 }
                 await prepare()
             }

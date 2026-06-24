@@ -939,7 +939,9 @@ final class ExcalidrawMCPAppBridge {
         }
 
         let activeFile = FileState.ActiveFile.file(file)
-        fileState.setActiveFile(activeFile)
+        guard await fileState.requestActiveFileChange(activeFile) else {
+            throw BridgeError.aiGenerationInProgress
+        }
         return currentFileInfo(
             activeFile,
             allowsFileAccess: true,
@@ -978,7 +980,9 @@ final class ExcalidrawMCPAppBridge {
 
         fileState.currentActiveGroup = .localFolder(folder)
         let activeFile = FileState.ActiveFile.localFile(fileURL)
-        fileState.setActiveFile(activeFile)
+        guard await fileState.requestActiveFileChange(activeFile) else {
+            throw BridgeError.aiGenerationInProgress
+        }
         return currentFileInfo(
             activeFile,
             allowsFileAccess: true,
@@ -1015,7 +1019,9 @@ final class ExcalidrawMCPAppBridge {
         }
 
         let activeFile = FileState.ActiveFile.file(file)
-        fileState.setActiveFile(activeFile)
+        guard await fileState.requestActiveFileChange(activeFile) else {
+            throw BridgeError.aiGenerationInProgress
+        }
         return currentFileInfo(
             activeFile,
             allowsFileAccess: true,
@@ -1055,7 +1061,9 @@ final class ExcalidrawMCPAppBridge {
         }
 
         let activeFile = FileState.ActiveFile.localFile(fileURL)
-        fileState.setActiveFile(activeFile)
+        guard await fileState.requestActiveFileChange(activeFile) else {
+            throw BridgeError.aiGenerationInProgress
+        }
         return currentFileInfo(
             activeFile,
             allowsFileAccess: true,

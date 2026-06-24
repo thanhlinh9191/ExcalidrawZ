@@ -163,6 +163,7 @@ struct HomeView: View {
 
 struct RecentlyFilesProvider: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
 
     var content: ([FileState.ActiveFile]) -> AnyView
     
@@ -292,7 +293,12 @@ struct RecentlyFilesProvider: View {
             $0.value > $1.value
         }).map {$0.key}
         
-        self.recentlyFiles = Array(sortedAllFiles.prefix(20))
+        let recentlyFiles = Array(sortedAllFiles.prefix(20))
+        self.recentlyFiles = recentlyFiles
+        FileCoverCacheCoordinator.shared.prioritizeRecentlyVisibleFiles(
+            recentlyFiles,
+            colorScheme: colorScheme
+        )
     }
 }
 
@@ -405,4 +411,3 @@ private struct APreviewView: View {
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
 #endif // DEBUG
-

@@ -27,6 +27,7 @@ struct SegmentedPicker<Selection, Content>: View where Selection : Hashable, Con
     }
     
     @StateObject private var viewModel = SegmentedPickerModel<Selection>()
+    @State private var canAnimateSelectionBackground = false
     
     var body: some View {
         _VariadicView.Tree(SegmentedPickerContent()) {
@@ -59,7 +60,12 @@ struct SegmentedPicker<Selection, Content>: View where Selection : Hashable, Con
                     }
                     .frame(width: rect.width, height: rect.height)
                     .offset(x: rect.minX, y: rect.minY)
-                    .animation(.bouncy, value: rect)
+                    .animation(canAnimateSelectionBackground ? .bouncy : nil, value: rect)
+                    .task {
+                        guard !canAnimateSelectionBackground else { return }
+                        await Task.yield()
+                        canAnimateSelectionBackground = true
+                    }
                 }
             }
         }
@@ -67,12 +73,12 @@ struct SegmentedPicker<Selection, Content>: View where Selection : Hashable, Con
         .apply { content in
             if #available(iOS 17.0, macOS 14.0, *) {
                 content
-                    .watch(value: selection) { oldValue, newValue in
+                    .watch(value: selection, initial: true) { _, newValue in
                         if newValue != viewModel.selection {
                             viewModel.selection = newValue
                         }
                     }
-                    .watch(value: viewModel.selection, initial: true) { _, newValue in
+                    .watch(value: viewModel.selection) { _, newValue in
                         if newValue != selection {
                             selection = newValue
                         }

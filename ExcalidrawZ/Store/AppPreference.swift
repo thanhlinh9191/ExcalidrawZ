@@ -147,6 +147,8 @@ final class AppPreference: ObservableObject {
     @AppStorage("useCustomDrawingSettings") var useCustomDrawingSettings = false
     @AppStorage("customDrawingSettingsData") private var customDrawingSettingsData: Data = Data()
     @AppStorage("toolbarToolOrderData") private var toolbarToolOrderData: Data = Data()
+    private var cachedToolbarToolOrderData: Data?
+    private var cachedToolbarToolOrder: ExcalidrawToolbarToolOrder?
 
     var customDrawingSettings: UserDrawingSettings {
         get {
@@ -170,11 +172,23 @@ final class AppPreference: ObservableObject {
 
     var toolbarToolOrder: ExcalidrawToolbarToolOrder {
         get {
-            ExcalidrawToolbarToolOrder(storedData: toolbarToolOrderData)
+            if let cachedToolbarToolOrderData,
+               cachedToolbarToolOrderData == toolbarToolOrderData,
+               let cachedToolbarToolOrder {
+                return cachedToolbarToolOrder
+            }
+
+            let toolbarToolOrder = ExcalidrawToolbarToolOrder(storedData: toolbarToolOrderData)
+            cachedToolbarToolOrderData = toolbarToolOrderData
+            cachedToolbarToolOrder = toolbarToolOrder
+            return toolbarToolOrder
         }
         set {
+            let storedData = newValue.storedData
+            cachedToolbarToolOrderData = storedData
+            cachedToolbarToolOrder = newValue
             objectWillChange.send()
-            toolbarToolOrderData = newValue.storedData
+            toolbarToolOrderData = storedData
         }
     }
 }

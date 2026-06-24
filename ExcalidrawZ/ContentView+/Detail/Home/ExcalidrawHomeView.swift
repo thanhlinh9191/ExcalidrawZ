@@ -54,7 +54,7 @@ struct ExcalidrawHomeView: View {
 //                .opacity(disableInteration || !fileHomeItemTransitionState.canShowExcalidrawCanvas ? 0 : 1)
 
             ExcalidrawEditor(
-                activeFile: $fileState.currentActiveFile,
+                activeFile: fileState.activeFileBinding,
                 interactionEnabled: !disableInteration
             )
             .opacity(disableInteration || !fileHomeItemTransitionState.canShowExcalidrawCanvas ? 0 : 1)

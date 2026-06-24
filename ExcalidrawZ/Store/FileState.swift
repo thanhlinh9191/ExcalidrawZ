@@ -151,9 +151,33 @@ final class FileState: ObservableObject {
             }
         }
     }
+
+    struct CapturedCanvasSaveTarget: Sendable {
+        enum Kind: Sendable {
+            case libraryFile(
+                objectURI: URL,
+                fileName: String,
+                didUpdate: Bool,
+                suppressCheckpoint: Bool
+            )
+            case localFile(
+                url: URL,
+                didUpdate: Bool,
+                suppressCheckpoint: Bool
+            )
+            case collaborationFile(
+                objectURI: URL,
+                fileName: String,
+                didUpdate: Bool
+            )
+        }
+
+        let id: String
+        let kind: Kind
+    }
     
-    @Published var activeFileIndex: Int? = 0
-    @Published var activeFiles: [ActiveFile?] = [nil] {
+    @Published private(set) var activeFileIndex: Int? = 0
+    @Published private(set) var activeFiles: [ActiveFile?] = [nil] {
         willSet {
             guard let activeFileIndex else { return }
             self.activeFileIndex = min(newValue.endIndex - 1, activeFileIndex)
@@ -163,62 +187,82 @@ final class FileState: ObservableObject {
         }
     }
     var currentActiveFile: ActiveFile? {
-        get {
-            if let activeFileIndex, activeFileIndex >= 0, activeFileIndex < activeFiles.count {
-                return activeFiles[activeFileIndex]
-            }
-            return nil
+        if let activeFileIndex,
+           activeFileIndex >= 0,
+           activeFileIndex < activeFiles.count {
+            return activeFiles[activeFileIndex]
         }
-        
-        set {
-            let previousConversationScope = currentActiveFile?.aiConversationFileScope
-            let nextConversationScope = newValue?.aiConversationFileScope
-            if previousConversationScope != nextConversationScope {
-                aiChatConversationID = nil
-                isAIChatConversationLoading = nextConversationScope != nil
-            }
+        return nil
+    }
 
-            if let currentActiveFileID = self.currentActiveFile?.id {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    NotificationCenter.default.post(
-                        name: .filePreviewShouldRefresh,
-                        object: currentActiveFileID
-                    )
-                }
-            }
-            if let activeFileIndex,
-               activeFileIndex < activeFiles.count {
-                if let newValue {
-                    activeFiles[activeFileIndex] = newValue
-                } else if activeFileIndex > 0 {
-                    activeFiles.remove(at: activeFileIndex)
-                } else {
-                    activeFiles[activeFileIndex] = nil
-                }
-            }
-            
-            shouldIgnoreUpdate = true
-            recoverWatchUpdate()
-            currentFilePublisherCancellables.forEach{$0.cancel()}
-            resetSelections()
-            if let currentActiveFile {
-                didUpdateFileState[currentActiveFile] = false
-            }
-            if let newValue {
-                didUpdateFileState[newValue] = false
-            }
-            resetCurrentFileChangesListener()
+    @MainActor
+    private var activeFileChangeGeneration = 0
+    private let homeOpenNavigationUpdateDelay: UInt64 = 650_000_000
+
+    @MainActor
+    var activeFileBinding: Binding<ActiveFile?> {
+        Binding {
+            self.currentActiveFile
+        } set: { newValue in
+            self.setActiveFile(newValue)
         }
+    }
+
+    @MainActor
+    private func applyActiveFile(_ newValue: ActiveFile?) {
+        let previousActiveFile = currentActiveFile
+        let previousConversationScope = previousActiveFile?.aiConversationFileScope
+        let nextConversationScope = newValue?.aiConversationFileScope
+        if previousConversationScope != nextConversationScope {
+            aiChatConversationID = nil
+            isAIChatConversationLoading = nextConversationScope != nil
+        }
+        if let currentActiveFileID = previousActiveFile?.id {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                NotificationCenter.default.post(
+                    name: .filePreviewShouldRefresh,
+                    object: currentActiveFileID
+                )
+            }
+        }
+        if let activeFileIndex,
+           activeFileIndex < activeFiles.count {
+            if let newValue {
+                activeFiles[activeFileIndex] = newValue
+            } else if activeFileIndex > 0 {
+                activeFiles.remove(at: activeFileIndex)
+            } else {
+                activeFiles[activeFileIndex] = nil
+            }
+        }
+
+        shouldIgnoreUpdate = true
+        recoverWatchUpdate()
+        currentFilePublisherCancellables.forEach { $0.cancel() }
+        resetSelections()
+        if let previousActiveFile {
+            didUpdateFileState[previousActiveFile] = false
+        }
+        if let newValue {
+            didUpdateFileState[newValue] = false
+        }
+        resetCurrentFileChangesListener()
     }
 
     var currentActiveFileIsInTrash: Bool {
         currentActiveFile?.isInTrash == true
     }
     
-    /// Set active file with automatic iCloud download handling
+    /// Set active file with automatic iCloud download handling.
     ///
-    /// This method checks if the file needs to be downloaded from iCloud
-    /// and waits for the download to complete before setting it as active.
+    /// This is also the active-file transition boundary: before switching away
+    /// from the current file, pending lightweight canvas dirty notifications are
+    /// handed to a captured-target background save. External UI should route
+    /// file changes through `setActiveFile(_:)` or `requestActiveFileChange(_:)`,
+    /// not by mutating tab state directly.
+    ///
+    /// This method checks whether the file needs to be downloaded from iCloud
+    /// and starts that download after the active file is selected.
     ///
     /// Use this method instead of directly setting `currentActiveFile` when
     /// the file might need to be downloaded from iCloud.
@@ -227,22 +271,125 @@ final class FileState: ObservableObject {
     /// - Throws: FileAccessError if download fails
     @MainActor
     func setActiveFile(_ file: ActiveFile?) {
+        activeFileChangeGeneration += 1
+        let generation = activeFileChangeGeneration
+        Task { @MainActor in
+            await performActiveFileChange(file, generation: generation)
+        }
+    }
+
+    @MainActor
+    @discardableResult
+    func requestActiveFileChange(_ file: ActiveFile?) async -> Bool {
+        activeFileChangeGeneration += 1
+        let generation = activeFileChangeGeneration
+        return await performActiveFileChange(file, generation: generation)
+    }
+
+    @MainActor
+    @discardableResult
+    private func requestActiveLibraryFileChange(fileObjectID: NSManagedObjectID) async -> Bool {
+        let context = PersistenceController.shared.container.viewContext
+        guard let file = context.object(with: fileObjectID) as? File else {
+            return false
+        }
+        return await requestActiveFileChange(.file(file))
+    }
+
+    @MainActor
+    private func capturedCanvasSaveTarget(for activeFile: ActiveFile) -> CapturedCanvasSaveTarget? {
+        switch activeFile {
+            case .file(let file):
+                guard !file.inTrash else { return nil }
+                return CapturedCanvasSaveTarget(
+                    id: activeFile.id,
+                    kind: .libraryFile(
+                        objectURI: file.objectID.uriRepresentation(),
+                        fileName: file.name ?? "Untitled",
+                        didUpdate: didUpdateFileState[activeFile] ?? false,
+                        suppressCheckpoint: automaticCheckpointWritesSuppressed
+                    )
+                )
+
+            case .localFile(let url), .temporaryFile(let url):
+                return CapturedCanvasSaveTarget(
+                    id: activeFile.id,
+                    kind: .localFile(
+                        url: url,
+                        didUpdate: didUpdateFile,
+                        suppressCheckpoint: automaticCheckpointWritesSuppressed
+                    )
+                )
+
+            case .collaborationFile(let file):
+                return CapturedCanvasSaveTarget(
+                    id: activeFile.id,
+                    kind: .collaborationFile(
+                        objectURI: file.objectID.uriRepresentation(),
+                        fileName: file.name ?? "Untitled",
+                        didUpdate: didUpdateFileState[activeFile] ?? false
+                    )
+                )
+        }
+    }
+
+    @MainActor
+    private func performActiveFileChange(
+        _ file: ActiveFile?,
+        generation: Int
+    ) async -> Bool {
         if aiChatSession != nil, currentActiveFile != file {
             activeFileSwitchBlockedReason = .aiGenerationInProgress
             activeFileSwitchBlockedToken += 1
-            return
+            return false
         }
 
-        guard let file else {
-            self.currentActiveFile = nil
-            return
+        if currentActiveFile == file {
+            return true
         }
-        self.currentActiveFile = file
-        recordVisit(for: file)
+
+        let shouldDelayNavigationUpdate = currentActiveFile == nil && file != nil
+
+        if let previousFile = currentActiveFile,
+           let saveTarget = capturedCanvasSaveTarget(for: previousFile) {
+            await FileCoverCacheCoordinator.shared.cacheCurrentViewportPreview(
+                for: previousFile
+            )
+            await excalidrawWebCoordinator?.documentSyncController.flushPendingDirtySnapshotInBackground(
+                reason: "activeFileWillChange",
+                expectedFileID: previousFile.id,
+                target: saveTarget
+            )
+        }
+
+        guard generation == activeFileChangeGeneration else {
+            return false
+        }
+
+        applyActiveFile(file)
+
+        guard let file else {
+            return true
+        }
+
+        if case .collaborationFile = file {
+            recordVisit(for: file)
+        }
         let context = PersistenceController.shared.container.viewContext
+        let activeFileID = file.id
         switch file {
             case .localFile(let url):
                 Task {
+                    if shouldDelayNavigationUpdate {
+                        try? await Task.sleep(nanoseconds: homeOpenNavigationUpdateDelay)
+                    }
+                    guard shouldApplyNavigationUpdate(
+                        fileID: activeFileID,
+                        generation: generation
+                    ) else {
+                        return
+                    }
+
                     do {
                         let folders = try await context.perform {
                             let fetchRequest = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
@@ -278,6 +425,16 @@ final class FileState: ObservableObject {
                 }
             case .file(let dbFile):
                 Task { @MainActor in
+                    if shouldDelayNavigationUpdate {
+                        try? await Task.sleep(nanoseconds: homeOpenNavigationUpdateDelay)
+                    }
+                    guard shouldApplyNavigationUpdate(
+                        fileID: activeFileID,
+                        generation: generation
+                    ) else {
+                        return
+                    }
+
                     if dbFile.group == nil {
                         currentActiveGroup = nil
                     } else if dbFile.inTrash {
@@ -297,10 +454,22 @@ final class FileState: ObservableObject {
                 }
                 
             case .temporaryFile(let url):
-                if !temporaryFiles.contains(where: {$0 == url}) {
-                    temporaryFiles.append(url)
+                Task { @MainActor in
+                    if shouldDelayNavigationUpdate {
+                        try? await Task.sleep(nanoseconds: homeOpenNavigationUpdateDelay)
+                    }
+                    guard shouldApplyNavigationUpdate(
+                        fileID: activeFileID,
+                        generation: generation
+                    ) else {
+                        return
+                    }
+
+                    if !temporaryFiles.contains(where: {$0 == url}) {
+                        temporaryFiles.append(url)
+                    }
+                    currentActiveGroup = .temporary
                 }
-                currentActiveGroup = .temporary
             case .collaborationFile(let room):
                 let store = Store.shared
                 if let limit = store.collaborationRoomLimits,
@@ -317,6 +486,22 @@ final class FileState: ObservableObject {
                     }
                 }
         }
+        return true
+    }
+
+    @MainActor
+    private func shouldApplyNavigationUpdate(
+        fileID: String,
+        generation: Int
+    ) -> Bool {
+        generation == activeFileChangeGeneration && currentActiveFile?.id == fileID
+    }
+
+    @MainActor
+    func recordVisitAfterFileReady(fileID: String) {
+        guard let currentActiveFile,
+              currentActiveFile.id == fileID else { return }
+        recordVisit(for: currentActiveFile)
     }
 
     @MainActor
@@ -631,11 +816,7 @@ final class FileState: ObservableObject {
         )
         
         if active {
-            await MainActor.run {
-                if let file = context.object(with: fileID) as? File {
-                    self.setActiveFile(.file(file))
-                }
-            }
+            await requestActiveLibraryFileChange(fileObjectID: fileID)
         }
         
         return fileID
@@ -693,6 +874,203 @@ final class FileState: ObservableObject {
         }
         return true
     }
+
+    static func saveCapturedCanvasUpdate(
+        _ target: CapturedCanvasSaveTarget,
+        with excalidrawFile: ExcalidrawFile
+    ) async {
+        let logger = Logger(label: "FileState")
+        do {
+            switch target.kind {
+                case .libraryFile(let objectURI, let fileName, let didUpdate, let suppressCheckpoint):
+                    guard let fileObjectID = managedObjectID(for: objectURI),
+                          let content = excalidrawFile.content else {
+                        return
+                    }
+                    _ = try await PersistenceController.shared.mediaItemRepository.syncMediaItemsForFile(
+                        excalidrawFile: excalidrawFile,
+                        fileObjectID: fileObjectID
+                    )
+                    let checkpointPolicy: CheckpointWriteOptions = suppressCheckpoint
+                        ? .suppress
+                        : .userEdit(newCheckpoint: !didUpdate)
+                    try await PersistenceController.shared.fileRepository.updateElements(
+                        fileObjectID: fileObjectID,
+                        fileData: content,
+                        checkpoint: checkpointPolicy
+                    )
+                    logger.debug("Background captured file update saved: \(fileName)")
+
+                case .localFile(let url, let didUpdate, let suppressCheckpoint):
+                    try await saveCapturedLocalCanvasUpdate(
+                        to: url,
+                        with: excalidrawFile,
+                        didUpdate: didUpdate,
+                        suppressCheckpoint: suppressCheckpoint,
+                        logger: logger
+                    )
+
+                case .collaborationFile(let objectURI, let fileName, let didUpdate):
+                    guard let collaborationFileObjectID = managedObjectID(for: objectURI),
+                          let content = excalidrawFile.content else {
+                        return
+                    }
+                    try await PersistenceController.shared.collaborationFileRepository.updateElements(
+                        collaborationFileObjectID: collaborationFileObjectID,
+                        content: content,
+                        newCheckpoint: !didUpdate
+                    )
+                    logger.debug("Background captured collaboration file update saved: \(fileName)")
+            }
+        } catch {
+            logger.error("Failed to update background captured file \(target.id): \(error)")
+        }
+    }
+
+    static func saveCapturedAppStateOnlyUpdate(
+        _ target: CapturedCanvasSaveTarget,
+        content: Data
+    ) async {
+        let logger = Logger(label: "FileState")
+        do {
+            switch target.kind {
+                case .libraryFile(let objectURI, let fileName, _, _):
+                    guard let fileObjectID = managedObjectID(for: objectURI) else { return }
+                    try await PersistenceController.shared.fileRepository.updateElements(
+                        fileObjectID: fileObjectID,
+                        fileData: content,
+                        checkpoint: .suppress
+                    )
+                    logger.debug("Background appState-only file update saved: \(fileName)")
+
+                case .localFile(let url, _, _):
+                    try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+                        try await FileCoordinator.shared.coordinatedWrite(url: url, data: content)
+                    }
+                    logger.debug("Background appState-only local file update saved: \(url.lastPathComponent)")
+
+                case .collaborationFile:
+                    break
+            }
+        } catch {
+            logger.error("Failed to update background appState-only file \(target.id): \(error)")
+        }
+    }
+
+    private static func saveCapturedLocalCanvasUpdate(
+        to url: URL,
+        with file: ExcalidrawFile,
+        didUpdate: Bool,
+        suppressCheckpoint: Bool,
+        logger: Logger
+    ) async throws {
+        var file = file
+        try file.updateContentFilesFromFiles()
+        guard let data = file.content else { return }
+
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
+        }
+
+        guard !suppressCheckpoint else {
+            logger.debug("Background captured local file update saved without checkpoint: \(url.lastPathComponent)")
+            return
+        }
+
+        let context = PersistenceController.shared.newTaskContext()
+        try await context.perform {
+            let fetchRequest = NSFetchRequest<LocalFileCheckpoint>(entityName: "LocalFileCheckpoint")
+            fetchRequest.predicate = NSPredicate(
+                format: "url = %@ AND (source == nil OR source == %@)",
+                url as NSURL,
+                FileCheckpointSource.user.rawValue
+            )
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \LocalFileCheckpoint.updatedAt, ascending: false)]
+            let localFileCheckpoints = try context.fetch(fetchRequest)
+
+            if didUpdate, let firstCheckpoint = localFileCheckpoints.first {
+                firstCheckpoint.updatedAt = Date()
+                firstCheckpoint.content = file.content
+                if firstCheckpoint.source == nil {
+                    firstCheckpoint.source = FileCheckpointSource.user.rawValue
+                }
+            } else {
+                let localFileCheckpoint = LocalFileCheckpoint(context: context)
+                localFileCheckpoint.id = UUID()
+                localFileCheckpoint.url = url
+                localFileCheckpoint.updatedAt = Date()
+                localFileCheckpoint.content = file.content
+                localFileCheckpoint.source = FileCheckpointSource.user.rawValue
+                context.insert(localFileCheckpoint)
+
+                if localFileCheckpoints.count > 50, let last = localFileCheckpoints.last {
+                    context.delete(last)
+                }
+            }
+            try context.save()
+        }
+
+        logger.debug("Background captured local file update saved: \(url.lastPathComponent)")
+    }
+
+    private static func managedObjectID(for uri: URL) -> NSManagedObjectID? {
+        PersistenceController.shared.container.persistentStoreCoordinator.managedObjectID(
+            forURIRepresentation: uri
+        )
+    }
+
+    @MainActor
+    func updateAppStateOnlyForCurrentFile(
+        expectedFileID: String?,
+        content: Data
+    ) {
+        guard let activeFile = currentActiveFile,
+              expectedFileID == nil || activeFile.id == expectedFileID else {
+            return
+        }
+
+        switch activeFile {
+            case .file(let file):
+                guard !file.inTrash else { return }
+                let fileObjectID = file.objectID
+                let fileName = file.name ?? "Untitled"
+                Task.detached {
+                    do {
+                        try await PersistenceController.shared.fileRepository.updateElements(
+                            fileObjectID: fileObjectID,
+                            fileData: content,
+                            checkpoint: .suppress
+                        )
+                        self.logger.debug("AppState-only file update saved")
+                    } catch {
+                        self.logger.error("Failed to update appState-only file \(fileName): \(error)")
+                    }
+                }
+
+            case .localFile(let url), .temporaryFile(let url):
+                Task.detached {
+                    do {
+                        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+                            try await FileCoordinator.shared.coordinatedWrite(url: url, data: content)
+                        }
+                        self.logger.debug("AppState-only local file update saved")
+                    } catch {
+                        self.logger.error("Failed to update appState-only local file \(url.lastPathComponent): \(error)")
+                    }
+                }
+
+            case .collaborationFile:
+                break
+        }
+    }
+
+    @MainActor
+    func flushPendingCanvasSnapshotBeforeTermination() async {
+        await excalidrawWebCoordinator?.documentSyncController.flushPendingDirtySnapshot(
+            reason: "applicationShouldTerminate",
+            force: true
+        )
+    }
     
     @discardableResult
     func createNewLocalFile(active: Bool = true, folderURL scopedURL: URL) async throws -> URL? {
@@ -716,9 +1094,7 @@ final class FileState: ObservableObject {
         try await FileCoordinator.shared.coordinatedWrite(url: fileURL, data: data)
         
         if active {
-            await MainActor.run {
-                self.setActiveFile(.localFile(fileURL))
-            }
+            await requestActiveFileChange(.localFile(fileURL))
         }
         
         return fileURL
@@ -902,12 +1278,7 @@ final class FileState: ObservableObject {
         }
         
         try? await self.excalidrawWebCoordinator?.insertMediaFiles(Array(mediaItemsNeedImport))
-        await MainActor.run {
-            let context = PersistenceController.shared.container.viewContext
-            if let file = context.object(with: fileID) as? File {
-                self.setActiveFile(.file(file))
-            }
-        }
+        await requestActiveLibraryFileChange(fileObjectID: fileID)
     }
     
     /// Different handle logics according to different combinations of urls.

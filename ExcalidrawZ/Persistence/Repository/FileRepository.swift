@@ -183,44 +183,19 @@ actor FileRepository {
     ) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
-        // Step 1: Load file entity to get access to loadContent()
-        let file = try await context.perform {
-            guard let file = context.object(with: fileObjectID) as? File else {
-                throw AppError.fileError(.notFound)
-            }
-            return file
-        }
+        let contentData = try await prepareContentDataForUpdate(
+            fileObjectID: fileObjectID,
+            fileData: fileData,
+            context: context
+        )
 
-        // Step 2: Load content outside context.perform
-        let data = try await file.loadContent()
+        try await saveFileContentToStorage(
+            fileObjectID: fileObjectID,
+            content: contentData,
+            updateMetadataWhenPathUnchanged: false
+        )
 
-        // Step 3: Prepare updated content
-        let contentData = try await context.perform {
-            guard let file = context.object(with: fileObjectID) as? File else {
-                throw AppError.fileError(.notFound)
-            }
-            var obj = try JSONSerialization.jsonObject(with: data) as! [String : Any]
-            guard let fileDataJson = try JSONSerialization.jsonObject(with: fileData) as? [String : Any] else {
-                throw AppError.fileError(.contentNotAvailable(filename: file.name ?? String(localizable: .generalUnknown)))
-            }
-            obj["elements"] = fileDataJson["elements"]
-            obj["appState"] = fileDataJson["appState"]
-            obj.removeValue(forKey: "files")
-            return try JSONSerialization.data(withJSONObject: obj)
-        }
-
-        // Step 4: Update CoreData immediately (as fallback)
-        try await context.perform {
-            guard let file = context.object(with: fileObjectID) as? File else { return }
-            file.content = contentData
-            file.updatedAt = .now
-            try context.save()
-        }
-
-        // Step 5: Save file to storage
-        try await saveFileContentToStorage(fileObjectID: fileObjectID, content: contentData)
-
-        // Step 6: Write checkpoint per policy.
+        // Step 2: Write checkpoint per policy.
         switch checkpoint {
         case .suppress:
             // Caller is in an AI chat session — content saved, history skipped.
@@ -253,6 +228,46 @@ actor FileRepository {
         }
     }
 
+    private func prepareContentDataForUpdate(
+        fileObjectID: NSManagedObjectID,
+        fileData: Data,
+        context: NSManagedObjectContext
+    ) async throws -> Data {
+        guard var fileDataJson = try JSONSerialization.jsonObject(with: fileData) as? [String : Any] else {
+            let fileName = await context.perform {
+                (context.object(with: fileObjectID) as? File)?.name
+            }
+            throw AppError.fileError(.contentNotAvailable(filename: fileName ?? String(localizable: .generalUnknown)))
+        }
+
+        if Self.isCompleteExcalidrawFileContent(fileDataJson) {
+            fileDataJson.removeValue(forKey: "files")
+            return try JSONSerialization.data(withJSONObject: fileDataJson)
+        }
+
+        // Legacy callers may still pass only the canvas payload. In that case
+        // preserve the existing file envelope and replace the scene fields.
+        let file = try await context.perform {
+            guard let file = context.object(with: fileObjectID) as? File else {
+                throw AppError.fileError(.notFound)
+            }
+            return file
+        }
+        let data = try await file.loadContent()
+        var contentObject = try JSONSerialization.jsonObject(with: data) as! [String : Any]
+        contentObject["elements"] = fileDataJson["elements"]
+        contentObject["appState"] = fileDataJson["appState"]
+        contentObject.removeValue(forKey: "files")
+        return try JSONSerialization.data(withJSONObject: contentObject)
+    }
+
+    private static func isCompleteExcalidrawFileContent(_ object: [String : Any]) -> Bool {
+        object["elements"] != nil
+            && object["appState"] != nil
+            && object["type"] != nil
+            && object["version"] != nil
+    }
+
     /// Force-write an explicitly tagged checkpoint for the current state of a
     /// file without going through the elements-update path. Used by automated
     /// integrations such as AI chat and MCP to create precise pre/post
@@ -277,7 +292,11 @@ actor FileRepository {
     /// - Parameters:
     ///   - fileObjectID: The file objectID
     ///   - content: The content data to save
-    func saveFileContentToStorage(fileObjectID: NSManagedObjectID, content: Data) async throws {
+    func saveFileContentToStorage(
+        fileObjectID: NSManagedObjectID,
+        content: Data,
+        updateMetadataWhenPathUnchanged: Bool = true
+    ) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
         // Step 1: Get file ID and metadata
@@ -306,13 +325,35 @@ actor FileRepository {
         )
 
         // Step 3: Update after successful save
-        try await context.perform {
-            guard let file = context.object(with: fileObjectID) as? File else { return }
+        let didUpdateMetadata = try await context.perform {
+            guard let file = context.object(with: fileObjectID) as? File else { return false }
+            if !updateMetadataWhenPathUnchanged,
+               file.filePath == relativePath,
+               file.content == nil {
+                return false
+            }
             file.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
+            return true
         }
-        logger.debug("Saved file to storage: \(relativePath)")
-        await PersistenceController.shared.spotlightIndexingService.indexFile(fileObjectID: fileObjectID)
+        if didUpdateMetadata {
+            logger.debug("Saved file to storage: \(relativePath)")
+            await PersistenceController.shared.spotlightIndexingService.indexFile(fileObjectID: fileObjectID)
+        } else {
+            logger.debug("Saved file to storage without CoreData metadata update: \(relativePath)")
+        }
+    }
+
+    private func saveFileContentFallback(
+        fileObjectID: NSManagedObjectID,
+        content: Data
+    ) async throws {
+        let context = PersistenceController.shared.newTaskContext()
+        try await context.perform {
+            guard let file = context.object(with: fileObjectID) as? File else { return }
+            file.updateContentFallback(data: content)
+            try context.save()
+        }
     }
 
     private func encryptedContentIfNeeded(
@@ -442,21 +483,16 @@ actor FileRepository {
                 return LatestLookup(foundUserCheckpoint: nil)
             }
 
-            self.logger.info("Updating latest user checkpoint")
-            checkpoint.content = content
-            checkpoint.filename = file.name
-            checkpoint.updatedAt = .now
-            // Backfill source on legacy rows so future predicates can be
-            // written without the OR-nil branch.
-            if checkpoint.source == nil {
-                checkpoint.source = FileCheckpointSource.user.rawValue
-            }
-            try context.save()
             return LatestLookup(foundUserCheckpoint: checkpoint.objectID)
         }
 
         if let checkpointObjectID = lookup.foundUserCheckpoint {
-            try await PersistenceController.shared.checkpointRepository.saveCheckpointToStorage(checkpointObjectID: checkpointObjectID)
+            self.logger.info("Updating latest user checkpoint")
+            try await PersistenceController.shared.checkpointRepository.saveCheckpointContentToStorage(
+                checkpointObjectID: checkpointObjectID,
+                content: content,
+                updateMetadataWhenPathUnchanged: false
+            )
         } else {
             // Latest checkpoint(s) are all AI rows — start a new user
             // checkpoint instead of clobbering them.

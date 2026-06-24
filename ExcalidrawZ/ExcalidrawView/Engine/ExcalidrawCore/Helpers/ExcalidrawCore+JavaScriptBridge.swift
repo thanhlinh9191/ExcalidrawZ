@@ -10,13 +10,13 @@ import Foundation
 extension ExcalidrawCore {
     struct JSONEncodingFailed: Error {}
 
-    struct InvalidJavaScriptResult: LocalizedError {
+    struct InvalidJavaScriptResult: LocalizedError, Sendable {
         var errorDescription: String? {
             "The Excalidraw web view did not return a valid JavaScript result."
         }
     }
 
-    enum JSONValue: Codable, Hashable {
+    enum JSONValue: Codable, Hashable, Sendable {
         case string(String)
         case number(Double)
         case bool(Bool)
@@ -58,6 +58,23 @@ extension ExcalidrawCore {
                     try container.encode(value)
                 case .null:
                     try container.encodeNil()
+            }
+        }
+
+        var foundationObject: Any {
+            switch self {
+                case .string(let value):
+                    return value
+                case .number(let value):
+                    return value
+                case .bool(let value):
+                    return value
+                case .object(let value):
+                    return value.mapValues(\.foundationObject)
+                case .array(let value):
+                    return value.map(\.foundationObject)
+                case .null:
+                    return NSNull()
             }
         }
     }
@@ -127,7 +144,7 @@ extension ExcalidrawCore {
         throw JavaScriptHelperExecutionError(payload: envelope.error)
     }
 
-    private struct JavaScriptResultDecodingError: LocalizedError {
+    private struct JavaScriptResultDecodingError: LocalizedError, Sendable {
         let targetType: String
         let reason: String
         let rawJSON: String?

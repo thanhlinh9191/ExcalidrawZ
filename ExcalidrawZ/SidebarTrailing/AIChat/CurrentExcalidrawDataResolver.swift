@@ -44,11 +44,7 @@ enum CurrentExcalidrawDataResolver {
         }
 
         let snapshot = try await coordinator.getCurrentFileSnapshot()
-        if let snapshotData = snapshot.dataString.data(using: .utf8) {
-            return try mergeLiveSceneData(snapshotData, into: resolvedBaseContent)
-        }
-
-        return resolvedBaseContent
+        return try mergeLiveSceneData(snapshot.documentData(), into: resolvedBaseContent)
     }
 
     private static func resolvedBaseContent(

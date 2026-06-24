@@ -41,6 +41,7 @@ struct ExcalidrawEditor: View {
     @State private var isLoadingFile = false
     @State private var loadingTask: Task<Void, Never>?
     @State private var fileLoadRevealTask: Task<Void, Never>?
+    @State private var recordVisitTask: Task<Void, Never>?
     @State private var documentLoadCompletion: ExcalidrawDocumentLoadCompletion?
     @State private var measuredNativeViewportInsets: ExcalidrawNativeViewportInsets = .zero
 
@@ -51,14 +52,13 @@ struct ExcalidrawEditor: View {
 
     /// Latest cloud data from observeExcalidrawFileStatus (not immediately applied)
     @State private var latestCloudData: Data?
-    /// Last received file content from WebView (for change detection)
-    @State private var lastReceivedFileContent: Data?
     /// Last time the user edited the file (applyExcalidrawFile was called with actual changes)
     @State private var lastEditTime: Date?
     /// Task waiting to apply deferred cloud updates (cancellable)
     @State private var cloudSyncTask: Task<Void, Never>?
     /// Idle timeout in seconds before applying cloud updates
     private let idleTimeout: TimeInterval = 2.0
+    private let recordVisitAfterOpenDelay: UInt64 = 1_000_000_000
 
     init(
         activeFile: Binding<FileState.ActiveFile?>,
@@ -70,14 +70,17 @@ struct ExcalidrawEditor: View {
     
     var localFileBinding: Binding<ExcalidrawFile?> {
         Binding<ExcalidrawFile?> {
-            return fileState.currentActiveFile == nil ? ExcalidrawFile() : excalidrawFile
+            if fileState.currentActiveFile == nil {
+                return excalidrawFile ?? ExcalidrawFile()
+            }
+            return excalidrawFile
         } set: { val in
             guard let val else { return }
             _ = persistCanvasUpdate(val)
         }
     }
 
-    private enum CanvasUpdatePersistenceResult {
+    private enum CanvasUpdatePersistenceResult: Equatable {
         case accepted
         case ignoredNoChanges
         case rejected
@@ -251,6 +254,7 @@ struct ExcalidrawEditor: View {
         }
 #endif
         .watch(value: activeFile) { (newFile: FileState.ActiveFile?) in
+            noteOpenTransitionStarted(for: newFile)
             loadingTask?.cancel()
             loadingTask = Task {
                 await lockedContentState.prepareForActiveFileChange(to: newFile)
@@ -267,11 +271,16 @@ struct ExcalidrawEditor: View {
             collapseCompactAISurfacesIfCurrentFileIsTrashed()
         }
         .task {
+            noteOpenTransitionStarted(for: activeFile)
             await lockedContentState.prepareForActiveFileChange(to: activeFile)
             await loadExcalidrawFile(from: activeFile)
         }
         .onAppear {
             collapseCompactAISurfacesIfCurrentFileIsTrashed()
+        }
+        .onDisappear {
+            recordVisitTask?.cancel()
+            recordVisitTask = nil
         }
     }
 
@@ -297,19 +306,38 @@ struct ExcalidrawEditor: View {
         guard activeFile?.id == fileID else { return }
 
         fileLoadRevealTask?.cancel()
-        fileLoadRevealTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 250_000_000)
-            guard !Task.isCancelled,
-                  activeFile?.id == fileID else { return }
-            isLoadingFile = false
-            fileLoadRevealTask = nil
-        }
+        isLoadingFile = false
+        fileLoadRevealTask = nil
     }
 
     private func cancelFileLoadRevealGuard() {
         fileLoadRevealTask?.cancel()
         fileLoadRevealTask = nil
         isLoadingFile = false
+    }
+
+    private func noteOpenTransitionStarted(for file: FileState.ActiveFile?) {
+        recordVisitTask?.cancel()
+        recordVisitTask = nil
+
+        guard let file else {
+            return
+        }
+
+        scheduleVisitRecordAfterOpenDelay(fileID: file.id)
+    }
+
+    private func scheduleVisitRecordAfterOpenDelay(fileID: String) {
+        recordVisitTask?.cancel()
+
+        recordVisitTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: recordVisitAfterOpenDelay)
+            guard !Task.isCancelled,
+                  activeFile?.id == fileID else { return }
+
+            fileState.recordVisitAfterFileReady(fileID: fileID)
+            recordVisitTask = nil
+        }
     }
     
     private func loadExcalidrawFile(from activeFile: FileState.ActiveFile?) async {
@@ -390,7 +418,6 @@ struct ExcalidrawEditor: View {
         cloudSyncTask?.cancel()
         cloudSyncTask = nil
         latestCloudData = nil
-        lastReceivedFileContent = nil
         excalidrawFile = nil
     }
 
@@ -404,7 +431,6 @@ struct ExcalidrawEditor: View {
             self.fileState.excalidrawWebCoordinator?.documentSyncController
                 .setTargetFileID(request.fileID)
             self.excalidrawFile = parsedFile
-            self.lastReceivedFileContent = parsedFile.content
         }
     }
     
@@ -504,94 +530,82 @@ struct ExcalidrawEditor: View {
         }
     }
 
-    /// Compare only elements and appState fields from two JSON data
-    private func compareExcalidrawContent(_ data1: Data, _ data2: Data) -> Bool {
-        let start = Date()
-        do {
-            guard let dict1 = try JSONSerialization.jsonObject(with: data1) as? [String: Any],
-                  let dict2 = try JSONSerialization.jsonObject(with: data2) as? [String: Any] else {
-                return false
-            }
-            
-            if let elements1 = dict1["elements"] as? [Any],
-               let elements2 = dict2["elements"] as? [Any] {
-                logger.info("elements1: \(elements1.count) -- elements2: \(elements2.count)")
-            }
-
-            // Compare elements
-            let elements1JSON = try JSONSerialization.data(withJSONObject: dict1["elements"] ?? [])
-            let elements2JSON = try JSONSerialization.data(withJSONObject: dict2["elements"] ?? [])
-
-            // Compare appState
-            let appState1JSON = try JSONSerialization.data(withJSONObject: dict1["appState"] ?? [:])
-            let appState2JSON = try JSONSerialization.data(withJSONObject: dict2["appState"] ?? [:])
-
-            self.logger.info("compareExcalidrawContent time consume: \((Date().timeIntervalSince(start)).formatted())")
-            return elements1JSON == elements2JSON && appState1JSON == appState2JSON
-        } catch {
-            logger.error("Failed to compare excalidraw content: \(error)")
-            return false
+    private func hasPersistentCanvasChanges(
+        in file: ExcalidrawFile,
+        comparedTo currentFile: ExcalidrawFile
+    ) -> Bool {
+        if let content = file.content,
+           let currentContent = currentFile.content {
+            return content != currentContent
         }
+
+        return file.elements != currentFile.elements || file.appState != currentFile.appState
     }
 
     private func applyExcalidrawFile(_ file: ExcalidrawFile?) {
         guard let file else { return }
-        guard let currentContent = file.content else { return }
 
-        // Check if content actually changed (compare elements and appState)
-        if let lastContent = lastReceivedFileContent,
-           compareExcalidrawContent(lastContent, currentContent) {
-            // Content unchanged, don't update lastEditTime or cancel task
-            logger.info("Content unchanged, skipping update")
-            return
+        if let currentFile = excalidrawFile {
+            let hasChanges = hasPersistentCanvasChanges(in: file, comparedTo: currentFile)
+            guard hasChanges else {
+                return
+            }
         }
 
-        guard persistCanvasUpdate(file).shouldUpdateEditorState else { return }
+        let persistenceResult = persistCanvasUpdate(file)
+        guard persistenceResult.shouldUpdateEditorState else { return }
 
-        // Content changed, update tracking
-        lockedContentState.noteUserActivity()
-        lastReceivedFileContent = currentContent
-        lastEditTime = Date()
-        logger.info("Content changed, updating lastEditTime and canceling any pending cloud sync task")
+        if persistenceResult == .accepted {
+            // Content changed, update tracking
+            lockedContentState.noteUserActivity()
+            lastEditTime = Date()
 
-        // Cancel pending cloud sync task (user is editing again, need to reset wait)
-        cloudSyncTask?.cancel()
-        cloudSyncTask = nil
+            // Cancel pending cloud sync task (user is editing again, need to reset wait)
+            cloudSyncTask?.cancel()
+            cloudSyncTask = nil
+        }
 
         // Keep in-memory file in sync so exports read the latest elements.
         excalidrawFile = file
     }
 
     private func persistCanvasUpdate(_ file: ExcalidrawFile) -> CanvasUpdatePersistenceResult {
-        guard activeFile?.id == file.id else { return .rejected }
+        guard activeFile?.id == file.id else {
+            logger.debug(
+                "Rejected canvas update: target mismatch file=\(file.id) active=\(activeFile?.id ?? "nil")"
+            )
+            return .rejected
+        }
 
         // Block updates while loading new file.
         guard !isLoadingFile else {
-            logger.info("Blocked update during file loading")
+            logger.debug("Rejected canvas update: file loading id=\(file.id)")
             return .rejected
         }
 
         guard lockedContentState.activeFileLockState != .locked else {
-            logger.info("Blocked update while active file is locked")
+            logger.debug("Rejected canvas update: active file locked id=\(file.id)")
             return .rejected
         }
 
         switch activeFile {
             case .file(let activeFile):
-                if let currentFile = excalidrawFile, file.elements == currentFile.elements {
-                    logger.info("no updates, ignored.")
+                if let currentFile = excalidrawFile,
+                   !hasPersistentCanvasChanges(in: file, comparedTo: currentFile) {
+                    logger.debug("Ignored canvas update: no persistent changes id=\(file.id)")
                     return .ignoredNoChanges
                 }
+                logger.debug("Persisting library canvas update id=\(file.id) elements=\(file.elements.count)")
                 return fileState.updateFile(activeFile, with: file) ? .accepted : .rejected
 
             case .localFile(let url):
                 guard case .localFolder(let folder) = fileState.currentActiveGroup else { return .rejected }
+                logger.debug("Persisting local canvas update id=\(file.id) url=\(url.lastPathComponent) elements=\(file.elements.count)")
                 Task {
                     try folder.withSecurityScopedURL { _ in
                         do {
-                            let oldElements = try ExcalidrawFile(contentsOf: url).elements
-                            if file.elements == oldElements {
-                                logger.info("no updates, ignored.")
+                            let oldFile = try ExcalidrawFile(contentsOf: url)
+                            if !hasPersistentCanvasChanges(in: file, comparedTo: oldFile) {
                                 return
                             }
                             try await fileState.updateLocalFile(
@@ -607,11 +621,11 @@ struct ExcalidrawEditor: View {
                 return .accepted
 
             case .temporaryFile(let url):
+                logger.debug("Persisting temporary canvas update id=\(file.id) url=\(url.lastPathComponent) elements=\(file.elements.count)")
                 Task {
                     do {
-                        let oldElements = try ExcalidrawFile(contentsOf: url).elements
-                        if file.elements == oldElements {
-                            logger.info("no updates, ignored.")
+                        let oldFile = try ExcalidrawFile(contentsOf: url)
+                        if !hasPersistentCanvasChanges(in: file, comparedTo: oldFile) {
                             return
                         }
                         try await fileState.updateLocalFile(
@@ -646,6 +660,7 @@ private struct NativeViewportInsetsMeasurementView: View {
             Color.clear
                 .allowsHitTesting(false)
                 .watch(value: measuredInsets, initial: true) { _, newValue in
+                    guard insets != newValue else { return }
                     insets = newValue
                 }
         }

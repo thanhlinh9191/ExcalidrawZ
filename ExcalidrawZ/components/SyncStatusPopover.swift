@@ -17,6 +17,8 @@ struct SyncStatusPopover: View {
     init() {}
     
     @State private var isPresented = false
+    @State private var showTask: Task<Void, Never>?
+    @State private var hideTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -25,8 +27,39 @@ struct SyncStatusPopover: View {
             }
         }
         .onChange(of: syncState.hasActiveSyncOperations, initial: true, throttle: 0.2, latest: true) { newVal in
+            handleActiveSyncOperationsChanged(newVal)
+        }
+        .onDisappear {
+            showTask?.cancel()
+            hideTask?.cancel()
+        }
+    }
+
+    private func handleActiveSyncOperationsChanged(_ isActive: Bool) {
+        guard isActive else {
+            showTask?.cancel()
+            hideTask?.cancel()
+            hideTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled,
+                      !syncState.hasActiveSyncOperations else { return }
+
+                withAnimation(.smooth) {
+                    isPresented = false
+                }
+            }
+            return
+        }
+
+        hideTask?.cancel()
+        showTask?.cancel()
+        showTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled,
+                  syncState.hasActiveSyncOperations else { return }
+
             withAnimation(.smooth) {
-                isPresented = newVal
+                isPresented = true
             }
         }
     }

@@ -85,6 +85,8 @@ final class AIChatPromptDraftState: ObservableObject {
 
 @MainActor
 final class AIChatState: ObservableObject {
+    nonisolated static let selectedConversationRefreshDelay: UInt64 = 350_000_000
+
     /// Messages typed while a reply was streaming. PromptInputView appends
     /// to this on mid-stream send, drains it FIFO when the in-flight reply
     /// finishes, and clears it on stop. Hosts read it to render the
@@ -389,11 +391,10 @@ extension AIConversationSnapshot {
 // MARK: - File-scoped conversation loader
 
 extension AIChatState {
-    /// Refresh the global conversation cache and pre-select the most
-    /// recent conversation tied to the current active file. Called on
-    /// every file change (typically driven by a `.task(id:)` on
-    /// `ContentView`), so by the time the user opens the chat panel
-    /// the right conversation is already pinned.
+    /// Pre-select the most recent conversation tied to the current active
+    /// file. Called on every file change (typically driven by a `.task(id:)`
+    /// on `ContentView`), so by the time the user opens an AI surface the
+    /// right conversation id is already pinned.
     ///
     /// "Pre-select" writes to `fileState.aiChatConversationID`. If
     /// the active file has no persisted history, the id is set to
@@ -405,7 +406,6 @@ extension AIChatState {
     /// independent of Core Data relationships so URL-backed files can
     /// be scoped without first becoming Core Data entities.
     func loadConversationForActiveFile(
-        in llmState: LLMStateObject,
         fileState: FileState
     ) async {
         let activeFile = fileState.currentActiveFile
@@ -419,12 +419,6 @@ extension AIChatState {
             return
         }
 
-        // Always refresh first: the global cache also drives
-        // AIChatView's rendering of the conversation we're about to
-        // pin, so we want both pieces to land in the same render
-        // pass. The snapshot path is fast (single Core Data fetch).
-        await llmState.refreshConversations()
-
         let chosen = await pickLatestConversationID(forActiveFile: activeFile)
         await MainActor.run {
             guard fileState.currentActiveFile?.aiConversationFileScope == activeFileScope else {
@@ -433,6 +427,19 @@ extension AIChatState {
             fileState.aiChatConversationID = chosen
             fileState.isAIChatConversationLoading = false
         }
+    }
+
+    /// Restore the global LLMKit conversation cache only when an AI surface
+    /// actually needs to render or send against the selected conversation.
+    /// File switching only pins the id; doing the full restore there can
+    /// resolve every historical attachment and make canvas transitions stutter.
+    func refreshSelectedConversationCacheIfNeeded(
+        in llmState: LLMStateObject,
+        fileState: FileState
+    ) async {
+        guard let conversationID = fileState.aiChatConversationID else { return }
+        guard llmState.getConversation(by: conversationID) == nil else { return }
+        await llmState.refreshConversations()
     }
 
     /// Returns the id of the most-recent file-bound conversation that
@@ -447,15 +454,11 @@ extension AIChatState {
             return nil
         }
         let repo = PersistenceController.shared.aiConversationRepository
-        let snapshots: [AIConversationSnapshot]
         do {
-            snapshots = try await repo.fetchConversationSnapshots(forFileScope: scope)
+            return try await repo.fetchLatestConversationIDWithActivity(forFileScope: scope)
         } catch {
             return nil
         }
-        let candidates = snapshots.filter { $0.hasUserOrAssistantMessage }
-        let latest = candidates.max(by: { ($0.lastChatAt ?? .distantPast) < ($1.lastChatAt ?? .distantPast) })
-        return latest?.conversationID
     }
 
 }

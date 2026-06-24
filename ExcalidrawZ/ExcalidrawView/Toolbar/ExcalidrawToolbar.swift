@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 import SFSafeSymbols
 import ChocofordUI
@@ -23,14 +22,6 @@ struct ExcalidrawToolbar: View {
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var toolState: ToolState
     @EnvironmentObject var layoutState: LayoutState
-    
-#if canImport(AppKit)
-    @State private var window: NSWindow?
-#elseif canImport(UIKit)
-    @State private var window: UIWindow?
-#endif
-    @State private var windowFrameCancellable: AnyCancellable?
-    @State private var isApplePencilDisconnectConfirmationDialogPresented = false
     
     private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
         switch fileState.currentActiveFile {
@@ -91,12 +82,13 @@ struct ExcalidrawToolbar: View {
     
     @ViewBuilder
     private func adaptiveToolPickerContent() -> some View {
+        let toolOrder = appPreference.toolbarToolOrder
+
         leadingTollsContent()
 #if os(iOS)
             .excalidrawToolbarSurface(.circle)
 #endif
         ExcalidrawToolbarToolContainer { sizeClass in
-            let toolOrder = appPreference.toolbarToolOrder
             let pickerItems = toolOrder.pickerItems(for: sizeClass)
             
             HStack(spacing: 10) {
@@ -108,7 +100,8 @@ struct ExcalidrawToolbar: View {
                         segmentedPicker(
                             sizeClass: sizeClass,
                             primaryPickerItems: pickerItems.primary,
-                            secondaryPickerItems: pickerItems.secondary
+                            secondaryPickerItems: pickerItems.secondary,
+                            toolOrder: toolOrder
                         )
                     }
                 }
@@ -164,6 +157,7 @@ struct ExcalidrawToolbar: View {
         sizeClass: ExcalidrawToolbarToolSizeClass,
         primaryPickerItems: [ExcalidrawTool],
         secondaryPickerItems: [ExcalidrawTool],
+        toolOrder: ExcalidrawToolbarToolOrder,
         size: CGFloat = 20,
         withFooter: Bool = true
     ) -> some View {
@@ -172,7 +166,8 @@ struct ExcalidrawToolbar: View {
                 primaryToolPikcerItems(
                     primaryPickerItems,
                     size: size,
-                    withFooter: withFooter
+                    withFooter: withFooter,
+                    toolOrder: toolOrder
                 )
             }
             .padding({
@@ -352,10 +347,17 @@ struct ExcalidrawToolbar: View {
     private func primaryToolPikcerItems(
         _ primaryPickerItems: [ExcalidrawTool],
         size: CGFloat,
-        withFooter: Bool
+        withFooter: Bool,
+        toolOrder: ExcalidrawToolbarToolOrder
     ) -> some View {
         ForEach(primaryPickerItems, id: \.self) { tool in
-            toolPickerItemView(tool: tool, size: size, withFooter: withFooter)
+            let shortcutLabel = toolOrder.shortcutLabel(for: tool)
+            toolPickerItemView(
+                tool: tool,
+                size: size,
+                withFooter: withFooter,
+                shortcutLabel: shortcutLabel
+            )
                 .tag(tool)
         }
     }
@@ -364,17 +366,18 @@ struct ExcalidrawToolbar: View {
     private func toolPickerItemView(
         tool: ExcalidrawTool,
         size: CGFloat,
-        withFooter: Bool
+        withFooter: Bool,
+        shortcutLabel: String?
     ) -> some View {
         SegmentedPickerItem(value: tool) {
             SegmentedToolPickerItemView(
                 tool: tool,
                 size: size,
                 withFooter: withFooter,
-                shortcutLabel: appPreference.toolbarToolOrder.shortcutLabel(for: tool)
+                shortcutLabel: shortcutLabel
             )
         }
-        .help(tool.help(shortcutLabel: appPreference.toolbarToolOrder.shortcutLabel(for: tool)))
+        .help(tool.help(shortcutLabel: shortcutLabel))
     }
     
     @ViewBuilder
@@ -411,6 +414,8 @@ struct ExcalidrawToolbar: View {
                 }
             }
         } else {
+            let toolOrder = appPreference.toolbarToolOrder
+
             HStack(spacing: 20) {
                 Button {
                     toolState.setActivedTool(.freedraw)
@@ -419,7 +424,7 @@ struct ExcalidrawToolbar: View {
                 }
                 Spacer()
                 Menu {
-                    compactShapeAndToolMenuItems
+                    compactShapeAndToolMenuItems(toolOrder: toolOrder)
                 } label: {
                     if toolState.activatedTool == .cursor {
                         Label(.localizable(.toolbarShapesAndTools), systemSymbol: .squareOnCircle)
@@ -656,8 +661,10 @@ struct ExcalidrawToolbar: View {
         Text(tool.localization)
     }
 
-    private var compactShapeAndToolMenuTools: [ExcalidrawTool] {
-        appPreference.toolbarToolOrder.tools.filter { tool in
+    private func compactShapeAndToolMenuTools(
+        toolOrder: ExcalidrawToolbarToolOrder
+    ) -> [ExcalidrawTool] {
+        toolOrder.tools.filter { tool in
             switch tool {
                 case .cursor, .freedraw, .hand, .lasso:
                     false
@@ -668,8 +675,10 @@ struct ExcalidrawToolbar: View {
     }
 
     @ViewBuilder
-    private var compactShapeAndToolMenuItems: some View {
-        ForEach(compactShapeAndToolMenuTools, id: \.self) { tool in
+    private func compactShapeAndToolMenuItems(
+        toolOrder: ExcalidrawToolbarToolOrder
+    ) -> some View {
+        ForEach(compactShapeAndToolMenuTools(toolOrder: toolOrder), id: \.self) { tool in
             compactShapeAndToolMenuButton(tool)
         }
     }
@@ -823,40 +832,15 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
         self.content = content
     }
 
-    @State private var sizeClass: ExcalidrawToolbarToolSizeClass = .dense
-
     var body: some View {
         content(sizeClass)
-            .watch(value: containerSize, initial: true) { _, newValue in
-                syncSizeClass(width: newValue.width)
-            }
-            .watch(value: layoutState.isInspectorPresented) { _ in
-                DispatchQueue.main.async {
-                    syncSizeClass(width: containerSize.width)
-                }
-            }
-            .watch(value: layoutState.isSidebarPresented) { _ in
-                DispatchQueue.main.async {
-                    syncSizeClass(width: containerSize.width)
-                }
-            }
-            .watch(value: fileState.currentActiveFile?.id) { _ in
-                DispatchQueue.main.async {
-                    syncSizeClass(width: containerSize.width)
-                }
-            }
     }
 
-    private func syncSizeClass(width: CGFloat) {
-        guard width > 0 else { return }
-        let newSizeClass = getSizeClass(width)
-        guard newSizeClass != sizeClass else { return }
-        sizeClass = newSizeClass
-    }
+    private var sizeClass: ExcalidrawToolbarToolSizeClass {
+        guard containerSize.width > 0 else { return .dense }
 
-    private func getSizeClass(_ width: CGFloat) -> ExcalidrawToolbarToolSizeClass {
-        ExcalidrawToolbarLayoutPolicy.toolSizeClass(
-            for: width,
+        return ExcalidrawToolbarLayoutPolicy.toolSizeClass(
+            for: containerSize.width,
             isSidebarPresented: layoutState.isSidebarPresented,
             isInspectorPresented: layoutState.isInspectorPresented,
             isCollaborationFile: {

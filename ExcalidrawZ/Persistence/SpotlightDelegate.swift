@@ -132,7 +132,7 @@ actor SpotlightIndexingService {
 
     private func fetchRecord(fileObjectID: NSManagedObjectID) async throws -> FileRecord? {
         let context = PersistenceController.shared.newTaskContext()
-        return try await context.perform {
+        return await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
                 return nil
             }

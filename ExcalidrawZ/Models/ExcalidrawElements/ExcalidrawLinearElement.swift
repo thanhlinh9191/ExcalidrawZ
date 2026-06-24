@@ -66,6 +66,20 @@ enum PointBinding: Codable, Hashable {
             self = try .lagacy(LagacyPointBinding(from: decoder))
         }
     }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+            case .fixed(let binding):
+                try container.encode(binding)
+            case .lagacy(let binding):
+                guard binding.elementID != nil else {
+                    try container.encodeNil()
+                    return
+                }
+                try container.encode(binding)
+        }
+    }
 }
 
 struct FixedSegment: Codable, Hashable {

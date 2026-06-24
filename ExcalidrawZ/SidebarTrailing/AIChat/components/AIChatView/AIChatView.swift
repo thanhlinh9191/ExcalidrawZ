@@ -226,6 +226,15 @@ struct AIChatView: View {
             guard isAIAvailable, prefs.isAIEnabled else { return }
             await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
         }
+        .task(id: fileState.aiChatConversationID) {
+            guard isAIAvailable, prefs.isAIEnabled else { return }
+            try? await Task.sleep(nanoseconds: AIChatState.selectedConversationRefreshDelay)
+            guard !Task.isCancelled else { return }
+            await aiChatState.refreshSelectedConversationCacheIfNeeded(
+                in: llmState,
+                fileState: fileState
+            )
+        }
     }
 
 #if os(iOS)

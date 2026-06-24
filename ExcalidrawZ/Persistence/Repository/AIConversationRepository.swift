@@ -199,6 +199,35 @@ actor AIConversationRepository {
         }
     }
 
+    /// Lightweight active-file lookup used during canvas transitions. It only
+    /// returns the latest conversation id that has real user/assistant content,
+    /// avoiding message relationship prefetch and attachment restoration.
+    func fetchLatestConversationIDWithActivity(
+        forFileScope scope: AIConversationFileScope
+    ) async throws -> String? {
+        let context = PersistenceController.shared.newTaskContext()
+
+        return try await context.perform {
+            let fetchRequest = NSFetchRequest<AIConversation>(entityName: "AIConversation")
+            fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                Self.fileScopePredicate(scope),
+                NSPredicate(
+                    format: "SUBQUERY(messages, $m, $m.messageType == %@ AND ($m.role == %@ OR $m.role == %@)).@count > 0",
+                    "content",
+                    "user",
+                    "assistant"
+                )
+            ])
+            fetchRequest.sortDescriptors = [
+                NSSortDescriptor(key: "lastChatAt", ascending: false),
+                NSSortDescriptor(key: "createdAt", ascending: false)
+            ]
+            fetchRequest.fetchLimit = 1
+
+            return try context.fetch(fetchRequest).first?.conversationID
+        }
+    }
+
     /// Bind an existing conversation to an active-file scope. Used as a
     /// post-create step after `LLMKit.createConversation(...)` returns
     /// — LLMKit's API doesn't carry our app's file scope, so we

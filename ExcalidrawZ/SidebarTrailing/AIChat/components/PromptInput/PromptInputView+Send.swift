@@ -208,6 +208,9 @@ extension PromptInputView {
                 }
                 let model = modelOption.model
                 attemptedModelProfileID = modelOption.profileID
+                if self.conversationID != nil, self.conversation == nil {
+                    await llmState.refreshConversations()
+                }
                 let isNewConversation = self.conversation == nil
                 let imageAttachments = AIChatImageAttachmentReference.makeReferences(from: files)
                 let canIncludeActiveFileContext = await activeFileAllowsAIContext()

@@ -17,10 +17,9 @@ import UniformTypeIdentifiers
 /// expected in the WebView, suppresses load-induced events, and only applies
 /// saves when the native file id still matches the WebView's loaded file id.
 ///
-/// Swift-driven canvas mutations, such as AI tools and Library insertion, do
-/// not always rely on a user edit-mode `stateChanged` round trip. For those,
-/// the controller schedules a short delayed snapshot commit and routes it
-/// through the same persistence path as normal WebView updates.
+/// Swift-driven canvas mutations and metadata-only dirty events are delegated
+/// to `ExcalidrawDocumentSnapshotCoordinator`, then routed back through this
+/// controller's persistence bridge when a full snapshot must be applied.
 final class ExcalidrawDocumentSyncController: @unchecked Sendable {
     enum LoadOutcome {
         case skipped
@@ -49,6 +48,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
 
     private let lock = NSLock()
     private weak var core: ExcalidrawCore?
+    private let snapshotCoordinator = ExcalidrawDocumentSnapshotCoordinator()
     /// Last file id that the WebView confirmed as loaded.
     private var loadedFileID: String?
     /// File id currently being loaded by a host-driven request.
@@ -56,9 +56,9 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
     /// Temporary guards used to ignore `stateChanged` events produced by file
     /// loading itself rather than by user or tool edits.
     private var stateChangeSuppressions: [UUID: StateChangeSuppression] = [:]
-    /// Debounced commit for Swift-driven canvas mutations. A later mutation
-    /// replaces the pending commit so one tool batch produces one snapshot save.
-    private var programmaticMutationCommitTask: Task<Void, Never>?
+    init() {
+        snapshotCoordinator.attach(delegate: self)
+    }
 
     var currentLoadedFileID: String? {
         lock.lock()
@@ -117,7 +117,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         force: Bool = false,
         validateCurrentParentFile: Bool = false
     ) async -> LoadOutcome {
-        cancelProgrammaticMutationCommit()
+        snapshotCoordinator.cancelPendingSnapshotCommits()
 
         let canvasToken: UUID
         if force {
@@ -193,6 +193,18 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         let currentFileID = await core.parent?.file?.id
         let onError = core.publishError
 
+        if let metadata = data.metadata, data.fileData == nil {
+            await snapshotCoordinator.handleStateChangedMetadata(
+                metadata,
+                currentFileID: currentFileID,
+                type: type,
+                savingType: core.parent?.savingType
+            )
+            return
+        }
+
+        guard let fileData = data.fileData else { return }
+
         do {
             let loadedID = await core.webActor.loadedFileID
             guard self.canApplyStateChanged(
@@ -204,7 +216,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             }
 
             try await applyCanvasFileData(
-                data.data,
+                fileData,
                 currentFileID: currentFileID,
                 type: type,
                 savingType: core.parent?.savingType,
@@ -215,74 +227,36 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         }
     }
 
-    /// Marks a native Swift mutation as locally dirty and schedules a live
-    /// canvas snapshot save. This is intentionally separate from `save(_:)`
-    /// because these mutations may not produce a reliable autosave event while
-    /// the editor is outside explicit edit mode on iOS.
-    @MainActor
-    func scheduleProgrammaticMutationCommit(reason: String) {
-        guard let core,
-              let fileID = core.parent?.file?.id else {
-            return
-        }
-
-        core.parent?.fileState.noteProgrammaticCanvasMutation(fileID: fileID)
-        programmaticMutationCommitTask?.cancel()
-        programmaticMutationCommitTask = Task { [weak self] in
-            do {
-                try await Task.sleep(nanoseconds: 180_000_000)
-                try Task.checkCancellation()
-                await self?.commitProgrammaticMutation(
-                    reason: reason,
-                    expectedFileID: fileID
-                )
-            } catch {
-                return
-            }
-        }
+    func flushPendingDirtySnapshot(
+        reason: String,
+        force: Bool = false,
+        expectedFileID: String? = nil,
+        validateParentFileID: Bool = true
+    ) async {
+        await snapshotCoordinator.flushPendingDirtySnapshot(
+            reason: reason,
+            force: force,
+            expectedFileID: expectedFileID,
+            validateParentFileID: validateParentFileID
+        )
     }
 
-    /// Captures the current WebView scene after a Swift-driven mutation and
-    /// persists it if the canvas is still showing the same file.
-    private func commitProgrammaticMutation(
+    @MainActor
+    func flushPendingDirtySnapshotInBackground(
         reason: String,
-        expectedFileID: String
+        expectedFileID: String,
+        target: FileState.CapturedCanvasSaveTarget
     ) async {
-        guard let core else { return }
+        await snapshotCoordinator.flushPendingDirtySnapshotInBackground(
+            reason: reason,
+            expectedFileID: expectedFileID,
+            target: target
+        )
+    }
 
-        let onError = core.publishError
-        let currentFileID = await MainActor.run { core.parent?.file?.id }
-        guard currentFileID == expectedFileID else { return }
-
-        let type = await MainActor.run { core.parent?.type }
-        let savingType = await MainActor.run { core.parent?.savingType }
-
-        do {
-            let loadedID = await core.webActor.loadedFileID
-            guard self.canApplyStateChanged(
-                currentFileID: currentFileID,
-                webLoadedFileID: loadedID,
-                isCollaboration: type == .collaboration
-            ) else {
-                return
-            }
-
-            let snapshot = try await core.getCurrentFileSnapshot()
-            let fileData = try Self.makeFileData(from: snapshot)
-            try await applyCanvasFileData(
-                fileData,
-                currentFileID: currentFileID,
-                type: type,
-                savingType: savingType,
-                markProgrammaticCommit: true
-            )
-            core.logger.debug("Committed programmatic canvas mutation: \(reason)")
-        } catch is CancellationError {
-            return
-        } catch {
-            core.logger.error("Failed to commit programmatic canvas mutation \(reason): \(error)")
-            onError(error)
-        }
+    @MainActor
+    func scheduleProgrammaticMutationCommit(reason: String) {
+        snapshotCoordinator.scheduleProgrammaticMutationCommit(reason: reason)
     }
 
     /// Shared persistence bridge for both WebView autosave events and explicit
@@ -296,88 +270,100 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         markProgrammaticCommit: Bool
     ) async throws {
         guard let core else { return }
-        let elements = fileData.elements
 
         switch savingType {
             case .some(.excalidrawPNG), .some(.png):
+                let elements = try await Self.elements(from: fileData)
                 let data = try await core.exportElementsToPNGData(
-                    elements: elements ?? [],
+                    elements: elements,
                     embedScene: true,
                     colorScheme: .light
                 )
                 await MainActor.run {
-                    guard type == .collaboration || core.parent?.file?.id == currentFileID else { return }
+                    guard type == .collaboration || core.parent?.file?.id == currentFileID else {
+                        core.logger.debug(
+                            "Skipped applying PNG canvas data: parent file mismatch expected=\(currentFileID ?? "nil") actual=\(core.parent?.file?.id ?? "nil")"
+                        )
+                        return
+                    }
                     core.parent?.file?.content = data
                 }
             case .some(.excalidrawSVG), .some(.svg):
+                let elements = try await Self.elements(from: fileData)
                 let data = try await core.exportElementsToSVGData(
-                    elements: elements ?? [],
+                    elements: elements,
                     embedScene: true,
                     colorScheme: .light
                 )
                 await MainActor.run {
-                    guard type == .collaboration || core.parent?.file?.id == currentFileID else { return }
+                    guard type == .collaboration || core.parent?.file?.id == currentFileID else {
+                        core.logger.debug(
+                            "Skipped applying SVG canvas data: parent file mismatch expected=\(currentFileID ?? "nil") actual=\(core.parent?.file?.id ?? "nil")"
+                        )
+                        return
+                    }
                     core.parent?.file?.content = data
                 }
             default:
-                let onError = core.publishError
+                let existingContent: Data? = await MainActor.run { () -> Data? in
+                    guard type == .collaboration || core.parent?.file?.id == currentFileID else {
+                        core.logger.debug(
+                            "Skipped applying canvas data: parent file mismatch expected=\(currentFileID ?? "nil") actual=\(core.parent?.file?.id ?? "nil")"
+                        )
+                        return nil
+                    }
+                    return core.parent?.file?.content
+                }
+                guard let existingContent else { return }
+
+                let preparedUpdate = try await Task.detached(priority: .utility) { () async throws -> ExcalidrawFile.PreparedCanvasDataUpdate in
+                    try ExcalidrawFile.prepareCanvasDataUpdate(
+                        existingContent: existingContent,
+                        data: fileData
+                    )
+                }.value
+
                 await MainActor.run {
-                    guard type == .collaboration || core.parent?.file?.id == currentFileID else { return }
+                    guard type == .collaboration || core.parent?.file?.id == currentFileID else {
+                        core.logger.debug(
+                            "Skipped applying canvas data: parent file mismatch expected=\(currentFileID ?? "nil") actual=\(core.parent?.file?.id ?? "nil")"
+                        )
+                        return
+                    }
                     if markProgrammaticCommit, let currentFileID {
                         core.parent?.fileState.noteProgrammaticCanvasMutation(fileID: currentFileID)
                     }
-                    do {
-                        try core.parent?.file?.update(data: fileData)
-                    } catch {
-                        onError(error)
-                    }
+                    core.parent?.file?.apply(preparedUpdate)
                 }
         }
     }
 
     /// Converts a live JS snapshot into the same payload shape used by the
-    /// `stateChanged` message. The snapshot's `dataString` does not include
-    /// resource files, so this method rebuilds a complete payload with
-    /// `elements`, `appState`, and `files`.
+    /// `stateChanged` message.
     private static func makeFileData(
         from snapshot: ExcalidrawCore.CurrentFileSnapshot
     ) throws -> ExcalidrawCore.ExcalidrawFileData {
-        let payload: [String: Any] = [
-            "elements": snapshot.elements.map(Self.jsonObject),
-            "appState": Self.jsonObject(snapshot.appState),
-            "files": snapshot.files.mapValues(Self.jsonObject)
-        ]
-        let data = try JSONSerialization.data(withJSONObject: payload)
-        guard let dataString = String(data: data, encoding: .utf8) else {
-            throw ExcalidrawCore.JSONEncodingFailed()
-        }
-
-        let elementsData = try JSONEncoder().encode(snapshot.elements)
-        let elements = try JSONDecoder().decode([ExcalidrawElement].self, from: elementsData)
-        let filesData = try JSONEncoder().encode(snapshot.files)
-        let files = try JSONDecoder().decode(
-            [String: ExcalidrawFile.ResourceFile].self,
-            from: filesData
-        )
-
-        return .init(dataString: dataString, elements: elements, files: files)
+        return .init(documentData: try snapshot.documentData(), elements: nil, files: [:])
     }
 
-    private static func jsonObject(_ value: ExcalidrawCore.JSONValue) -> Any {
-        switch value {
-            case .string(let value):
-                return value
-            case .number(let value):
-                return value
-            case .bool(let value):
-                return value
-            case .object(let value):
-                return value.mapValues(Self.jsonObject)
-            case .array(let value):
-                return value.map(Self.jsonObject)
-            case .null:
-                return NSNull()
+    private static func elements(
+        from fileData: ExcalidrawCore.ExcalidrawFileData
+    ) async throws -> [ExcalidrawElement] {
+        if let elements = fileData.elements {
+            return elements
         }
+
+        return try await Task.detached(priority: .utility) {
+            let payload = try JSONDecoder().decode(
+                SnapshotElementsPayload.self,
+                from: fileData.documentData
+            )
+            return payload.elements
+        }.value
+    }
+
+    private struct SnapshotElementsPayload: Decodable {
+        var elements: [ExcalidrawElement]
     }
 
     private func loadPreparedFile(
@@ -474,7 +460,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
     }
 
     func resetFileLoadState() {
-        cancelProgrammaticMutationCommit()
+        snapshotCoordinator.reset()
         lock.lock()
         loadedFileID = nil
         pendingFileLoadID = nil
@@ -482,19 +468,14 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         lock.unlock()
     }
 
-    private func cancelProgrammaticMutationCommit() {
-        programmaticMutationCommitTask?.cancel()
-        programmaticMutationCommitTask = nil
-    }
-
     private func receivedStateChangedRejectionReason(isCoreLoading: Bool) -> String? {
         lock.lock()
         pruneExpiredStateChangeSuppressions()
-        let suppressedFileID = latestStateChangeSuppression()?.fileID
+        let suppression = latestStateChangeSuppression()
         lock.unlock()
 
-        if let suppressedFileID {
-            return "suppressed during file load id=\(suppressedFileID)"
+        if let suppression {
+            return "suppressed during file load id=\(suppression.fileID)"
         }
 
         if isCoreLoading {
@@ -556,5 +537,45 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         stateChangeSuppressions.values.max { lhs, rhs in
             lhs.startedAt < rhs.startedAt
         }
+    }
+}
+
+extension ExcalidrawDocumentSyncController: ExcalidrawDocumentSnapshotCoordinatorDelegate {
+    var snapshotCoordinatorCore: ExcalidrawCore? {
+        core
+    }
+
+    func snapshotCoordinatorCanApplyStateChanged(
+        currentFileID: String?,
+        webLoadedFileID: String?,
+        isCollaboration: Bool
+    ) -> Bool {
+        canApplyStateChanged(
+            currentFileID: currentFileID,
+            webLoadedFileID: webLoadedFileID,
+            isCollaboration: isCollaboration
+        )
+    }
+
+    func snapshotCoordinatorApplyCanvasFileData(
+        _ fileData: ExcalidrawCore.ExcalidrawFileData,
+        currentFileID: String?,
+        type: ExcalidrawCanvasView.ExcalidrawType?,
+        savingType: UTType?,
+        markProgrammaticCommit: Bool
+    ) async throws {
+        try await applyCanvasFileData(
+            fileData,
+            currentFileID: currentFileID,
+            type: type,
+            savingType: savingType,
+            markProgrammaticCommit: markProgrammaticCommit
+        )
+    }
+
+    func snapshotCoordinatorMakeFileData(
+        from snapshot: ExcalidrawCore.CurrentFileSnapshot
+    ) throws -> ExcalidrawCore.ExcalidrawFileData {
+        try Self.makeFileData(from: snapshot)
     }
 }

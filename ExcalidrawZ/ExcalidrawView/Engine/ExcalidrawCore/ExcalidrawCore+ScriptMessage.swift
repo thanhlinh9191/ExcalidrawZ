@@ -25,6 +25,11 @@ extension ExcalidrawCore: WKScriptMessageHandler {
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
+        if message.name == "consoleHandler" {
+            handleConsoleMessage(message.body)
+            return
+        }
+
         do {
             let sanitization = sanitizeScriptMessageBody(message.body)
 #if DEBUG
@@ -170,6 +175,15 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                         self.requestMathImageEdit(message.data)
                     }
 
+                case .currentFileSaveStreamStarted(let message):
+                    currentFileSaveStreamBridge.receiveStarted(message.data)
+                case .currentFileSaveStreamChunk(let message):
+                    currentFileSaveStreamBridge.receiveChunk(message.data)
+                case .currentFileSaveStreamFinished(let message):
+                    currentFileSaveStreamBridge.receiveFinished(message.data)
+                case .currentFileSaveStreamFailed(let message):
+                    currentFileSaveStreamBridge.receiveFailed(message.data)
+
                 case .log(let logMessage):
                     _ = logMessage
                     // self.onWebLog(message: logMessage)
@@ -178,6 +192,28 @@ extension ExcalidrawCore: WKScriptMessageHandler {
         } catch {
             self.logger.error("[WKScriptMessageHandler] Decode received message failed. Raw data:\n\(String(describing: message.body))")
             self.publishError(error)
+        }
+    }
+
+    private func handleConsoleMessage(_ body: Any) {
+        guard let dictionary = body as? [String: Any] else { return }
+        let method = dictionary["method"] as? String ?? "log"
+        let args = dictionary["args"] as? [Any] ?? []
+        let message = args.compactMap { arg -> String? in
+            if let string = arg as? String {
+                return string
+            }
+            return String(describing: arg)
+        }
+        .joined(separator: " ")
+
+        switch method {
+            case "warn":
+                logger.warning("Receive warning from web:\n\(message)")
+            case "error":
+                logger.error("Receive error from web:\n\(message)")
+            default:
+                break
         }
     }
 
@@ -510,6 +546,12 @@ extension ExcalidrawCore {
         // Math
         case requestEditMathImage
 
+        // Current file save stream
+        case currentFileSaveStreamStarted
+        case currentFileSaveStreamChunk
+        case currentFileSaveStreamFinished
+        case currentFileSaveStreamFailed
+
         case log
     }
     
@@ -553,6 +595,12 @@ extension ExcalidrawCore {
 
         // Math
         case requestEditMathImage(RequestEditMathImageMessage)
+
+        // Current file save stream
+        case currentFileSaveStreamStarted(CurrentFileSaveStreamStartedMessage)
+        case currentFileSaveStreamChunk(CurrentFileSaveStreamChunkMessage)
+        case currentFileSaveStreamFinished(CurrentFileSaveStreamFinishedMessage)
+        case currentFileSaveStreamFailed(CurrentFileSaveStreamFailedMessage)
 
         case log(LogMessage)
         
@@ -651,6 +699,16 @@ extension ExcalidrawCore {
                 case .requestEditMathImage:
                     self = .requestEditMathImage(try RequestEditMathImageMessage(from: decoder))
 
+                // Current file save stream
+                case .currentFileSaveStreamStarted:
+                    self = .currentFileSaveStreamStarted(try CurrentFileSaveStreamStartedMessage(from: decoder))
+                case .currentFileSaveStreamChunk:
+                    self = .currentFileSaveStreamChunk(try CurrentFileSaveStreamChunkMessage(from: decoder))
+                case .currentFileSaveStreamFinished:
+                    self = .currentFileSaveStreamFinished(try CurrentFileSaveStreamFinishedMessage(from: decoder))
+                case .currentFileSaveStreamFailed:
+                    self = .currentFileSaveStreamFailed(try CurrentFileSaveStreamFailedMessage(from: decoder))
+
                 case .log:
                     self = .log(try LogMessage(from: decoder))
             }
@@ -660,6 +718,7 @@ extension ExcalidrawCore {
         func encode(to encoder: Encoder) throws {
             
         }
+
     }
     
     struct StateChangedMessage: AnyExcalidrawZMessage {
@@ -674,9 +733,261 @@ extension ExcalidrawCore {
         var event: String
         var data: AICameraSessionInfo
     }
+
+    struct CurrentFileSaveStreamStartedMessage: AnyExcalidrawZMessage {
+        var event: String
+        var data: CurrentFileSaveStreamStartedData
+    }
+
+    struct CurrentFileSaveStreamChunkMessage: AnyExcalidrawZMessage {
+        var event: String
+        var data: CurrentFileSaveStreamChunkData
+    }
+
+    struct CurrentFileSaveStreamFinishedMessage: AnyExcalidrawZMessage {
+        var event: String
+        var data: CurrentFileSaveStreamFinishedData
+    }
+
+    struct CurrentFileSaveStreamFailedMessage: AnyExcalidrawZMessage {
+        var event: String
+        var data: CurrentFileSaveStreamFailedData
+    }
+
+    struct CurrentFileSaveStreamStartedData: Codable, Sendable {
+        var streamID: String?
+        var revision: Int?
+        var totalBytes: Int?
+        var elementCount: Int?
+        var fileCount: Int?
+
+        var resolvedStreamID: String? { streamID }
+
+        enum CodingKeys: String, CodingKey {
+            case streamID
+            case streamId
+            case saveId
+            case id
+            case revision
+            case totalBytes
+            case elementCount
+            case fileCount
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            streamID = try container.decodeIfPresent(String.self, forKey: .streamID)
+                ?? container.decodeIfPresent(String.self, forKey: .streamId)
+                ?? container.decodeIfPresent(String.self, forKey: .saveId)
+                ?? container.decodeIfPresent(String.self, forKey: .id)
+            revision = try container.decodeIfPresent(Int.self, forKey: .revision)
+            totalBytes = try container.decodeIfPresent(Int.self, forKey: .totalBytes)
+            elementCount = try container.decodeIfPresent(Int.self, forKey: .elementCount)
+            fileCount = try container.decodeIfPresent(Int.self, forKey: .fileCount)
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(streamID, forKey: .streamID)
+            try container.encodeIfPresent(revision, forKey: .revision)
+            try container.encodeIfPresent(totalBytes, forKey: .totalBytes)
+            try container.encodeIfPresent(elementCount, forKey: .elementCount)
+            try container.encodeIfPresent(fileCount, forKey: .fileCount)
+        }
+    }
+
+    struct CurrentFileSaveStreamChunkData: Codable, Sendable {
+        var streamID: String?
+        var index: Int
+        var base64: String
+
+        var resolvedStreamID: String? { streamID }
+
+        enum CodingKeys: String, CodingKey {
+            case streamID
+            case streamId
+            case saveId
+            case id
+            case index
+            case base64
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            streamID = try container.decodeIfPresent(String.self, forKey: .streamID)
+                ?? container.decodeIfPresent(String.self, forKey: .streamId)
+                ?? container.decodeIfPresent(String.self, forKey: .saveId)
+                ?? container.decodeIfPresent(String.self, forKey: .id)
+            index = try container.decode(Int.self, forKey: .index)
+            base64 = try container.decode(String.self, forKey: .base64)
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(streamID, forKey: .streamID)
+            try container.encode(index, forKey: .index)
+            try container.encode(base64, forKey: .base64)
+        }
+    }
+
+    struct CurrentFileSaveStreamFinishedData: Codable, Sendable {
+        var streamID: String?
+        var revision: Int?
+        var totalBytes: Int?
+        var elementCount: Int?
+        var fileCount: Int?
+        var sha256: String?
+
+        var resolvedStreamID: String? { streamID }
+
+        enum CodingKeys: String, CodingKey {
+            case streamID
+            case streamId
+            case saveId
+            case id
+            case revision
+            case totalBytes
+            case elementCount
+            case fileCount
+            case sha256
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            streamID = try container.decodeIfPresent(String.self, forKey: .streamID)
+                ?? container.decodeIfPresent(String.self, forKey: .streamId)
+                ?? container.decodeIfPresent(String.self, forKey: .saveId)
+                ?? container.decodeIfPresent(String.self, forKey: .id)
+            revision = try container.decodeIfPresent(Int.self, forKey: .revision)
+            totalBytes = try container.decodeIfPresent(Int.self, forKey: .totalBytes)
+            elementCount = try container.decodeIfPresent(Int.self, forKey: .elementCount)
+            fileCount = try container.decodeIfPresent(Int.self, forKey: .fileCount)
+            sha256 = try container.decodeIfPresent(String.self, forKey: .sha256)
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(streamID, forKey: .streamID)
+            try container.encodeIfPresent(revision, forKey: .revision)
+            try container.encodeIfPresent(totalBytes, forKey: .totalBytes)
+            try container.encodeIfPresent(elementCount, forKey: .elementCount)
+            try container.encodeIfPresent(fileCount, forKey: .fileCount)
+            try container.encodeIfPresent(sha256, forKey: .sha256)
+        }
+    }
+
+    struct CurrentFileSaveStreamFailedData: Codable, Sendable {
+        var streamID: String?
+        var message: String?
+        var error: String?
+
+        var resolvedStreamID: String? { streamID }
+
+        enum CodingKeys: String, CodingKey {
+            case streamID
+            case streamId
+            case saveId
+            case id
+            case message
+            case error
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            streamID = try container.decodeIfPresent(String.self, forKey: .streamID)
+                ?? container.decodeIfPresent(String.self, forKey: .streamId)
+                ?? container.decodeIfPresent(String.self, forKey: .saveId)
+                ?? container.decodeIfPresent(String.self, forKey: .id)
+            message = try container.decodeIfPresent(String.self, forKey: .message)
+            error = try container.decodeIfPresent(String.self, forKey: .error)
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(streamID, forKey: .streamID)
+            try container.encodeIfPresent(message, forKey: .message)
+            try container.encodeIfPresent(error, forKey: .error)
+        }
+    }
+
     struct StateChangedMessageData: Codable {
         var state: ExcalidrawState?
-        var data: ExcalidrawFileData
+        var fileData: ExcalidrawFileData?
+        var metadata: StateChangedMetadata?
+
+        enum CodingKeys: String, CodingKey {
+            case state, data
+        }
+
+        init(
+            state: ExcalidrawState?,
+            fileData: ExcalidrawFileData?,
+            metadata: StateChangedMetadata?
+        ) {
+            self.state = state
+            self.fileData = fileData
+            self.metadata = metadata
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.state = try container.decodeIfPresent(ExcalidrawState.self, forKey: .state)
+            if let fileData = try? container.decode(ExcalidrawFileData.self, forKey: .data) {
+                self.fileData = fileData
+                self.metadata = nil
+            } else {
+                self.fileData = nil
+                self.metadata = try container.decodeIfPresent(StateChangedMetadata.self, forKey: .data)
+            }
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(state, forKey: .state)
+            if let fileData {
+                try container.encode(fileData, forKey: .data)
+            } else {
+                try container.encodeIfPresent(metadata, forKey: .data)
+            }
+        }
+    }
+
+    struct StateChangedMetadata: Codable, Hashable {
+        var revision: Int?
+        var changedAt: Double?
+        var dirty: Bool?
+        var contentDirty: Bool?
+        var appStateDirty: Bool?
+        var appState: JSONValue?
+        var elementCount: Int?
+        var deletedElementCount: Int?
+        var fileElementCount: Int?
+        var appStateKeyCount: Int?
+        var appStateChars: Int?
+        var currentFileId: String?
+
+        var hasDirtySplitFields: Bool {
+            contentDirty != nil || appStateDirty != nil
+        }
+
+        var hasAnyDirtyChanges: Bool {
+            if hasDirtySplitFields {
+                return contentDirty == true || appStateDirty == true
+            }
+            return dirty ?? true
+        }
+
+        /// Old Web builds only sent `dirty`. Treat those as content-dirty only
+        /// when none of the new dirty-split fields are present.
+        var shouldPullContentSnapshot: Bool {
+            if let contentDirty {
+                return contentDirty
+            }
+            if hasDirtySplitFields || appState != nil || appStateChars != nil {
+                return false
+            }
+            return dirty ?? true
+        }
     }
 
     struct ExcalidrawState: Codable {
@@ -742,11 +1053,72 @@ extension ExcalidrawCore {
         }
     }
 
-    struct ExcalidrawFileData: Codable, Hashable {
-        // The JSON.stringify of `elements` & `files`
-        var dataString: String
+    struct ExcalidrawFileData: Codable, Hashable, Sendable {
+        /// UTF-8 document payload produced by the Web editor. Keep this as
+        /// `Data` once it crosses the WebKit bridge so Swift-side persistence
+        /// does not treat the Excalidraw document shape as a native model.
+        var documentData: Data
         var elements: [ExcalidrawElement]?
         var files: [String : ExcalidrawFile.ResourceFile]
+
+        enum CodingKeys: String, CodingKey {
+            case dataString
+            case elements
+            case appState
+            case files
+        }
+
+        init(
+            documentData: Data,
+            elements: [ExcalidrawElement]?,
+            files: [String : ExcalidrawFile.ResourceFile]
+        ) {
+            self.documentData = documentData
+            self.elements = elements
+            self.files = files
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            if let dataString = try container.decodeIfPresent(String.self, forKey: .dataString) {
+                guard let documentData = dataString.data(using: .utf8) else {
+                    throw JSONEncodingFailed()
+                }
+                self.documentData = documentData
+            } else {
+                guard let rawElements = try container.decodeIfPresent([JSONValue].self, forKey: .elements) else {
+                    throw DecodingError.keyNotFound(
+                        CodingKeys.elements,
+                        .init(
+                            codingPath: decoder.codingPath,
+                            debugDescription: "File data payload requires either dataString or elements."
+                        )
+                    )
+                }
+                let rawAppState = try container.decodeIfPresent(JSONValue.self, forKey: .appState) ?? .object([:])
+                let rawFiles = try container.decodeIfPresent([String : JSONValue].self, forKey: .files)
+                var payload: [String: Any] = [
+                    "elements": rawElements.map(\.foundationObject),
+                    "appState": rawAppState.foundationObject
+                ]
+                if let rawFiles {
+                    payload["files"] = rawFiles.mapValues(\.foundationObject)
+                }
+                self.documentData = try JSONSerialization.data(withJSONObject: payload)
+            }
+            self.elements = try container.decodeIfPresent([ExcalidrawElement].self, forKey: .elements)
+            self.files = try container.decodeIfPresent([String : ExcalidrawFile.ResourceFile].self, forKey: .files) ?? [:]
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            guard let dataString = String(data: documentData, encoding: .utf8) else {
+                throw JSONEncodingFailed()
+            }
+            try container.encode(dataString, forKey: .dataString)
+            try container.encodeIfPresent(elements, forKey: .elements)
+            try container.encode(files, forKey: .files)
+        }
     }
 
     struct BlobDataMessage: AnyExcalidrawZMessage {
@@ -1005,6 +1377,12 @@ extension Notification.Name {
 }
 
 extension ExcalidrawFile {
+    struct PreparedCanvasDataUpdate: Sendable {
+        var content: Data
+        var elements: [ExcalidrawElement]
+        var files: [String: ResourceFile]
+    }
+
     mutating func update(data: ExcalidrawCanvasView.Coordinator.ExcalidrawFileData) throws {
         guard let content = self.content else {
             struct EmptyContentError: LocalizedError {
@@ -1013,9 +1391,21 @@ extension ExcalidrawFile {
             throw EmptyContentError()
         }
 
-        var contentObject = try JSONSerialization.jsonObject(with: content) as! [String : Any]
-        guard let dataData = data.dataString.data(using: .utf8),
-              let fileDataJson = try JSONSerialization.jsonObject(with: dataData) as? [String : Any] else {
+        apply(try Self.prepareCanvasDataUpdate(existingContent: content, data: data))
+    }
+
+    mutating func apply(_ preparedUpdate: PreparedCanvasDataUpdate) {
+        self.content = preparedUpdate.content
+        self.elements = preparedUpdate.elements
+        self.files = preparedUpdate.files
+    }
+
+    static func prepareCanvasDataUpdate(
+        existingContent: Data,
+        data: ExcalidrawCanvasView.Coordinator.ExcalidrawFileData
+    ) throws -> PreparedCanvasDataUpdate {
+        var contentObject = try JSONSerialization.jsonObject(with: existingContent) as! [String : Any]
+        guard let fileDataJson = try JSONSerialization.jsonObject(with: data.documentData) as? [String : Any] else {
             struct InvalidPayloadError: LocalizedError {
                 var errorDescription: String? {
                     "Invalid update payload."
@@ -1026,9 +1416,30 @@ extension ExcalidrawFile {
         contentObject["elements"] = fileDataJson["elements"]
         contentObject["files"] = fileDataJson["files"]
         contentObject["appState"] = fileDataJson["appState"]
-        self.content = try JSONSerialization.data(withJSONObject: contentObject)
-        self.elements = data.elements ?? []
-        self.files = data.files
+        let content = try JSONSerialization.data(withJSONObject: contentObject)
+        let elements: [ExcalidrawElement]
+        if let dataElements = data.elements {
+            elements = dataElements
+        } else {
+            elements = try decodeJSONValue(
+                fileDataJson["elements"] ?? [],
+                as: [ExcalidrawElement].self
+            )
+        }
+        let files = try decodeJSONValue(
+            fileDataJson["files"] ?? [String: Any](),
+            as: [String: ResourceFile].self
+        )
+
+        return .init(content: content, elements: elements, files: files)
+    }
+
+    private static func decodeJSONValue<T: Decodable>(
+        _ value: Any,
+        as type: T.Type
+    ) throws -> T {
+        let data = try JSONSerialization.data(withJSONObject: value)
+        return try JSONDecoder().decode(type, from: data)
     }
 }
  

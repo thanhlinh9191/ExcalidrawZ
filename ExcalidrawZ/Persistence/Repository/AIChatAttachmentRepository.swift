@@ -205,7 +205,7 @@ actor AIChatAttachmentRepository {
                     let dataURI = "data:\(mimeType);base64,\(data.base64EncodedString())"
                     return .base64EncodedImage(dataURI)
                 } catch {
-                    logger.warning("Failed to resolve local attachment bytes: \(error.localizedDescription)")
+                    logger.debug("Skipping unavailable local attachment bytes: \(error.localizedDescription)")
                     return nil
                 }
         }

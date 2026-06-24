@@ -241,7 +241,6 @@ actor FileStorageManager {
             updatedAt: updatedAt
         )
 
-        // Step 2: Queue for iCloud sync only if content was actually modified
         if saveResult.wasModified {
             Task {
                 await syncCoordinator?.queueUpload(fileID: fileID, relativePath: saveResult.relativePath)

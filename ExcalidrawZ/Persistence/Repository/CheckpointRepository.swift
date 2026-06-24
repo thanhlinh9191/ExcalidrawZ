@@ -176,6 +176,25 @@ actor CheckpointRepository {
         )
     }
 
+    func saveCheckpointContentToStorage(
+        checkpointObjectID: NSManagedObjectID,
+        content: Data,
+        updateMetadataWhenPathUnchanged: Bool = true
+    ) async throws {
+        let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
+        let contentToSave = try await encryptedCheckpointContentIfNeeded(
+            content,
+            snapshot: snapshot,
+            recoveryKeyOverride: nil,
+            forceProtected: false
+        )
+        try await saveRawCheckpointContentToStorage(
+            snapshot: snapshot,
+            content: contentToSave,
+            updateMetadataWhenPathUnchanged: updateMetadataWhenPathUnchanged
+        )
+    }
+
     func encryptCheckpoints(
         for fileObjectID: NSManagedObjectID,
         recoveryKey: RecoveryKey
@@ -446,7 +465,8 @@ actor CheckpointRepository {
 
     private func saveRawCheckpointContentToStorage(
         snapshot: RawCheckpointContentSnapshot,
-        content: Data
+        content: Data,
+        updateMetadataWhenPathUnchanged: Bool = true
     ) async throws {
         let relativePath = try await FileStorageManager.shared.saveContent(
             content,
@@ -456,12 +476,22 @@ actor CheckpointRepository {
         )
 
         let context = PersistenceController.shared.newTaskContext()
-        try await context.perform {
-            guard let checkpoint = context.object(with: snapshot.objectID) as? FileCheckpoint else { return }
+        let didUpdateMetadata = try await context.perform {
+            guard let checkpoint = context.object(with: snapshot.objectID) as? FileCheckpoint else { return false }
+            if !updateMetadataWhenPathUnchanged,
+               checkpoint.filePath == relativePath,
+               checkpoint.content == nil {
+                return false
+            }
             checkpoint.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
+            return true
         }
-        logger.debug("Saved checkpoint to storage: \(relativePath)")
+        if didUpdateMetadata {
+            logger.debug("Saved checkpoint to storage: \(relativePath)")
+        } else {
+            logger.debug("Saved checkpoint to storage without CoreData metadata update: \(relativePath)")
+        }
     }
 
     private func savePlainCheckpointContentToStorage(

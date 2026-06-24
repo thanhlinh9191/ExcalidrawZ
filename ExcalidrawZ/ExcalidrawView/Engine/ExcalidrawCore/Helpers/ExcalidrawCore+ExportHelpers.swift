@@ -9,6 +9,17 @@ import Foundation
 import SwiftUI
 
 extension ExcalidrawCore {
+    struct ViewportImageExportResult {
+        let data: Data
+        let width: Double?
+        let height: Double?
+        let actualScale: Double?
+        let scaleClamped: Bool?
+        let elementCount: Int?
+        let fileCount: Int?
+        let mimeType: String?
+    }
+
     @MainActor
     func exportPNG() async throws {
         _ = try await webView.callAsyncJavaScript(
@@ -62,7 +73,6 @@ extension ExcalidrawCore {
                 withBackground: \(withBackground),
                 exportWithDarkMode: \(colorScheme == .dark),
                 mimeType: 'image/png',
-                quality: 100,
                 exportScale: \(exportScale)
             }
         );
@@ -79,6 +89,82 @@ extension ExcalidrawCore {
             throw DecodeImageFailed()
         }
         return data
+    }
+
+    func exportViewportToPNGData(
+        sceneData: Data,
+        colorScheme: ColorScheme? = nil
+    ) async throws -> ViewportImageExportResult {
+        var scene = try makeViewportExportScene(from: sceneData)
+        if let colorScheme {
+            scene.appState["theme"] = colorScheme == .dark ? "dark" : "light"
+        }
+        let raw = try await webView.callAsyncJavaScript(
+            """
+            return await window.excalidrawZHelper.exportViewportToBlob({
+                elements,
+                appState,
+                files,
+            });
+            """,
+            arguments: [
+                "elements": scene.elements,
+                "appState": scene.appState,
+                "files": scene.files
+            ],
+            contentWorld: .page
+        )
+        return try decodeViewportImageExportResult(raw)
+    }
+
+    func exportCurrentViewportToPNGData() async throws -> ViewportImageExportResult {
+        let raw = try await webView.callAsyncJavaScript(
+            "return await window.excalidrawZHelper.exportViewportToBlob();",
+            arguments: [:],
+            contentWorld: .page
+        )
+        return try decodeViewportImageExportResult(raw)
+    }
+
+    func exportCurrentViewportToPNG() async throws -> PlatformImage {
+        let result = try await exportCurrentViewportToPNGData()
+        guard let image = PlatformImage(data: result.data) else {
+            throw InvalidJavaScriptResult()
+        }
+        return image
+    }
+
+    private func decodeViewportImageExportResult(_ raw: Any?) throws -> ViewportImageExportResult {
+        guard let dict = raw as? [String: Any],
+              let dataString = dict["blobData"] as? String,
+              let data = Data(base64Encoded: dataString) else {
+            throw InvalidJavaScriptResult()
+        }
+
+        return ViewportImageExportResult(
+            data: data,
+            width: Self.doubleValue(fromJavaScript: dict["width"]),
+            height: Self.doubleValue(fromJavaScript: dict["height"]),
+            actualScale: Self.doubleValue(fromJavaScript: dict["actualScale"]),
+            scaleClamped: Self.boolValue(fromJavaScript: dict["scaleClamped"]),
+            elementCount: Self.intValue(fromJavaScript: dict["elementCount"]),
+            fileCount: Self.intValue(fromJavaScript: dict["fileCount"]),
+            mimeType: dict["mimeType"] as? String
+        )
+    }
+
+    func exportViewportToPNG(
+        sceneData: Data,
+        colorScheme: ColorScheme? = nil
+    ) async throws -> PlatformImage {
+        let result = try await exportViewportToPNGData(
+            sceneData: sceneData,
+            colorScheme: colorScheme
+        )
+        guard let image = PlatformImage(data: result.data) else {
+            throw InvalidJavaScriptResult()
+        }
+        return image
     }
 
     func exportElementsToPNG(
@@ -201,6 +287,61 @@ extension ExcalidrawCore {
         } catch {
             logger.warning("Failed to rewrite SVG dimensions: \(error)")
             return svgContent
+        }
+    }
+
+    private struct ViewportExportScene {
+        let elements: Any
+        var appState: [String: Any]
+        let files: Any
+    }
+
+    private func makeViewportExportScene(from data: Data) throws -> ViewportExportScene {
+        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw InvalidJavaScriptResult()
+        }
+
+        return ViewportExportScene(
+            elements: object["elements"] as? [Any] ?? [],
+            appState: object["appState"] as? [String: Any] ?? [:],
+            files: object["files"] as? [String: Any] ?? [:]
+        )
+    }
+
+    private static func doubleValue(fromJavaScript value: Any?) -> Double? {
+        switch value {
+            case let value as Double:
+                return value
+            case let value as Int:
+                return Double(value)
+            case let value as NSNumber:
+                return value.doubleValue
+            default:
+                return nil
+        }
+    }
+
+    private static func intValue(fromJavaScript value: Any?) -> Int? {
+        switch value {
+            case let value as Int:
+                return value
+            case let value as Double:
+                return Int(value)
+            case let value as NSNumber:
+                return value.intValue
+            default:
+                return nil
+        }
+    }
+
+    private static func boolValue(fromJavaScript value: Any?) -> Bool? {
+        switch value {
+            case let value as Bool:
+                return value
+            case let value as NSNumber:
+                return value.boolValue
+            default:
+                return nil
         }
     }
 }

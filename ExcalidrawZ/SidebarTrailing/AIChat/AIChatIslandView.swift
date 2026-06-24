@@ -183,6 +183,14 @@ struct AIChatIslandView: View {
             .task {
                 await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
             }
+            .task(id: fileState.aiChatConversationID) {
+                try? await Task.sleep(nanoseconds: AIChatState.selectedConversationRefreshDelay)
+                guard !Task.isCancelled else { return }
+                await aiChatState.refreshSelectedConversationCacheIfNeeded(
+                    in: llmState,
+                    fileState: fileState
+                )
+            }
         }
     }
 
