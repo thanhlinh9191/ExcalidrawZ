@@ -44,7 +44,7 @@ struct ExcalidrawToolbar: View {
         toolbarContent()
             .animation(.smooth, value: toolState.activatedTool)
             .animation(.smooth, value: toolState.inDragMode)
-            .onChange(of: toolState.activatedTool, debounce: 0.05) { newValue in
+            .watch(value: toolState.activatedTool) { newValue in
                 if newValue == nil {
                     toolState.setActivedTool(.cursor)
                 }

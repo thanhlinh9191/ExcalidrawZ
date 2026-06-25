@@ -66,10 +66,18 @@ final class FileCoverCacheCoordinator: ObservableObject {
     private var processingTask: Task<Void, Never>?
     private var prewarmTask: Task<Void, Never>?
     private var currentColorScheme: ColorScheme = .light
+    private var lastRecentlyVisiblePrewarmKey: CoverPrewarmKey?
+    private var lastLibraryPrewarmAt: [ColorScheme: Date] = [:]
 
     private let cache = FileItemPreviewCache.shared
     private let logger = Logger(label: "FileCoverCacheCoordinator")
     private let maximumRetryCount = 8
+    private let libraryPrewarmMinimumInterval: TimeInterval = 10 * 60
+
+    private struct CoverPrewarmKey: Equatable {
+        let colorScheme: ColorScheme
+        let fileIDs: [String]
+    }
 
     private init() {}
 
@@ -144,7 +152,15 @@ final class FileCoverCacheCoordinator: ObservableObject {
         limit: Int = 20
     ) {
         currentColorScheme = colorScheme
-        for file in files.prefix(limit) {
+        let files = Array(files.prefix(limit))
+        let prewarmKey = CoverPrewarmKey(
+            colorScheme: colorScheme,
+            fileIDs: files.map(\.id)
+        )
+        guard prewarmKey != lastRecentlyVisiblePrewarmKey else { return }
+        lastRecentlyVisiblePrewarmKey = prewarmKey
+
+        for file in files {
             request(
                 activeFile: file,
                 colorScheme: colorScheme,
@@ -163,7 +179,11 @@ final class FileCoverCacheCoordinator: ObservableObject {
             try? await Task.sleep(nanoseconds: delay)
             guard !Task.isCancelled else { return }
             enqueueRecentlyUsedCovers(colorScheme: colorScheme)
-            enqueueMissingLibraryCovers(colorScheme: colorScheme)
+            let now = Date()
+            if now.timeIntervalSince(lastLibraryPrewarmAt[colorScheme] ?? .distantPast) >= libraryPrewarmMinimumInterval {
+                lastLibraryPrewarmAt[colorScheme] = now
+                enqueueMissingLibraryCovers(colorScheme: colorScheme)
+            }
         }
     }
 

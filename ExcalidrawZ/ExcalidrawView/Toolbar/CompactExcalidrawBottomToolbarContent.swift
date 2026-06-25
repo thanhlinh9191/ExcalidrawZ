@@ -583,7 +583,7 @@ struct CompactExcalidrawBottomToolbarStateModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: toolState.activatedTool, debounce: 0.05) { newValue in
+            .watch(value: toolState.activatedTool) { newValue in
                 guard usesCompactIOSBottomToolbar else { return }
                 syncActiveTool(newValue)
             }
