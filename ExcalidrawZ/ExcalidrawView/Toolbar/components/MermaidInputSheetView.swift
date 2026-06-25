@@ -27,7 +27,7 @@ struct MermaidInputSheetViewModifier: ViewModifier {
                     MermaidInputSheetView { definition in
                         do {
                             var options = ExcalidrawCore.MermaidInsertOptions()
-                            options.focus = .enabled(true)
+                            options.focus = .mode(.center)
                             guard let coordinator = activeCoordinator else {
                                 throw MermaidInputSheetError.noActiveCanvas
                             }
@@ -53,6 +53,7 @@ struct MermaidInputSheetViewModifier: ViewModifier {
 
 struct MermaidInputSheetView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
 
     var onInsert: (_ definition: String) async throws -> Void
 
@@ -68,15 +69,96 @@ struct MermaidInputSheetView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Picker("", selection: $selectedPage) {
-                Text(.localizable(.mermaidInputSheetInputTab))
-                    .tag(MermaidInputSheetPage.input)
-                Text(.localizable(.mermaidInputSheetPreviewTab))
-                    .tag(MermaidInputSheetPage.preview)
+        VStack(spacing: 16) {
+            sheetHeader
+            content
+        }
+        .padding()
+        .watch(value: selectedPage) { newValue in
+            guard usesCompactLayout else { return }
+            if newValue == .preview {
+                schedulePreview()
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+        }
+        .watch(value: usesCompactLayout) { isCompact in
+            handleLayoutChanged(isCompact: isCompact)
+        }
+        .onChange(of: trimmedInput, debounce: 0.35) { _ in
+            handleInputChanged()
+        }
+        .onAppear {
+            if !usesCompactLayout {
+                schedulePreview()
+            }
+        }
+        .onDisappear {
+            previewTask?.cancel()
+        }
+    }
+
+    private var sheetHeader: some View {
+        ZStack {
+            Text(.localizable(.toolbarMermaid))
+                .font(.headline)
+                .lineLimit(1)
+                .padding(.horizontal, 132)
+
+            HStack {
+                Button {
+                    previewTask?.cancel()
+                    dismiss()
+                } label: {
+                    Label(.localizable(.generalButtonCancel), systemImage: "xmark")
+                        .labelStyle(.iconOnly)
+                }
+                .modernButtonStyle(style: .glass, size: .extraLarge, shape: .circle)
+                .keyboardShortcut(.cancelAction)
+
+                Spacer(minLength: 0)
+
+                Button {
+                    insertMermaid()
+                } label: {
+                    if isInserting {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text(.localizable(.librariesButtonItemAddToCanvas))
+                        }
+                    } else {
+                        Text(.localizable(.librariesButtonItemAddToCanvas))
+                    }
+                }
+                .lineLimit(1)
+                .modernButtonStyle(style: .glassProminent, size: .extraLarge, shape: .capsule)
+                .keyboardShortcut(.defaultAction)
+                .disabled(insertButtonDisabled)
+            }
+        }
+        .frame(minHeight: 48)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if usesCompactLayout {
+            compactContent
+        } else {
+            regularContent
+        }
+    }
+
+    private var compactContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Picker("", selection: $selectedPage) {
+                    Text(.localizable(.mermaidInputSheetInputTab))
+                        .tag(MermaidInputSheetPage.input)
+                    Text(.localizable(.mermaidInputSheetPreviewTab))
+                        .tag(MermaidInputSheetPage.preview)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
 
             ZStack {
                 switch selectedPage {
@@ -88,54 +170,47 @@ struct MermaidInputSheetView: View {
             }
             .frame(minHeight: contentHeight)
         }
-        .padding()
-        .navigationTitle(.localizable(.toolbarMermaid))
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button {
-                    previewTask?.cancel()
-                    dismiss()
-                } label: {
-                    Label(.localizable(.generalButtonCancel), systemImage: "xmark")
-                }
-                .labelStyle(.iconOnly)
-            }
+    }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button {
-                    insertMermaid()
-                } label: {
-                    if isInserting {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Label(.localizable(.toolbarLatexMathButtonInsert), systemImage: "checkmark")
-                            .labelStyle(.iconOnly)
-                    }
-                }
-                .disabled(
-                    trimmedInput.isEmpty ||
-                    isInserting ||
-                    previewState == .loading
-                )
+    private var regularContent: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                inputHeader
+                inputEditor
             }
-        }
-        .watch(value: selectedPage) { newValue in
-            if newValue == .preview {
-                schedulePreview()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(.localizable(.mermaidInputSheetPreviewTab))
+                    .font(.headline)
+                previewContent
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .onChange(of: trimmedInput, debounce: 0.35) { _ in
-            guard selectedPage == .preview else {
-                previewState = .idle
-                previewImage = nil
-                return
-            }
-            schedulePreview()
-        }
-        .onDisappear {
-            previewTask?.cancel()
-        }
+        .frame(minWidth: 820, idealWidth: 900, minHeight: 460, idealHeight: 520)
+    }
+
+    private var usesCompactLayout: Bool {
+#if os(macOS)
+        false
+#else
+        containerHorizontalSizeClass == .compact
+#endif
+    }
+
+    private var insertButtonDisabled: Bool {
+        trimmedInput.isEmpty ||
+            isInserting ||
+            !previewSucceeded
+    }
+
+    private var previewSucceeded: Bool {
+        previewState == .loaded && previewImage != nil
+    }
+
+    private var inputHeader: some View {
+        Text(.localizable(.mermaidInputSheetInputTab))
+            .font(.headline)
     }
 
     private var contentHeight: CGFloat {
@@ -146,37 +221,49 @@ struct MermaidInputSheetView: View {
         #endif
     }
 
+    private func handleInputChanged() {
+        if usesCompactLayout, selectedPage != .preview {
+            previewState = .idle
+            previewImage = nil
+            return
+        }
+
+        schedulePreview()
+    }
+
+    private func handleLayoutChanged(isCompact: Bool) {
+        if isCompact, selectedPage != .preview {
+            previewTask?.cancel()
+            previewState = .idle
+            previewImage = nil
+            return
+        }
+
+        schedulePreview()
+    }
+
     private var inputEditor: some View {
-        TextEditor(text: $inputText)
-            .font(.system(.body, design: .monospaced))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .scrollContentBackground(.hidden)
-            .padding(10)
+        TextArea(
+            text: $inputText,
+            placeholder: Text(.localizable(.mermaidInputSheetPlaceholder))
+        )
+            .textFont(.system(design: .monospaced))
+            .textInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 72))
+            .textAreaSizing(.fill)
             .background {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.secondary.opacity(0.08))
             }
-            .overlay(alignment: .topLeading) {
-                if inputText.isEmpty {
-                    Text(.localizable(.mermaidInputSheetPlaceholder))
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 18)
-                        .allowsHitTesting(false)
-                }
-            }
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(alignment: .bottomTrailing) {
                 Button {
                     pasteFromClipboard()
                 } label: {
                     Label(.localizable(.mermaidInputSheetPasteButton), systemImage: "clipboard")
+                        .labelStyle(.iconOnly)
                 }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .padding(8)
-                .background(.regularMaterial, in: Circle())
-                .padding(10)
+                .modernButtonStyle(style: .glassProminent, size: .extraLarge, shape: .circle)
+                .padding(12)
             }
     }
 
@@ -261,7 +348,7 @@ struct MermaidInputSheetView: View {
 
     private func insertMermaid() {
         let definition = trimmedInput
-        guard !definition.isEmpty, !isInserting else { return }
+        guard !definition.isEmpty, !isInserting, previewSucceeded else { return }
         isInserting = true
         Task { @MainActor in
             do {

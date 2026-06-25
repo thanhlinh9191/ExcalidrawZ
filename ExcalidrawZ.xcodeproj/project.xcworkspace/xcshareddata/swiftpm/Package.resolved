@@ -1,5 +1,5 @@
 {
-  "originHash" : "7298fb82f631bdc0397433ef69623962890b608e1f115ec2a827e5335b9b6ad9",
+  "originHash" : "2007e8c63ea4cfee60ecf7e17788ae94652a1aaa9b0fefe73a506b993b06b6fa",
   "pins" : [
     {
       "identity" : "alerttoast",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "862808b2070cd908cb04f9aafe7de83d35f81b05",
         "version" : "0.6.7"
-      }
-    },
-    {
-      "identity" : "chocofordkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/chocoford/ChocofordKit.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "23c57ee2564aa4b287c432d3d0f64919a5d255e7"
       }
     },
     {
