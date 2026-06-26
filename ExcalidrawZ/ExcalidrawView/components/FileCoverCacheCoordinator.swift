@@ -296,8 +296,14 @@ final class FileCoverCacheCoordinator: ObservableObject {
 
     func cacheCurrentViewportPreview(for activeFile: FileState.ActiveFile) async {
         let source = Source.activeFile(activeFile)
+        let coordinator: ExcalidrawCanvasView.Coordinator? = {
+            if case .collaborationFile = activeFile {
+                return fileState?.excalidrawCollaborationWebCoordinator
+            }
+            return fileState?.excalidrawWebCoordinator
+        }()
         guard !shouldSkipLockedSource(source),
-              let coordinator = fileState?.excalidrawWebCoordinator,
+              let coordinator,
               !coordinator.isLoading,
               coordinator.documentSyncController.currentLoadedFileID == activeFile.id else {
             return

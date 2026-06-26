@@ -225,14 +225,6 @@ final class FileState: ObservableObject {
             aiChatConversationID = nil
             isAIChatConversationLoading = nextConversationScope != nil
         }
-        if let currentActiveFileID = previousActiveFile?.id {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                NotificationCenter.default.post(
-                    name: .filePreviewShouldRefresh,
-                    object: currentActiveFileID
-                )
-            }
-        }
         if let activeFileIndex,
            activeFileIndex < activeFiles.count {
             if let newValue {
