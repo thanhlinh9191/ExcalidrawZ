@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Upload App Store Connect metadata only. Build upload stays manual.
 
+### mac generate_sparkle_release_notes
+
+```sh
+[bundle exec] fastlane mac generate_sparkle_release_notes
+```
+
+Generate localized Sparkle release notes and patch local website appcast.
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
