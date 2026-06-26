@@ -63,6 +63,11 @@ struct ExcalidrawHomeView: View {
                     SyncStatusPopover()
                 }
             }
+            .overlay(alignment: .top) {
+                ActiveFileCloseSavingIndicator(
+                    isSaving: fileState.isFinalizingActiveFileClose
+                )
+            }
             .watch(value: fileState.currentActiveFile) { newValue in
                 if newValue == nil {
                     initCurrentGroups()
@@ -442,4 +447,65 @@ struct ExcalidrawHomeView: View {
         }
     }
     
+}
+
+private struct ActiveFileCloseSavingIndicator: View {
+    let isSaving: Bool
+
+    @State private var isPresented = false
+    @State private var showTask: Task<Void, Never>?
+
+    var body: some View {
+        ZStack {
+            if isPresented {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(.localizable(.activeFileCloseSavingTitle))
+                        .font(.callout.weight(.medium))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background {
+                    if #available(iOS 26.0, macOS 26.0, *) {
+                        Capsule()
+                            .glassEffect(in: Capsule())
+                    } else {
+                        Capsule()
+                            .fill(.ultraThinMaterial)
+                    }
+                }
+                .padding()
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .allowsHitTesting(false)
+        .watch(value: isSaving, initial: true) { saving in
+            handleSavingChanged(saving)
+        }
+        .onDisappear {
+            showTask?.cancel()
+            showTask = nil
+        }
+    }
+
+    private func handleSavingChanged(_ saving: Bool) {
+        guard saving else {
+            showTask?.cancel()
+            showTask = nil
+            withAnimation(.easeOut(duration: 0.15)) {
+                isPresented = false
+            }
+            return
+        }
+
+        showTask?.cancel()
+        showTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            guard !Task.isCancelled, isSaving else { return }
+            withAnimation(.easeOut(duration: 0.2)) {
+                isPresented = true
+            }
+        }
+    }
 }

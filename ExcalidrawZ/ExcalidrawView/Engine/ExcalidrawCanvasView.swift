@@ -74,6 +74,7 @@ struct ExcalidrawCanvasView: View {
     @StateObject private var excalidrawCore = ExcalidrawCore()
     @State private var hasSetupCore = false
     @State private var loadingFileID: String?
+    @State private var pendingErrorEvent: IdentifiableError?
     
     // MARK: - Computed Properties
     
@@ -171,6 +172,10 @@ struct ExcalidrawCanvasView: View {
                             .flushPendingDirtySnapshot(reason: "sceneBackground", force: true)
                     }
                 }
+            }
+            .watch(value: pendingErrorEvent) { event in
+                guard let event else { return }
+                onError(event.error)
             }
             .task {
                 await listenToLoadingState()
@@ -286,7 +291,7 @@ struct ExcalidrawCanvasView: View {
     private func listenToErrors() async {
         for await error in excalidrawCore.errorStream {
             await MainActor.run {
-                onError(error)
+                pendingErrorEvent = IdentifiableError(error)
             }
         }
     }

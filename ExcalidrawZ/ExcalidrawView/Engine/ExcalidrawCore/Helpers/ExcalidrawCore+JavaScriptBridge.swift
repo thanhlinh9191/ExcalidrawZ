@@ -229,3 +229,23 @@ extension ExcalidrawCore {
         return "$." + fullPath.map(\.stringValue).joined(separator: ".")
     }
 }
+
+#if DEBUG
+extension ExcalidrawCore {
+    @MainActor
+    func debugThrowJavaScriptErrorForToastProbe() async throws {
+        do {
+            _ = try await webView.callAsyncJavaScript(
+                """
+                throw new Error("ExcalidrawZ debug JavaScript error propagation probe");
+                """,
+                arguments: [:],
+                contentWorld: .page
+            )
+        } catch {
+            publishError(error)
+            throw error
+        }
+    }
+}
+#endif

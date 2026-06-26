@@ -50,6 +50,7 @@ struct DebugPanelView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 debugHeader
+                diagnosticsSection
                 cameraSection
                 adjustSection
                 logsSection
@@ -95,6 +96,29 @@ struct DebugPanelView: View {
             return "Selection: \(firstID)"
         }
         return "Selection: \(firstID) +\(selectedElementIDs.count - 1)"
+    }
+
+    @ViewBuilder
+    private var diagnosticsSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Trigger a JavaScript exception inside the active Excalidraw WebView and publish it through the normal canvas error stream.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                debugActionButton("Throw JS Error Toast") {
+                    runCameraAction("JS Error Toast Probe") {
+                        try await requireCoordinator().debugThrowJavaScriptErrorForToastProbe()
+                        return "Unexpected success: JavaScript did not throw."
+                    }
+                }
+                .disabled(isRunning)
+            }
+        } label: {
+            Label("Diagnostics", systemImage: "exclamationmark.triangle")
+                .font(.headline)
+        }
     }
 
     @ViewBuilder

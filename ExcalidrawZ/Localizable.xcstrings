@@ -1,6 +1,29 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "activeFileCloseSavingTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在保存…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在儲存…"
+          }
+        }
+      }
+    },
     "aiChatActiveFileSwitchBlockedToastTitle": {
       "extractionState": "manual",
       "localizations": {

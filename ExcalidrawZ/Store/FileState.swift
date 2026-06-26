@@ -353,6 +353,14 @@ final class FileState: ObservableObject {
     }
 
     @MainActor
+    private func canvasCoordinator(for activeFile: ActiveFile) -> ExcalidrawCanvasView.Coordinator? {
+        if case .collaborationFile = activeFile {
+            return excalidrawCollaborationWebCoordinator
+        }
+        return excalidrawWebCoordinator
+    }
+
+    @MainActor
     private func performActiveFileChange(
         _ file: ActiveFile?,
         generation: Int
@@ -377,14 +385,32 @@ final class FileState: ObservableObject {
 
         if let previousFile,
            let saveTarget = capturedCanvasSaveTarget(for: previousFile) {
-            await FileCoverCacheCoordinator.shared.cacheCurrentViewportPreview(
-                for: previousFile
-            )
-            await excalidrawWebCoordinator?.documentSyncController.flushPendingDirtySnapshotInBackground(
-                reason: "activeFileWillChange",
-                expectedFileID: previousFile.id,
-                target: saveTarget
-            )
+            let coordinator = canvasCoordinator(for: previousFile)
+            if file == nil {
+                isFinalizingActiveFileClose = true
+                defer {
+                    isFinalizingActiveFileClose = false
+                }
+
+                await coordinator?.documentSyncController.flushPendingDirtySnapshotToCapturedTarget(
+                    reason: "activeFileClose",
+                    expectedFileID: previousFile.id,
+                    target: saveTarget,
+                    forceCurrentAppState: true
+                )
+                await FileCoverCacheCoordinator.shared.cacheCurrentViewportPreview(
+                    for: previousFile
+                )
+            } else {
+                await FileCoverCacheCoordinator.shared.cacheCurrentViewportPreview(
+                    for: previousFile
+                )
+                await coordinator?.documentSyncController.flushPendingDirtySnapshotInBackground(
+                    reason: "activeFileWillChange",
+                    expectedFileID: previousFile.id,
+                    target: saveTarget
+                )
+            }
         }
 
         guard generation == activeFileChangeGeneration else {
@@ -663,6 +689,7 @@ final class FileState: ObservableObject {
     @Published var collaboratingFiles: [CollaborationFile] = []
     @Published var collaboratingFilesState: [CollaborationFile : ExcalidrawCanvasView.LoadingState] = [:]
     @Published var collaborators: [CollaborationFile : [Collaborator]] = [:]
+    @Published var isFinalizingActiveFileClose = false
 
     var activeCollaborationFileIsLoading: Bool {
         guard case .collaborationFile(let file) = currentActiveFile else {
@@ -1101,6 +1128,18 @@ final class FileState: ObservableObject {
 
     @MainActor
     func flushPendingCanvasSnapshotBeforeTermination() async {
+        if let activeFile = currentActiveFile,
+           let saveTarget = capturedCanvasSaveTarget(for: activeFile),
+           let coordinator = canvasCoordinator(for: activeFile) {
+            await coordinator.documentSyncController.flushPendingDirtySnapshotToCapturedTarget(
+                reason: "applicationShouldTerminate",
+                expectedFileID: activeFile.id,
+                target: saveTarget,
+                forceCurrentAppState: true
+            )
+            return
+        }
+
         await excalidrawWebCoordinator?.documentSyncController.flushPendingDirtySnapshot(
             reason: "applicationShouldTerminate",
             force: true

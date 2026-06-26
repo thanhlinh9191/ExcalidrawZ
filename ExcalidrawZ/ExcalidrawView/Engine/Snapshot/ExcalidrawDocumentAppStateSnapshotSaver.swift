@@ -94,6 +94,98 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         }
     }
 
+    func flushCurrentAppState(reason: String) async -> Bool {
+        cancelScheduledCommit()
+        guard let core = delegate?.snapshotCoordinatorCore else { return false }
+
+        do {
+            let state = await MainActor.run {
+                (
+                    currentFileID: core.parent?.file?.id,
+                    content: core.parent?.file?.content,
+                    type: core.parent?.type,
+                    savingType: core.parent?.savingType
+                )
+            }
+            guard state.savingType == nil || state.savingType == .excalidrawFile else {
+                return false
+            }
+            guard state.type != .collaboration,
+                  let expectedFileID = state.currentFileID,
+                  let content = state.content else {
+                return false
+            }
+
+            let loadedID = await core.webActor.loadedFileID
+            guard loadedID == expectedFileID else {
+                core.logger.debug(
+                    "Skipped forced appState-only canvas update \(reason): loaded file mismatch expected=\(expectedFileID) loaded=\(loadedID ?? "nil")"
+                )
+                return false
+            }
+
+            let appState = try await core.getCurrentAppState()
+            let contentWithAppState = try Self.mergingAppState(appState, into: content)
+            await MainActor.run {
+                core.parent?.fileState.updateAppStateOnlyForCurrentFile(
+                    expectedFileID: expectedFileID,
+                    content: contentWithAppState
+                )
+            }
+            clear()
+            core.logger.debug("Committed forced appState-only canvas update: \(reason) id=\(expectedFileID)")
+            return true
+        } catch is CancellationError {
+            return false
+        } catch {
+            core.logger.error("Failed to apply forced appState-only canvas update: \(error)")
+            core.publishError(error)
+            return false
+        }
+    }
+
+    func flushCurrentAppStateToCapturedTarget(
+        reason: String,
+        expectedFileID: String,
+        target: FileState.CapturedCanvasSaveTarget,
+        capturedContent: Data?
+    ) async -> Bool {
+        cancelScheduledCommit()
+        guard let core = delegate?.snapshotCoordinatorCore,
+              let capturedContent else {
+            return false
+        }
+        if case .collaborationFile = target.kind {
+            return false
+        }
+
+        do {
+            let loadedID = await core.webActor.loadedFileID
+            guard loadedID == expectedFileID else {
+                core.logger.debug(
+                    "Skipped forced background appState-only canvas update \(reason): loaded file mismatch expected=\(expectedFileID) loaded=\(loadedID ?? "nil")"
+                )
+                return false
+            }
+
+            let appState = try await core.getCurrentAppState()
+            let contentWithAppState = try Self.mergingAppState(appState, into: capturedContent)
+            await FileState.saveCapturedAppStateOnlyUpdate(
+                target,
+                content: contentWithAppState
+            )
+            clear()
+            core.logger.debug("Committed forced background appState-only canvas update: \(reason) id=\(expectedFileID)")
+            return true
+        } catch is CancellationError {
+            return false
+        } catch {
+            core.logger.error("Failed to apply forced background appState-only canvas update: \(error)")
+            core.publishError(error)
+            return false
+        }
+    }
+
     private func makeCommitTask(delay: UInt64) -> Task<Void, Never> {
         Task { [weak self] in
             do {
@@ -173,7 +265,7 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         latestAppStateFileID = nil
     }
 
-    private static func mergingAppState(
+    static func mergingAppState(
         _ appState: ExcalidrawCore.JSONValue,
         into content: Data
     ) throws -> Data {
@@ -185,4 +277,5 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         contentObject["appState"] = appStateObject
         return try JSONSerialization.data(withJSONObject: contentObject)
     }
+
 }

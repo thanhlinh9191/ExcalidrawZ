@@ -120,6 +120,11 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
                 requirePendingDirty: !force,
                 validateParentFileID: validateParentFileID
             )
+        } else if force {
+            let didCommitCurrentAppState = await appStateSaver.flushCurrentAppState(reason: reason)
+            if !didCommitCurrentAppState {
+                await appStateSaver.flush(reason: reason)
+            }
         } else {
             await appStateSaver.flush(reason: reason)
         }
@@ -142,6 +147,24 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
             )
         }
         await Task.yield()
+    }
+
+    func flushPendingDirtySnapshotToCapturedTarget(
+        reason: String,
+        expectedFileID: String,
+        target: FileState.CapturedCanvasSaveTarget,
+        forceCurrentAppState: Bool = false
+    ) async {
+        let capturedContent = await MainActor.run {
+            delegate?.snapshotCoordinatorCore?.parent?.file?.content
+        }
+        await flushPendingDirtySnapshotToCapturedTarget(
+            reason: reason,
+            expectedFileID: expectedFileID,
+            target: target,
+            capturedContent: capturedContent,
+            forceCurrentAppState: forceCurrentAppState
+        )
     }
 
     private func commitScheduledDirtySnapshot() async {
@@ -236,7 +259,8 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
         reason: String,
         expectedFileID: String,
         target: FileState.CapturedCanvasSaveTarget,
-        capturedContent: Data?
+        capturedContent: Data?,
+        forceCurrentAppState: Bool = false
     ) async {
         await contentScheduler.waitForCommitToFinish()
         if let flushState = contentScheduler.takeFlushState() {
@@ -247,6 +271,21 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
                 target: target,
                 capturedContent: capturedContent
             )
+        } else if forceCurrentAppState {
+            let didCommitCurrentAppState = await appStateSaver.flushCurrentAppStateToCapturedTarget(
+                reason: reason,
+                expectedFileID: expectedFileID,
+                target: target,
+                capturedContent: capturedContent
+            )
+            if !didCommitCurrentAppState {
+                await appStateSaver.flushToCapturedTarget(
+                    reason: reason,
+                    expectedFileID: expectedFileID,
+                    target: target,
+                    capturedContent: capturedContent
+                )
+            }
         } else {
             await appStateSaver.flushToCapturedTarget(
                 reason: reason,

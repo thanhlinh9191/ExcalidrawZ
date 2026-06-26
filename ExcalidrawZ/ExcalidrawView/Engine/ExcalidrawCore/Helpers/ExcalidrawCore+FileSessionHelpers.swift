@@ -54,6 +54,29 @@ extension ExcalidrawCore {
     }
 
     @MainActor
+    func getCurrentAppState() async throws -> JSONValue {
+        guard !self.webView.isLoading else {
+            throw InvalidJavaScriptResult()
+        }
+        let result = try await self.webView.callAsyncJavaScript(
+            """
+            const api = window.excalidrawZHelper?._api;
+            if (!api || typeof api.getAppState !== "function") {
+                throw new Error("Excalidraw API is not ready.");
+            }
+            return JSON.stringify(api.getAppState());
+            """,
+            arguments: [:],
+            contentWorld: .page
+        )
+        guard let jsonString = result as? String,
+              let data = jsonString.data(using: .utf8) else {
+            throw InvalidJavaScriptResult()
+        }
+        return try JSONDecoder().decode(JSONValue.self, from: data)
+    }
+
+    @MainActor
     private func getCurrentFileSnapshotUsingSaveStream() async throws -> CurrentFileSnapshot {
         let result = try await requestCurrentFileSaveStream(includeFiles: true)
         return CurrentFileSnapshot(saveStreamResult: result)

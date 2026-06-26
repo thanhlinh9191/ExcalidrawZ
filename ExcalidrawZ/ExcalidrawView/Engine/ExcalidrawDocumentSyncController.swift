@@ -254,6 +254,20 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         )
     }
 
+    func flushPendingDirtySnapshotToCapturedTarget(
+        reason: String,
+        expectedFileID: String,
+        target: FileState.CapturedCanvasSaveTarget,
+        forceCurrentAppState: Bool = false
+    ) async {
+        await snapshotCoordinator.flushPendingDirtySnapshotToCapturedTarget(
+            reason: reason,
+            expectedFileID: expectedFileID,
+            target: target,
+            forceCurrentAppState: forceCurrentAppState
+        )
+    }
+
     @MainActor
     func scheduleProgrammaticMutationCommit(reason: String) {
         snapshotCoordinator.scheduleProgrammaticMutationCommit(reason: reason)
