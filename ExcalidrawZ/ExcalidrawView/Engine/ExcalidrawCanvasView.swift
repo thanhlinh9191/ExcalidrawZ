@@ -348,6 +348,12 @@ struct ExcalidrawCanvasView: View {
                 loadingState = .loaded
                 onDocumentLoadFinished(newFile.id)
             }
+
+#if os(iOS)
+            if outcome.didLoad {
+                await enterCompactDragModeAfterLoadIfNeeded()
+            }
+#endif
         }
     }
     

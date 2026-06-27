@@ -31,20 +31,48 @@ import StoreKit
 //}
 
 struct SubscriptionItem: Hashable, Identifiable, Comparable {
+    private static var commonPlanFeatures: [String] {
+        [
+            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
+            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
+            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
+            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
+        ]
+    }
+
+    private static func planFeatures(
+        mcpFeature: String?,
+        collaborationRoomsCount: String,
+        aiCredits: Int? = nil
+    ) -> [String] {
+        var features = commonPlanFeatures
+        if ExcalidrawZMCPServerController.isAvailable,
+           let mcpFeature {
+            features.append(mcpFeature)
+        }
+        features.append(
+            String(
+                localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
+                    collaborationRoomsCount
+                )
+            )
+        )
+        if let aiCredits {
+            features.append(String(localizable: .paywallPlanGeneralFeaturesAICredits(aiCredits)))
+        }
+        return features
+    }
+
     static let free = SubscriptionItem(
         id: "free",
         yearlyID: nil,
         title: String(localizable: .paywallPlanFreeTitle),
         // 免费的计划，可以享受绝大部分的功能
         description: String(localizable: .paywallPlanFreeDescription),
-        features: [
-            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
-            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
-            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
-            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
-            String(localizable: .paywallPlanGeneralFeaturesBasicMCPServices),
-            String(localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount("1")),
-        ],
+        features: Self.planFeatures(
+            mcpFeature: String(localizable: .paywallPlanGeneralFeaturesBasicMCPServices),
+            collaborationRoomsCount: "1"
+        ),
         fallbackDisplayPrice: "Free",
         fallbackDisplayPeriod: "Forever",
         fallbackYearlyDisplayPrice: "Free",
@@ -56,18 +84,10 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
         title: String(localizable: .paywallPlanStarterTitle),
         // Starter now carries the original Pro feature set.
         description: String(localizable: .paywallPlanStarterDescription),
-        features: [
-            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
-            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
-            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
-            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
-            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
-            String(
-                localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
-                    String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
-                )
-            ),
-        ],
+        features: Self.planFeatures(
+            mcpFeature: String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
+            collaborationRoomsCount: String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
+        ),
         fallbackDisplayPrice: "$2.99",
         fallbackDisplayPeriod: "a month",
         fallbackYearlyDisplayPrice: "$29.99",
@@ -79,19 +99,11 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
         title: String(localizable: .paywallPlanProTitle),
         // 无限制
         description: String(localizable: .paywallPlanProDescription),
-        features: [
-            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
-            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
-            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
-            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
-            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
-            String(
-                localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
-                    String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
-                )
-            ),
-            String(localizable: .paywallPlanGeneralFeaturesAICredits(500)),
-        ],
+        features: Self.planFeatures(
+            mcpFeature: String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
+            collaborationRoomsCount: String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue),
+            aiCredits: 500
+        ),
         fallbackDisplayPrice: "$9.99",
         fallbackDisplayPeriod: "a month",
         fallbackYearlyDisplayPrice: "$99.99",
@@ -102,19 +114,11 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
         yearlyID: "plan.max_3x_yearly",
         title: "Max",
         description: String(localizable: .paywallPlanMaxDescription),
-        features: [
-            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
-            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
-            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
-            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
-            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
-            String(
-                localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
-                    String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
-                )
-            ),
-            String(localizable: .paywallPlanGeneralFeaturesAICredits(1800)),
-        ],
+        features: Self.planFeatures(
+            mcpFeature: String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
+            collaborationRoomsCount: String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue),
+            aiCredits: 1800
+        ),
         fallbackDisplayPrice: "$29.99",
         fallbackDisplayPeriod: "a month",
         fallbackYearlyDisplayPrice: "$299.99",
@@ -125,19 +129,11 @@ struct SubscriptionItem: Hashable, Identifiable, Comparable {
         yearlyID: "plan.max_10x_yearly",
         title: "Max 10x",
         description: String(localizable: .paywallPlanMax10xDescription),
-        features: [
-            String(localizable: .paywallPlanGeneralFeaturesUnlimitedDraws),
-            String(localizable: .paywallPlanGeneralFeaturesICloudSync),
-            String(localizable: .paywallPlanGeneralFeaturesPDFExport),
-            String(localizable: .paywallPlanGeneralFeaturesLibrariesSupport),
-            String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
-            String(
-                localizable: .paywallPlanGeneralFeaturesCollaborationRoomsCount(
-                    String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue)
-                )
-            ),
-            String(localizable: .paywallPlanGeneralFeaturesAICredits(5400)),
-        ],
+        features: Self.planFeatures(
+            mcpFeature: String(localizable: .paywallPlanGeneralFeaturesOptimizedMCPServices),
+            collaborationRoomsCount: String(localizable: .paywallPlanGeneralFeaturesUnlimitedValue),
+            aiCredits: 5400
+        ),
         fallbackDisplayPrice: "$99.99",
         fallbackDisplayPeriod: "a month",
         fallbackYearlyDisplayPrice: "$999.99",
@@ -181,6 +177,7 @@ extension Store {
     }
 
     var canUseOptimizedMCPServices: Bool {
+        guard ExcalidrawZMCPServerController.isAvailable else { return false }
         guard let activeSubscriptionItem else { return false }
         return activeSubscriptionItem >= .starter
     }

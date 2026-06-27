@@ -100,12 +100,6 @@ extension AIChatView {
             }
 #else
             Button {
-                presentMCPSettings()
-            } label: {
-                Label(.localizable(.aiChatButtonMCPSettings), systemSymbol: .serverRack)
-            }
-
-            Button {
                 presentAISettings()
             } label: {
                 Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)

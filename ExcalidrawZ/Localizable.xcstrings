@@ -83523,6 +83523,119 @@
         }
       }
     },
+    "settingsAIMCPMacOnlyMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوفر MCP على macOS. افتح ExcalidrawZ على Mac لتشغيل خادم MCP المحلي والاتصال بعملاء الذكاء الاصطناعي على سطح المكتب."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP ist auf macOS verfügbar. Öffne ExcalidrawZ auf dem Mac, um den lokalen MCP-Server auszuführen und Desktop-KI-Clients zu verbinden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP is available on macOS. Open ExcalidrawZ on your Mac to run the local MCP server and connect desktop AI clients."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP está disponible en macOS. Abre ExcalidrawZ en tu Mac para ejecutar el servidor MCP local y conectar clientes de IA de escritorio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP est disponible sur macOS. Ouvrez ExcalidrawZ sur votre Mac pour lancer le serveur MCP local et connecter des clients IA de bureau."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP macOS पर उपलब्ध है। स्थानीय MCP सर्वर चलाने और डेस्कटॉप AI क्लाइंट कनेक्ट करने के लिए अपने Mac पर ExcalidrawZ खोलें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP è disponibile su macOS. Apri ExcalidrawZ sul Mac per eseguire il server MCP locale e collegare client AI desktop."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP は macOS で利用できます。Mac で ExcalidrawZ を開き、ローカル MCP サーバーを実行してデスクトップ AI クライアントを接続してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP는 macOS에서 사용할 수 있습니다. Mac에서 ExcalidrawZ를 열어 로컬 MCP 서버를 실행하고 데스크톱 AI 클라이언트를 연결하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP is beschikbaar op macOS. Open ExcalidrawZ op je Mac om de lokale MCP-server te draaien en desktop-AI-clients te verbinden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP jest dostępne w macOS. Otwórz ExcalidrawZ na Macu, aby uruchomić lokalny serwer MCP i połączyć klientów AI na komputerze."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O MCP está disponível no macOS. Abra o ExcalidrawZ no Mac para executar o servidor MCP local e conectar clientes de IA desktop."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP доступен на macOS. Откройте ExcalidrawZ на Mac, чтобы запустить локальный MCP-сервер и подключить настольные AI-клиенты."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP ใช้งานได้บน macOS เปิด ExcalidrawZ บน Mac เพื่อเรียกใช้เซิร์ฟเวอร์ MCP ในเครื่องและเชื่อมต่อไคลเอนต์ AI บนเดสก์ท็อป"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP macOS'te kullanılabilir. Yerel MCP sunucusunu çalıştırmak ve masaüstü AI istemcilerini bağlamak için Mac'inizde ExcalidrawZ'yi açın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP khả dụng trên macOS. Mở ExcalidrawZ trên máy Mac để chạy máy chủ MCP cục bộ và kết nối các ứng dụng khách AI trên desktop."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 功能目前仅在 macOS 可用。请在 Mac 上打开 ExcalidrawZ 来运行本地 MCP 服务器，并连接桌面端 AI 客户端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 功能目前僅在 macOS 可用。請在 Mac 上開啟 ExcalidrawZ 來執行本機 MCP 伺服器，並連接桌面端 AI 用戶端。"
+          }
+        }
+      }
+    },
     "settingsAIMCPTitle": {
       "extractionState": "manual",
       "localizations": {

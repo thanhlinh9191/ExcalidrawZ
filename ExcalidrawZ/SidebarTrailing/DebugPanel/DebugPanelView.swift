@@ -6,6 +6,7 @@
 //
 
 #if DEBUG
+import Foundation
 import SwiftUI
 import LLMCore
 
@@ -42,9 +43,11 @@ struct DebugPanelView: View {
     """
 
     @State private var isDryRun = false
-    @State private var isRunning = false
-    @State private var lastResult = ""
-    @State private var lastError = ""
+    @State var isRunning = false
+    @State var lastResult = ""
+    @State var lastError = ""
+    @State var viewportCaptureImage: PlatformImage?
+    @State var viewportCaptureSummary = ""
 
     var body: some View {
         ScrollView {
@@ -96,29 +99,6 @@ struct DebugPanelView: View {
             return "Selection: \(firstID)"
         }
         return "Selection: \(firstID) +\(selectedElementIDs.count - 1)"
-    }
-
-    @ViewBuilder
-    private var diagnosticsSection: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Trigger a JavaScript exception inside the active Excalidraw WebView and publish it through the normal canvas error stream.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                debugActionButton("Throw JS Error Toast") {
-                    runCameraAction("JS Error Toast Probe") {
-                        try await requireCoordinator().debugThrowJavaScriptErrorForToastProbe()
-                        return "Unexpected success: JavaScript did not throw."
-                    }
-                }
-                .disabled(isRunning)
-            }
-        } label: {
-            Label("Diagnostics", systemImage: "exclamationmark.triangle")
-                .font(.headline)
-        }
     }
 
     @ViewBuilder
@@ -409,7 +389,7 @@ struct DebugPanelView: View {
     }
 
     @ViewBuilder
-    private func debugActionButton(_ title: String, action: @escaping () -> Void) -> some View {
+    func debugActionButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(title, action: action)
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
@@ -430,7 +410,7 @@ struct DebugPanelView: View {
     }
 
     @ViewBuilder
-    private func debugCard<Content: View>(
+    func debugCard<Content: View>(
         _ title: String,
         systemImage: String,
         @ViewBuilder content: () -> Content
@@ -456,7 +436,7 @@ struct DebugPanelView: View {
             .lineLimit(1)
     }
 
-    private func requireCoordinator() throws -> ExcalidrawCanvasView.Coordinator {
+    func requireCoordinator() throws -> ExcalidrawCanvasView.Coordinator {
         guard let activeCoordinator else {
             struct MissingCoordinator: LocalizedError {
                 var errorDescription: String? { "No active Excalidraw coordinator." }
@@ -491,7 +471,7 @@ struct DebugPanelView: View {
         return selectedID
     }
 
-    private func runCameraAction(
+    func runCameraAction(
         _ title: String,
         action: @escaping @MainActor () async throws -> String
     ) {
@@ -776,6 +756,7 @@ struct DebugPanelView: View {
                 }.joined(separator: "\n")
         }
     }
+
 }
 
 #endif

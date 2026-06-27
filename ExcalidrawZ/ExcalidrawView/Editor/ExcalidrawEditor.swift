@@ -177,6 +177,14 @@ struct ExcalidrawEditor: View {
 #if os(iOS)
             .dismissKeyboardOnCanvasTap()
 #endif
+            .background {
+#if os(iOS)
+                Color.clear
+                    .anchorPreference(key: FileHomeItemPreferenceKey.self, value: .bounds) { value in
+                        [FileHomeItemTransitionPreferenceID.viewportDestination: value]
+                    }
+#endif
+            }
 
             ExcalidrawTrailingControls()
                 .opacity(isLoadingFile ? 0 : 1)

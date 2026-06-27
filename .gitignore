@@ -80,6 +80,8 @@ Dependencies/
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
+fastlane/previews/assets/**/*.png
+fastlane/previews/output/**/*.png
 fastlane/test_output
 fastlane/.env
 fastlane/.env.local
@@ -119,6 +121,8 @@ ExcalidrawZ/**/*.md
 ExcalidrawZ/SidebarTrailing/AIChat/**/*.json
 ExcalidrawZ/Utils/MCP/Optimized/Resources/
 scripts/
+!fastlane/scripts/
+!fastlane/scripts/**
 Resources/scripts/
 Resources/scripts/**
 /ASO

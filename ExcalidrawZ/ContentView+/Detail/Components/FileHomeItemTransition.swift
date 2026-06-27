@@ -8,6 +8,11 @@
 import SwiftUI
 import ChocofordUI
 import CoreData
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 final class FileHomeItemTransitionState: ObservableObject {
     @Published var canShowExcalidrawCanvas: Bool = false
@@ -26,6 +31,84 @@ final class FileHomeItemTransitionItemState: ObservableObject {
     func setSourceFileID(_ value: String?) {
         guard sourceFileID != value else { return }
         sourceFileID = value
+    }
+}
+
+enum FileHomeCoverTransitionGeometry {
+    static func rectIncludingIgnoredSafeArea(
+        _ rect: CGRect,
+        in geometry: GeometryProxy,
+        includesBottom: Bool = true
+    ) -> CGRect {
+        let topInset = max(
+            geometry.safeAreaInsets.top,
+            geometry.frame(in: .global).minY
+        )
+        let bottomInset = includesBottom ? geometry.safeAreaInsets.bottom : 0
+        let missingTopInset = min(
+            topInset,
+            max(0, topInset + rect.minY)
+        )
+        let missingBottomInset = min(
+            bottomInset,
+            max(0, geometry.size.height + bottomInset - rect.maxY)
+        )
+
+        guard missingTopInset > 0 || missingBottomInset > 0 else {
+            return rect
+        }
+        return CGRect(
+            x: rect.minX,
+            y: rect.minY - missingTopInset,
+            width: rect.width,
+            height: rect.height + missingTopInset + missingBottomInset
+        )
+    }
+
+    static func rectClosestToImageAspect(
+        _ rect: CGRect,
+        alternate candidate: CGRect,
+        image: PlatformImage?
+    ) -> CGRect {
+        guard let imageAspect = image.map({ aspectRatio(pixelSize($0)) ?? 0 }),
+              imageAspect > 0 else {
+            return candidate
+        }
+
+        let rectDistance = abs((aspectRatio(rect.size) ?? 0) - imageAspect)
+        let candidateDistance = abs((aspectRatio(candidate.size) ?? 0) - imageAspect)
+        return candidateDistance < rectDistance ? candidate : rect
+    }
+
+    private static func pixelSize(_ image: PlatformImage) -> CGSize {
+#if canImport(UIKit)
+        if let cgImage = image.cgImage {
+            return CGSize(
+                width: CGFloat(cgImage.width),
+                height: CGFloat(cgImage.height)
+            )
+        }
+        return CGSize(
+            width: image.size.width * image.scale,
+            height: image.size.height * image.scale
+        )
+#elseif canImport(AppKit)
+        var proposedRect = CGRect(origin: .zero, size: image.size)
+        if let cgImage = image.cgImage(forProposedRect: &proposedRect, context: nil, hints: nil) {
+            return CGSize(
+                width: CGFloat(cgImage.width),
+                height: CGFloat(cgImage.height)
+            )
+        }
+        return image.size
+#else
+        return image.size
+#endif
+    }
+
+    private static func aspectRatio(_ size: CGSize) -> Double? {
+        guard size.width > 0, size.height > 0 else { return nil }
+        return Double(size.width / size.height)
     }
 }
 
@@ -50,20 +133,24 @@ struct FileHomeItemTransitionModifier: ViewModifier {
             .background {
                 Color.clear
                     .anchorPreference(key: FileHomeItemPreferenceKey.self, value: .bounds) { value in
-                        ["DEST": value]
+                        [FileHomeItemTransitionPreferenceID.destination: value]
                     }
             }
             .overlayPreferenceValue(FileHomeItemPreferenceKey.self) { value in
+                let viewportDestinationAnchor = value[FileHomeItemTransitionPreferenceID.viewportDestination]
+                let fallbackDestinationAnchor = value[FileHomeItemTransitionPreferenceID.destination]
+
                 if let activeFile = file,// ?? fileState.currentActiveFile,
-                   let sAnchor: Anchor<CGRect> = value[activeFile.id + "SOURCE"],
-                   let dAnchor: Anchor<CGRect> = value["DEST"] {
+                   let sAnchor: Anchor<CGRect> = value[FileHomeItemTransitionPreferenceID.source(for: activeFile.id)],
+                   let dAnchor: Anchor<CGRect> = viewportDestinationAnchor ?? fallbackDestinationAnchor {
                     GeometryReader { geomerty in
                         FileHomeItemHeroLayer(
                             file: activeFile,
                             show: show,
                             animateFlag: animateFlag,
                             sourceAnchor: sAnchor,
-                            destinationAnchor: dAnchor
+                            destinationAnchor: dAnchor,
+                            usesExactViewportDestination: viewportDestinationAnchor != nil
                         )
                         .transition(.identity)
                         // .id(currentItem.id) // <-- important, cannot be `currentItem`
@@ -133,12 +220,24 @@ struct FileHomeItemTransitionModifier: ViewModifier {
                     if #available(macOS 14.0, iOS 17.0, *) {
                         DispatchQueue.main.async {
                             guard revision == transitionRevision else { return }
+#if os(iOS)
+                            withAnimation(
+                                .smooth(duration: animationDuration),
+                                completionCriteria: .removed
+                            ) {
+                                self.animateFlag = true
+                            } completion: {
+                                guard revision == transitionRevision else { return }
+                                completeOpenTransition()
+                            }
+#else
                             withAnimation(.smooth(duration: animationDuration)) {
                                 self.animateFlag = true
                             } completion: {
                                 guard revision == transitionRevision else { return }
                                 completeOpenTransition()
                             }
+#endif
                         }
                     } else {
                         DispatchQueue.main.async {
@@ -220,7 +319,7 @@ struct FileHomeItemTransitionModifier: ViewModifier {
 
 struct FileHomeItemHeroLayer: View {
     @Environment(\.colorScheme) var colorScheme
-    
+
     @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
     
@@ -229,19 +328,22 @@ struct FileHomeItemHeroLayer: View {
     var isAnimating: Bool
     var sourceAnchor: Anchor<CGRect>
     var destinationAnchor: Anchor<CGRect>
+    var usesExactViewportDestination: Bool
 
     init(
         file: FileState.ActiveFile,
         show: Bool,
         animateFlag: Bool,
         sourceAnchor: Anchor<CGRect>,
-        destinationAnchor: Anchor<CGRect>
+        destinationAnchor: Anchor<CGRect>,
+        usesExactViewportDestination: Bool
     ) {
         self.file = file
         self.show = show
         self.isAnimating = animateFlag
         self.sourceAnchor = sourceAnchor
         self.destinationAnchor = destinationAnchor
+        self.usesExactViewportDestination = usesExactViewportDestination
     }
     
     var cacheKey: String {
@@ -270,15 +372,16 @@ struct FileHomeItemHeroLayer: View {
         GeometryReader { geomerty in
             let sRect = geomerty[sourceAnchor]
             let dRect = geomerty[destinationAnchor]
+            let adjustedDRect = adjustedDestinationRect(
+                dRect,
+                in: geomerty
+            )
             
             FileHomeItemHeroSurface(
                 show: show,
                 progress: isAnimating ? 1 : 0,
                 sourceRect: sRect,
-                destinationRect: adjustedDestinationRect(
-                    dRect,
-                    in: geomerty
-                ),
+                destinationRect: adjustedDRect,
                 lockState: lockState,
                 platformImage: platformImage,
                 background: background
@@ -287,6 +390,35 @@ struct FileHomeItemHeroLayer: View {
     }
 
     private func adjustedDestinationRect(
+        _ rect: CGRect,
+        in geometry: GeometryProxy
+    ) -> CGRect {
+        if usesExactViewportDestination {
+            return viewportAdjustedDestinationRect(rect, in: geometry)
+        }
+
+        return platformAdjustedDestinationRect(rect, in: geometry)
+    }
+
+    private func viewportAdjustedDestinationRect(
+        _ rect: CGRect,
+        in geometry: GeometryProxy
+    ) -> CGRect {
+#if os(iOS)
+        return FileHomeCoverTransitionGeometry.rectClosestToImageAspect(
+            rect,
+            alternate: FileHomeCoverTransitionGeometry.rectIncludingIgnoredSafeArea(
+                rect,
+                in: geometry
+            ),
+            image: platformImage
+        )
+#else
+        return rect
+#endif
+    }
+
+    private func platformAdjustedDestinationRect(
         _ rect: CGRect,
         in geometry: GeometryProxy
     ) -> CGRect {
@@ -302,10 +434,20 @@ struct FileHomeItemHeroLayer: View {
             width: rect.width,
             height: rect.height + topInset
         )
+#elseif os(iOS)
+        return FileHomeCoverTransitionGeometry.rectClosestToImageAspect(
+            rect,
+            alternate: FileHomeCoverTransitionGeometry.rectIncludingIgnoredSafeArea(
+                rect,
+                in: geometry
+            ),
+            image: platformImage
+        )
 #else
         return rect
 #endif
     }
+
 }
 
 private struct FileHomeItemHeroSurface: View, Animatable {

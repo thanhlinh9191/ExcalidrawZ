@@ -179,6 +179,7 @@ struct LocalFolderMenuItems: View {
 
     var folder: LocalFolder
     var canExpand: Bool
+    var showsRemoveObservation: Bool
     
     var onToggleCreateSubfolder: () -> Void
     var onToggleRemoveObservation: () -> Void
@@ -186,11 +187,13 @@ struct LocalFolderMenuItems: View {
     init(
         folder: LocalFolder,
         canExpand: Bool,
+        showsRemoveObservation: Bool = true,
         onToggleCreateSubfolder: @escaping () -> Void,
         onToggleRemoveObservation: @escaping () -> Void,
     ) {
         self.folder = folder
         self.canExpand = canExpand
+        self.showsRemoveObservation = showsRemoveObservation
         self.onToggleCreateSubfolder = onToggleCreateSubfolder
         self.onToggleRemoveObservation = onToggleRemoveObservation
     }
@@ -257,13 +260,17 @@ struct LocalFolderMenuItems: View {
 #endif
         }
         
-        Divider()
+        if showsRemoveObservation || folder.parent != nil {
+            Divider()
+        }
         
         if folder.parent == nil {
-            Button(role: .destructive) {
-                onToggleRemoveObservation()
-            } label: {
-                Label(.localizable(.sidebarLocalFolderRowContextMenuRemoveObservation), systemSymbol: .trash)
+            if showsRemoveObservation {
+                Button(role: .destructive) {
+                    onToggleRemoveObservation()
+                } label: {
+                    Label(.localizable(.sidebarLocalFolderRowContextMenuRemoveObservation), systemSymbol: .trash)
+                }
             }
         } else {
             Button(role: .destructive) {

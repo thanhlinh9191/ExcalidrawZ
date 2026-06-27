@@ -125,6 +125,15 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
             width: rect.width,
             height: rect.height + topInset
         )
+#elseif os(iOS)
+        return FileHomeCoverTransitionGeometry.rectClosestToImageAspect(
+            rect,
+            alternate: FileHomeCoverTransitionGeometry.rectIncludingIgnoredSafeArea(
+                rect,
+                in: geometry
+            ),
+            image: loadingOverlayCoverImage
+        )
 #else
         return rect
 #endif
