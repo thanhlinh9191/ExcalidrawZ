@@ -1,12 +1,60 @@
 require "cgi"
 require "fileutils"
+require "json"
 require "rexml/document"
+require "shellwords"
 
 default_platform(:mac)
 
+PREVIEW_PLATFORMS = {
+  "iphone" => {
+    config: "previews/iphone.json",
+    source_dir: "previews/output/iphone",
+    basename: "AppStore_iPhone_Previews",
+    slice_width: 1284,
+    gap_width: 0,
+    slice_count: 5,
+    output_prefix: "iphone_6_7"
+  },
+  "ipad" => {
+    config: "previews/ipad.json",
+    source_dir: "previews/output/ipad",
+    basename: "AppStore_iPad_Previews",
+    slice_width: 2048,
+    gap_width: 0,
+    slice_count: nil,
+    output_prefix: "ipad_13"
+  },
+  "mac" => {
+    config: "previews/mac.json",
+    source_dir: "previews/output/mac",
+    basename: "AppStore_Mac_Previews",
+    slice_width: 2880,
+    gap_width: 0,
+    slice_count: nil,
+    output_prefix: "mac"
+  }
+}.freeze
+
+def preview_platform_options(value)
+  platform = (value || "iphone").to_s
+  options = PREVIEW_PLATFORMS[platform]
+  return options if options
+
+  UI.user_error!("Unknown preview platform '#{platform}'. Expected one of: #{PREVIEW_PLATFORMS.keys.join(', ')}")
+end
+
+def preview_json(path)
+  return {} unless File.exist?(path)
+
+  JSON.parse(File.read(path))
+rescue JSON::ParserError => error
+  UI.user_error!("Invalid preview config #{path}: #{error.message}")
+end
+
 def current_project_version
   get_version_number(
-    xcodeproj: "ExcalidrawZ.xcodeproj",
+    xcodeproj: File.expand_path("../ExcalidrawZ.xcodeproj", __dir__),
     target: "ExcalidrawZ"
   )
 end
@@ -185,7 +233,7 @@ platform :mac do
   desc "Upload App Store Connect metadata only. Build upload stays manual."
   lane :upload_metadata do |options|
     version = options[:version] || current_project_version
-    metadata_path = "./fastlane/metadata"
+    metadata_path = File.expand_path("metadata", __dir__)
     locales = release_note_locales(metadata_path)
 
     UI.message("Preparing to upload App Store Connect metadata.")
@@ -236,5 +284,93 @@ platform :mac do
     else
       UI.message("No matching appcast item found for version #{version}; generated HTML only.")
     end
+  end
+
+  desc "Split localized App Store preview strips into fastlane screenshot folders."
+  lane :split_screenshots do |options|
+    platform_options = preview_platform_options(options[:preview_platform] || options[:platform])
+    config_path = options[:config] || File.expand_path(platform_options[:config], __dir__)
+    config_json = preview_json(config_path)
+    args = [
+      "python3",
+      File.expand_path("scripts/split_app_store_previews.py", __dir__),
+      "--source-dir",
+      options[:source_dir] || File.expand_path(platform_options[:source_dir], __dir__),
+      "--basename",
+      options[:basename] || platform_options[:basename],
+      "--output-dir",
+      options[:output_dir] || File.expand_path("screenshots", __dir__),
+      "--slice-width",
+      (options[:slice_width] || config_json["sliceWidth"] || platform_options[:slice_width]).to_s,
+      "--gap-width",
+      (options[:gap_width] || config_json["gapWidth"] || platform_options[:gap_width]).to_s,
+      "--legacy-locale",
+      options[:legacy_locale] || "zh-Hans",
+      "--output-prefix",
+      options[:output_prefix] || platform_options[:output_prefix]
+    ]
+
+    slice_count = options[:slice_count] || config_json["sliceCount"] || platform_options[:slice_count]
+    args += ["--slice-count", slice_count.to_s] if slice_count
+    args += ["--locales", options[:locales]] if options[:locales]
+    args << "--include-remainder" if options[:include_remainder]
+    args << "--no-clean" if options[:no_clean]
+    args << "--dry-run" if options[:dry_run]
+
+    sh(args.shelljoin)
+  end
+
+  desc "Render localized App Store preview strips from a text-free template."
+  lane :render_preview_strips do |options|
+    platform_options = preview_platform_options(options[:preview_platform] || options[:platform])
+    args = [
+      "env",
+      "CLANG_MODULE_CACHE_PATH=/private/tmp/excalidrawz-clang-module-cache",
+      "swift",
+      File.expand_path("scripts/render_app_store_previews.swift", __dir__),
+      "--config",
+      options[:config] || File.expand_path(platform_options[:config], __dir__),
+      "--repo-root",
+      File.expand_path("..", __dir__)
+    ]
+
+    args += ["--template", options[:template]] if options[:template]
+    args += ["--output", options[:output]] if options[:output]
+    args += ["--locales", options[:locales]] if options[:locales]
+    args << "--dry-run" if options[:dry_run]
+
+    sh(args.shelljoin)
+  end
+
+  desc "Render localized preview strips and split them into App Store screenshots."
+  lane :generate_previews do |options|
+    render_options = {
+      platform: options[:preview_platform] || options[:platform],
+      config: options[:config],
+      template: options[:template],
+      output: options[:output],
+      locales: options[:locales],
+      dry_run: options[:dry_run]
+    }.compact
+
+    split_options = {
+      platform: options[:preview_platform] || options[:platform],
+      config: options[:config],
+      source_dir: options[:source_dir],
+      basename: options[:basename],
+      output_dir: options[:output_dir],
+      slice_width: options[:slice_width],
+      gap_width: options[:gap_width],
+      slice_count: options[:slice_count],
+      legacy_locale: options[:legacy_locale],
+      output_prefix: options[:output_prefix],
+      locales: options[:locales],
+      include_remainder: options[:include_remainder],
+      no_clean: options[:no_clean],
+      dry_run: options[:dry_run]
+    }.compact
+
+    render_preview_strips(render_options)
+    split_screenshots(split_options)
   end
 end

@@ -31,6 +31,30 @@ Upload App Store Connect metadata only. Build upload stays manual.
 
 Generate localized Sparkle release notes and patch local website appcast.
 
+### mac split_screenshots
+
+```sh
+[bundle exec] fastlane mac split_screenshots
+```
+
+Split localized App Store preview strips into fastlane screenshot folders.
+
+### mac render_preview_strips
+
+```sh
+[bundle exec] fastlane mac render_preview_strips
+```
+
+Render localized App Store preview strips from a text-free template.
+
+### mac generate_previews
+
+```sh
+[bundle exec] fastlane mac generate_previews
+```
+
+Render localized preview strips and split them into App Store screenshots.
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

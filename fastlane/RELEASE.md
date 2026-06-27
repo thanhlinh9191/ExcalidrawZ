@@ -89,3 +89,95 @@ If `WebPage/public/downloads/appcast.xml` already contains an item for that vers
 ```
 
 The existing appcast generation script should run before this lane when publishing a new non-App Store build.
+
+## Screenshots
+
+Preview strips are rendered from a text-free template plus localized text configuration, then split into fastlane screenshot folders.
+
+Text-free template:
+
+```text
+fastlane/previews/assets/iphone/AppStore_iPhone_Previews.png
+fastlane/previews/assets/iphone/AppStore_iPhone_Previews-zh-Hans.png
+```
+
+The renderer first looks for a localized template named `AppStore_iPhone_Previews-{locale}.png`. If none exists, it falls back to `AppStore_iPhone_Previews.png`.
+
+Localized text and font candidates:
+
+```text
+fastlane/previews/iphone.json
+```
+
+Text boxes can use `horizontalPlacement: "center"` to stay centered within each screenshot slice. In that mode, `x` is optional and acts as a center offset.
+
+Generate localized App Store preview screenshots:
+
+```sh
+fastlane mac generate_previews
+```
+
+Render one locale:
+
+```sh
+fastlane mac generate_previews locales:zh-Hans
+```
+
+Preview without writing files:
+
+```sh
+fastlane mac generate_previews dry_run:true
+```
+
+Output:
+
+```text
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.en-US.png
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.zh-Hans.png
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.zh-Hant.png
+```
+
+The lane renders localized preview strips as an intermediate output, then splits them into fastlane screenshot folders.
+
+Source naming:
+
+```text
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.en-US.png
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.zh-Hans.png
+fastlane/previews/output/iphone/AppStore_iPhone_Previews.zh-Hant.png
+```
+
+If you need to split an older Resource strip, pass `source_dir:Resources`. The legacy source `AppStore_iPhone_Previews.png` is treated as `zh-Hans` unless a localized `AppStore_iPhone_Previews.zh-Hans.png` exists in the selected source directory.
+
+Split existing strips again without rendering:
+
+```sh
+fastlane mac split_screenshots
+```
+
+Preview without writing files:
+
+```sh
+fastlane mac split_screenshots dry_run:true
+```
+
+Output:
+
+```text
+fastlane/screenshots/en-US/iphone_6_7_01.png
+fastlane/screenshots/zh-Hans/iphone_6_7_01.png
+```
+
+The generated PNG files under `fastlane/screenshots/` are ignored by git.
+
+Platform defaults are prepared for `iphone`, `ipad`, and `mac`:
+
+```sh
+fastlane mac generate_previews platform:iphone
+```
+
+Add `fastlane/previews/ipad.json` or `fastlane/previews/mac.json` later when those layouts are ready.
+
+Apple controls the spacing between screenshots in App Store surfaces, and the web and app presentations should not be treated as pixel-identical. If a design source strip includes visual spacing between screenshots, set `gapWidth` in its preview config or pass `gap_width:` to `split_screenshots`. The splitter skips the gap, so final App Store screenshots do not contain baked-in spacing.
+
+If the source strip is wider than the number of screenshots you want to upload, set `sliceCount` in its preview config. The iPhone config currently exports the first 5 screenshots.
