@@ -13,6 +13,77 @@ import Logging
 actor CollaborationFileRepository {
     private let logger = Logger(label: "CollaborationFileRepository")
 
+    // MARK: - Create CollaborationFile
+
+    func createCollaborationFile(
+        name: String,
+        content: Data?,
+        isOwner: Bool,
+        roomID: String? = nil
+    ) async throws -> NSManagedObjectID {
+        let context = PersistenceController.shared.newTaskContext()
+
+        let (objectID, hasInlineContent) = try await context.perform {
+            let collaborationFile = CollaborationFile(
+                name: name,
+                content: content,
+                isOwner: isOwner,
+                context: context
+            )
+            collaborationFile.roomID = roomID
+
+            try context.save()
+
+            return (collaborationFile.objectID, content != nil)
+        }
+
+        if hasInlineContent {
+            try await saveCollaborationFileContentToStorage(collaborationFileObjectID: objectID)
+        }
+
+        return objectID
+    }
+
+    func findOrCreateCollaborationFile(
+        name: String,
+        content: Data?,
+        isOwner: Bool,
+        roomID: String
+    ) async throws -> NSManagedObjectID {
+        let context = PersistenceController.shared.newTaskContext()
+
+        let (objectID, needsStorageSave) = try await context.perform {
+            let fetchRequest = NSFetchRequest<CollaborationFile>(entityName: "CollaborationFile")
+            fetchRequest.predicate = NSPredicate(format: "roomID = %@", roomID)
+            fetchRequest.fetchLimit = 1
+
+            if let collaborationFile = try context.fetch(fetchRequest).first {
+                return (
+                    collaborationFile.objectID,
+                    collaborationFile.content != nil && collaborationFile.filePath == nil
+                )
+            }
+
+            let collaborationFile = CollaborationFile(
+                name: name,
+                content: content,
+                isOwner: isOwner,
+                context: context
+            )
+            collaborationFile.roomID = roomID
+
+            try context.save()
+
+            return (collaborationFile.objectID, content != nil)
+        }
+
+        if needsStorageSave {
+            try await saveCollaborationFileContentToStorage(collaborationFileObjectID: objectID)
+        }
+
+        return objectID
+    }
+
     // MARK: - Update CollaborationFile Content
 
     /// Update collaboration file content with new data from server
