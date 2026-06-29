@@ -60,6 +60,7 @@ extension FileState {
 
                 try await folder.withSecurityScopedURL { _ in
                     try await FileCoordinator.shared.coordinatedWrite(url: fileURL, data: content)
+                    Self.touchLocalFileModificationDate(fileURL, logger: self.logger)
                 }
                 do {
                     try await recordLocalRestoreCheckpoint(

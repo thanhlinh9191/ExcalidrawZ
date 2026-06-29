@@ -179,7 +179,8 @@ actor FileRepository {
     func updateElements(
         fileObjectID: NSManagedObjectID,
         fileData: Data,
-        checkpoint: CheckpointWriteOptions
+        checkpoint: CheckpointWriteOptions,
+        updateMetadataWhenPathUnchanged: Bool = true
     ) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
@@ -192,7 +193,7 @@ actor FileRepository {
         try await saveFileContentToStorage(
             fileObjectID: fileObjectID,
             content: contentData,
-            updateMetadataWhenPathUnchanged: false
+            updateMetadataWhenPathUnchanged: updateMetadataWhenPathUnchanged
         )
 
         // Step 2: Write checkpoint per policy.

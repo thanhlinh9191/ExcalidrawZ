@@ -1000,7 +1000,8 @@ final class FileState: ObservableObject {
                     try await PersistenceController.shared.fileRepository.updateElements(
                         fileObjectID: fileObjectID,
                         fileData: content,
-                        checkpoint: .suppress
+                        checkpoint: .suppress,
+                        updateMetadataWhenPathUnchanged: false
                     )
                     logger.debug("Background appState-only file update saved: \(fileName)")
 
@@ -1031,6 +1032,7 @@ final class FileState: ObservableObject {
 
         try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
             try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
+            touchLocalFileModificationDate(url, logger: logger)
         }
 
         guard !suppressCheckpoint else {
@@ -1101,7 +1103,8 @@ final class FileState: ObservableObject {
                         try await PersistenceController.shared.fileRepository.updateElements(
                             fileObjectID: fileObjectID,
                             fileData: content,
-                            checkpoint: .suppress
+                            checkpoint: .suppress,
+                            updateMetadataWhenPathUnchanged: false
                         )
                         self.logger.debug("AppState-only file update saved")
                     } catch {
@@ -1184,6 +1187,7 @@ final class FileState: ObservableObject {
         // Use FileCoordinator for safe atomic write
         guard let data = excalidrawFile.content else { return }
         try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
+        Self.touchLocalFileModificationDate(url, logger: logger)
 
         // Skip checkpoint writes entirely while an automated mutation session
         // is active — file content still saves, history doesn't. Mirrors the
@@ -1192,7 +1196,10 @@ final class FileState: ObservableObject {
             self.automaticCheckpointWritesSuppressed
         }
         if suppressCheckpoint {
-            await MainActor.run { self.didUpdateFile = true }
+            await MainActor.run {
+                self.didUpdateFile = true
+                self.objectWillChange.send()
+            }
             return
         }
 
@@ -1238,6 +1245,22 @@ final class FileState: ObservableObject {
 
         await MainActor.run {
             self.didUpdateFile = true
+            self.objectWillChange.send()
+        }
+    }
+
+    static func touchLocalFileModificationDate(
+        _ url: URL,
+        date: Date = Date(),
+        logger: Logger
+    ) {
+        do {
+            try FileManager.default.setAttributes(
+                [.modificationDate: date],
+                ofItemAtPath: url.filePath
+            )
+        } catch {
+            logger.warning("Failed to update local file modification date for \(url.lastPathComponent): \(error.localizedDescription)")
         }
     }
     
@@ -1281,6 +1304,7 @@ final class FileState: ObservableObject {
                 
                 await MainActor.run {
                     self.didUpdateFile = true
+                    self.objectWillChange.send()
                 }
             } catch {
                 self.logger.error("Failed to update collaboration file: \(error)")
