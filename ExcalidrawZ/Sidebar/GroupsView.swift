@@ -189,6 +189,7 @@ struct GroupsView: View {
                             files: files,
                             fileState: fileState
                         )
+                        .id(SidebarActiveFileScrollTarget.file(file.objectID))
                     }
                     // ⬇️ cause `com.apple.SwiftUI.AsyncRenderer (22): EXC_BREAKPOINT` on iOS
                     // .animation(.smooth, value: files)
@@ -217,6 +218,7 @@ struct GroupsView: View {
                 isBeingDropped: $isBeingDropped,
                 fileState: fileState
             )
+            .id(SidebarGroupScrollTarget.group(group.objectID))
             .modifier(GroupRowDragModifier(group: group))
             .simultaneousGesture(TapGesture(count: 2).onEnded {
                 fileState.expandToGroup(group.objectID)
@@ -279,6 +281,7 @@ struct GroupsView: View {
                 isBeingDropped: $isBeingDropped,
                 fileState: fileState
             )
+            .id(SidebarGroupScrollTarget.group(group.objectID))
             .modifier(
                 GroupContextMenuViewModifier(
                     group: group,

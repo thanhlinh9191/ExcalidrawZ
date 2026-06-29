@@ -140,6 +140,14 @@ struct GroupListView: View {
                 .readHeight($scrollViewHeight)
                 .onReceive(NotificationCenter.default.publisher(for: .shouldExpandGroup)) { output in
                     guard let targetGroupID = output.object as? NSManagedObjectID else { return }
+#if os(iOS)
+                    if fileState.currentActiveFile != nil,
+                       isCurrentActiveGroupExpansionTarget(targetGroupID) {
+                        scrollToCurrentActiveFileIfNeeded(using: proxy, delay: 0.45)
+                    } else {
+                        scrollToGroupLabel(targetGroupID, using: proxy, delay: 0.7)
+                    }
+#else
                     withAnimation(.smooth(duration: 0.2).delay(0.7)) {
                         proxy.scrollTo(targetGroupID)
                         if let group = viewContext.object(with: targetGroupID) as? Group {
@@ -149,13 +157,24 @@ struct GroupListView: View {
                             proxy.scrollTo(folder)
                         }
                     }
+#endif
                 }
+#if os(iOS)
+                .watch(value: fileState.currentActiveFile?.id) { _ in
+                    scrollToCurrentActiveFileIfNeeded(using: proxy, delay: 1.0)
+                }
+#endif
                 .watch(value: fileState.currentActiveGroup) { newValue in
                     if newValue == nil {
                         withAnimation(.smooth(duration: 0.2)) {
                             proxy.scrollTo("home")
                         }
                     }
+#if os(iOS)
+                    if newValue != nil {
+                        scrollToCurrentActiveFileIfNeeded(using: proxy, delay: 0.35)
+                    }
+#endif
                 }
             }
             Divider()
@@ -217,8 +236,94 @@ struct GroupListView: View {
         .menuIndicator(.hidden)
         .fixedSize()
     }
+
+    private func scrollToGroupLabel(
+        _ groupID: NSManagedObjectID,
+        using proxy: ScrollViewProxy,
+        delay: TimeInterval
+    ) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.smooth(duration: 0.2)) {
+                if viewContext.object(with: groupID) is Group {
+                    proxy.scrollTo(
+                        SidebarGroupScrollTarget.group(groupID),
+                        anchor: .center
+                    )
+                } else if viewContext.object(with: groupID) is LocalFolder {
+                    proxy.scrollTo(
+                        SidebarGroupScrollTarget.localFolder(groupID),
+                        anchor: .center
+                    )
+                } else {
+                    proxy.scrollTo(groupID, anchor: .center)
+                }
+            }
+        }
+    }
+
+#if os(iOS)
+    private func isCurrentActiveGroupExpansionTarget(_ groupID: NSManagedObjectID) -> Bool {
+        guard let activeGroup = fileState.currentActiveGroup else {
+            return false
+        }
+
+        switch activeGroup {
+            case .group(let group):
+                return group.containsInAncestorChain(groupID)
+            case .localFolder(let folder):
+                return folder.containsInAncestorChain(groupID)
+            case .temporary, .collaboration:
+                return false
+        }
+    }
+
+    private func scrollToCurrentActiveFileIfNeeded(
+        using proxy: ScrollViewProxy,
+        delay: TimeInterval
+    ) {
+        guard let target = SidebarActiveFileScrollTarget(activeFile: fileState.currentActiveFile),
+              let activeFileID = fileState.currentActiveFile?.id else {
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard fileState.currentActiveFile?.id == activeFileID else { return }
+            withAnimation(.smooth(duration: 0.2)) {
+                proxy.scrollTo(target, anchor: .center)
+            }
+        }
+    }
+#endif
     
 }
+
+#if os(iOS)
+private extension Group {
+    func containsInAncestorChain(_ objectID: NSManagedObjectID) -> Bool {
+        var currentGroup: Group? = self
+        while let group = currentGroup {
+            if group.objectID == objectID {
+                return true
+            }
+            currentGroup = group.parent
+        }
+        return false
+    }
+}
+
+private extension LocalFolder {
+    func containsInAncestorChain(_ objectID: NSManagedObjectID) -> Bool {
+        var currentFolder: LocalFolder? = self
+        while let folder = currentFolder {
+            if folder.objectID == objectID {
+                return true
+            }
+            currentFolder = folder.parent
+        }
+        return false
+    }
+}
+#endif
 
 private struct DatabaseGroupsListView: View {
     @FetchRequest
