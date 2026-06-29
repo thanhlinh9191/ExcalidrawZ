@@ -19,13 +19,10 @@ struct ContentViewDetail: View {
     @EnvironmentObject var fileState: FileState
     
     @Binding var isSettingsPresented: Bool
-    
-    @StateObject private var toolState = ToolState()
 
     var body: some View {
         splitViewsContent()
             .modifier(ExcalidrawEditorToolbarModifier())
-            .environmentObject(toolState)
     }
     
     private func applyToolStateWebCoordinator() {

@@ -12,6 +12,7 @@ import LLMCore
 
 struct DebugPanelView: View {
     @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject var toolState: ToolState
 
     private let actionColumns = [
         GridItem(.flexible(minimum: 100), spacing: 8),

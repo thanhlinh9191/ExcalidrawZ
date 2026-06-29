@@ -32,6 +32,20 @@ extension DebugPanelView {
                 }
                 .disabled(isRunning)
 
+                debugCard("Pencil State", systemImage: "pencil.tip") {
+                    Text("Compare Swift ToolState with excalidrawZHelper and Excalidraw appState.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    debugActionButton("Get Pencil State") {
+                        runCameraAction("Pencil State") {
+                            try await debugPencilState()
+                        }
+                    }
+                    .disabled(isRunning)
+                }
+
                 debugCard("Viewport Capture", systemImage: "photo") {
                     Text("Export the active WebView viewport through excalidrawZHelper.exportViewportToBlob().")
                         .font(.caption)
@@ -72,6 +86,55 @@ extension DebugPanelView {
             Label("Diagnostics", systemImage: "exclamationmark.triangle")
                 .font(.headline)
         }
+    }
+
+    private func debugPencilState() async throws -> String {
+        let coordinator = try requireCoordinator()
+        let swiftState = await MainActor.run {
+            """
+            Swift:
+              inPenMode=\(toolState.inPenMode)
+              pencilInteractionMode=\(String(describing: toolState.pencilInteractionMode)) (\(toolState.pencilInteractionMode.rawValue))
+              activatedTool=\(String(describing: toolState.activatedTool))
+              previousActivatedTool=\(String(describing: toolState.previousActivatedTool))
+              isToolLocked=\(toolState.isToolLocked)
+            """
+        }
+        let jsState = try await coordinator.webView.callAsyncJavaScript(
+            """
+            return JSON.stringify((() => {
+              const helper = window.excalidrawZHelper;
+              const appState = helper?._api?.getAppState?.();
+              return {
+                helper: helper ? {
+                  inPencilMode: helper.inPencilMode,
+                  pencilConnected: helper.pencilConnected,
+                  pencilInterationMode: helper.pencilInterationMode,
+                  pointerInputPolicy: helper.getPointerInputPolicy?.() ?? null,
+                  lastToggleToolKey: helper.lastToggleToolKey
+                } : null,
+                appState: appState ? {
+                  penMode: appState.penMode,
+                  penDetected: appState.penDetected,
+                  activeTool: appState.activeTool,
+                  lastPointerDownWith: appState.lastPointerDownWith,
+                  cursorButton: appState.cursorButton
+                } : null,
+                document: {
+                  activeElement: document.activeElement?.tagName ?? null
+                }
+              };
+            })(), null, 2);
+            """,
+            arguments: [:],
+            contentWorld: .page
+        )
+        return """
+        \(swiftState)
+
+        JS:
+        \((jsState as? String) ?? String(describing: jsState))
+        """
     }
 
     private func runViewportCapture() {

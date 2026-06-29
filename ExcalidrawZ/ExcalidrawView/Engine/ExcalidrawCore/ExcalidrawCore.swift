@@ -65,6 +65,11 @@ class ExcalidrawCore: NSObject, ObservableObject {
 
     internal var lastTool: ExcalidrawTool?
     weak var aiCameraEventSink: (any AICameraSessionEventSink)?
+
+#if os(iOS)
+    var lastPencilToolToggleAt: Date = .distantPast
+    var isHandlingPencilToolToggle = false
+#endif
     
     @MainActor
     func setup(parent: ExcalidrawCanvasView) {

@@ -41,6 +41,7 @@ struct ContentView: View {
     @StateObject private var layoutState = LayoutState()
     @StateObject private var shareFileState = ShareFileState()
     @StateObject private var canvasPreferencesState = CanvasPreferencesState()
+    @StateObject private var toolState = ToolState()
 
 #if canImport(AppKit)
     @State private var window: NSWindow?
@@ -78,6 +79,7 @@ struct ContentView: View {
             .environmentObject(layoutState)
             .environmentObject(shareFileState)
             .environmentObject(canvasPreferencesState)
+            .environmentObject(toolState)
             .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
             .swiftyAlert(logs: true)
             .bindWindow($window)

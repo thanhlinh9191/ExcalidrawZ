@@ -14,8 +14,6 @@ extension Notification.Name {
 
 #if os(iOS)
 struct ApplePencilToolbarModifier: ViewModifier {
-    @AppStorage("isFirstOpenPencilMode") private var isFirstOpenPencilMode = true
-
     @Environment(\.alertToast) var alertToast
     @EnvironmentObject private var toolState: ToolState
 
@@ -32,10 +30,6 @@ struct ApplePencilToolbarModifier: ViewModifier {
     @State private var expansionHandlerOffset: CGSize = .zero
 
     @State private var toolbarAlignment: Alignment = .bottomTrailing
-    
-    @State private var isPencilModeTipsPresented = false
-    
-
     
     /// 工具栏与屏幕边缘的最小间距
     private let margin: CGFloat = 16
@@ -224,25 +218,11 @@ struct ApplePencilToolbarModifier: ViewModifier {
                 guard toolState.inPenMode else { return }
                 Task {
                     do {
-                        switch mode {
-                            case .fingerSelect:
-                                try await toolState.togglePencilInterationMode(.fingerSelect)
-                            case .fingerMove:
-                                try await toolState.togglePencilInterationMode(.fingerMove)
-                        }
+                        try await toolState.setPencilInteractionMode(mode)
                     } catch {
                         alertToast(error)
                     }
                 }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .didPencilConnected)) { _ in
-                if isFirstOpenPencilMode {
-                    isPencilModeTipsPresented = true
-                    isFirstOpenPencilMode = false
-                }
-            }
-            .sheet(isPresented: $isPencilModeTipsPresented) {
-                PencilTipsSheetView()
             }
     }
     

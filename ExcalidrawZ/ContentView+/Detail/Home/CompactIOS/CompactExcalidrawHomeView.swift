@@ -19,8 +19,6 @@ struct CompactExcalidrawHomeView: View {
         fileState.currentActiveFile == nil
     }
 
-    @StateObject private var toolState = ToolState()
-
     @State private var searchText = ""
 
     
@@ -35,7 +33,6 @@ struct CompactExcalidrawHomeView: View {
                 .opacity(disableInteration || !fileHomeItemTransitionState.canShowExcalidrawCanvas ? 0 : 1)
                 .modifier(ExcalidrawEditorToolbarModifier())
                 .modifier(InspectorPresentationModifier())
-                .environmentObject(toolState)
             }
             
             TabView {

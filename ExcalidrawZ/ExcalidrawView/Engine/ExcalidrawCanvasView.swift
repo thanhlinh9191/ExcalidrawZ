@@ -224,6 +224,7 @@ struct ExcalidrawCanvasView: View {
 
 #if os(iOS)
             if !isLoading, loadingFileID == nil {
+                await applyPencilInteractionModeAfterLoadIfNeeded()
                 await enterCompactDragModeAfterLoadIfNeeded()
             }
 #endif
@@ -231,6 +232,16 @@ struct ExcalidrawCanvasView: View {
     }
 
 #if os(iOS)
+    @MainActor
+    private func applyPencilInteractionModeAfterLoadIfNeeded() async {
+        guard toolState.inPenMode else { return }
+        do {
+            try await toolState.setPencilInteractionMode(toolState.pencilInteractionMode)
+        } catch {
+            logger.warning("Failed to apply Apple Pencil interaction mode after load: \(error)")
+        }
+    }
+
     @MainActor
     private func enterCompactDragModeAfterLoadIfNeeded() async {
         guard containerHorizontalSizeClass == .compact,

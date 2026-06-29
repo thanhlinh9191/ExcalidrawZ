@@ -65,14 +65,13 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     if message.data.type == .hand {
                         self.lastTool = .hand
                         DispatchQueue.main.async {
-                            self.parent?.toolState.setActivedTool(.hand)
+                            self.parent?.toolState.setActiveToolFromWeb(.hand)
                         }
                     } else {
-                        self.parent?.toolState.previousActivatedTool = self.parent?.toolState.activatedTool
                         if let tool = ExcalidrawTool(from: message.data.type) {
                             self.lastTool = tool
                             DispatchQueue.main.async {
-                                self.parent?.toolState.setActivedTool(tool)
+                                self.parent?.toolState.setActiveToolFromWeb(tool)
                             }
                         }
                     }
@@ -92,8 +91,12 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                             self.canUndo = !message.data.disabled
                     }
                 case .didPenDown:
-                    self.parent?.toolState.inPenMode = true
-                    NotificationCenter.default.post(name: .didPencilConnected, object: nil)
+                    Task { @MainActor in
+                        guard let toolState = self.parent?.toolState else { return }
+                        toolState.inPenMode = true
+                        try? await toolState.setPencilInteractionMode(toolState.pencilInteractionMode)
+                        NotificationCenter.default.post(name: .didPencilConnected, object: nil)
+                    }
                 case .didSelectElements(let message):
                     DispatchQueue.main.async {
                         self.updateSelectedElementIDs(message.data.map(\.id))
