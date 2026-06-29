@@ -82,7 +82,17 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         }
 
         do {
-            let contentWithAppState = try Self.mergingAppState(appState, into: capturedContent)
+            let persistenceAppState = try await appStateForPersistence(
+                appState,
+                fileID: expectedFileID,
+                target: target
+            )
+            guard let contentWithAppState = try Self.mergingAppStateIfSemanticallyChanged(
+                persistenceAppState,
+                into: capturedContent
+            ) else {
+                return
+            }
             await FileState.saveCapturedAppStateOnlyUpdate(
                 target,
                 content: contentWithAppState
@@ -125,7 +135,18 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
             }
 
             let appState = try await core.getCurrentAppState()
-            let contentWithAppState = try Self.mergingAppState(appState, into: content)
+            let persistenceAppState = try await appStateForPersistence(
+                appState,
+                fileID: expectedFileID,
+                core: core
+            )
+            guard let contentWithAppState = try Self.mergingAppStateIfSemanticallyChanged(
+                persistenceAppState,
+                into: content
+            ) else {
+                clear()
+                return true
+            }
             await MainActor.run {
                 core.parent?.fileState.updateAppStateOnlyForCurrentFile(
                     expectedFileID: expectedFileID,
@@ -169,7 +190,18 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
             }
 
             let appState = try await core.getCurrentAppState()
-            let contentWithAppState = try Self.mergingAppState(appState, into: capturedContent)
+            let persistenceAppState = try await appStateForPersistence(
+                appState,
+                fileID: expectedFileID,
+                target: target
+            )
+            guard let contentWithAppState = try Self.mergingAppStateIfSemanticallyChanged(
+                persistenceAppState,
+                into: capturedContent
+            ) else {
+                clear()
+                return true
+            }
             await FileState.saveCapturedAppStateOnlyUpdate(
                 target,
                 content: contentWithAppState
@@ -224,7 +256,17 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
                 return
             }
 
-            let contentWithAppState = try Self.mergingAppState(appState, into: content)
+            let persistenceAppState = try await appStateForPersistence(
+                appState,
+                fileID: expectedFileID,
+                core: core
+            )
+            guard let contentWithAppState = try Self.mergingAppStateIfSemanticallyChanged(
+                persistenceAppState,
+                into: content
+            ) else {
+                return
+            }
             await MainActor.run {
                 core.parent?.fileState.updateAppStateOnlyForCurrentFile(
                     expectedFileID: expectedFileID,
@@ -256,6 +298,50 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         return (fileID, appState)
     }
 
+    private func appStateForPersistence(
+        _ appState: ExcalidrawCore.JSONValue,
+        fileID: String,
+        core: ExcalidrawCore
+    ) async throws -> ExcalidrawCore.JSONValue {
+        guard await usesLocalViewportSidecar(fileID: fileID, core: core) else {
+            return appState
+        }
+
+        return try await ExcalidrawViewportStateStore.shared.appStateBySeparatingViewport(
+            appState,
+            fileID: fileID
+        )
+    }
+
+    private func appStateForPersistence(
+        _ appState: ExcalidrawCore.JSONValue,
+        fileID: String,
+        target: FileState.CapturedCanvasSaveTarget
+    ) async throws -> ExcalidrawCore.JSONValue {
+        guard case .libraryFile = target.kind else {
+            return appState
+        }
+
+        return try await ExcalidrawViewportStateStore.shared.appStateBySeparatingViewport(
+            appState,
+            fileID: fileID
+        )
+    }
+
+    private func usesLocalViewportSidecar(
+        fileID: String,
+        core: ExcalidrawCore
+    ) async -> Bool {
+        await MainActor.run {
+            guard core.parent?.type == .normal,
+                  let activeFile = core.parent?.fileState.currentActiveFile,
+                  case .file(let file) = activeFile else {
+                return false
+            }
+            return file.id?.uuidString == fileID
+        }
+    }
+
     private func clearLocked(cancelTask: Bool = true) {
         if cancelTask {
             commitTask?.cancel()
@@ -265,17 +351,42 @@ final class ExcalidrawDocumentAppStateSnapshotSaver: @unchecked Sendable {
         latestAppStateFileID = nil
     }
 
-    static func mergingAppState(
+    private static func mergingAppStateIfSemanticallyChanged(
         _ appState: ExcalidrawCore.JSONValue,
         into content: Data
-    ) throws -> Data {
+    ) throws -> Data? {
         let appStateData = try JSONEncoder().encode(appState)
         let appStateObject = try JSONSerialization.jsonObject(with: appStateData)
         guard var contentObject = try JSONSerialization.jsonObject(with: content) as? [String: Any] else {
             return content
         }
+
+        let existingAppStateObject = contentObject["appState"] ?? [String: Any]()
+        let existingSemanticAppStateObject = appStateObjectByRemovingViewport(from: existingAppStateObject)
+        guard try normalizedJSONData(existingSemanticAppStateObject) != normalizedJSONData(appStateObject) else {
+            return nil
+        }
+
         contentObject["appState"] = appStateObject
         return try JSONSerialization.data(withJSONObject: contentObject)
+    }
+
+    private static func appStateObjectByRemovingViewport(from appStateObject: Any) -> Any {
+        guard var appState = appStateObject as? [String: Any] else {
+            return appStateObject
+        }
+
+        for key in ["scrollX", "scrollY", "zoom", "width", "height"] {
+            appState.removeValue(forKey: key)
+        }
+        return appState
+    }
+
+    private static func normalizedJSONData(_ object: Any) throws -> Data {
+        try JSONSerialization.data(
+            withJSONObject: ["value": object],
+            options: [.sortedKeys]
+        )
     }
 
 }

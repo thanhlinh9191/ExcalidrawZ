@@ -381,7 +381,7 @@ struct ExcalidrawEditor: View {
         do {
             switch activeFile {
                 case .file(let file):
-                    let content = try await file.loadContent()
+                    let content = try await file.loadContent(applyingLocalViewport: true)
                     let parsedFile = try? ExcalidrawFile(data: content, id: activeFile.id)
                     await MainActor.run {
                         guard self.activeFile?.id == activeFile.id else { return }
@@ -537,7 +537,19 @@ struct ExcalidrawEditor: View {
 
         self.logger.info("pullUpdatingFromCloud")
         do {
-            let file = try ExcalidrawFile(data: latestData, id: excalidrawFile?.id)
+            let data: Data
+            if let activeFile,
+               case .file = activeFile,
+               let fileID = excalidrawFile?.id {
+                data = try await ExcalidrawViewportStateStore.shared
+                    .contentDataByApplyingStoredViewport(
+                        to: latestData,
+                        fileID: fileID
+                    )
+            } else {
+                data = latestData
+            }
+            let file = try ExcalidrawFile(data: data, id: excalidrawFile?.id)
             await MainActor.run {
                 self.excalidrawFile = file
                 NotificationCenter.default.post(name: .forceReloadExcalidrawFile, object: nil)

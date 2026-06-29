@@ -132,6 +132,11 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             endStateChangeSuppression(canvasToken)
         }
 
+        let dataForLoad = await dataByApplyingLocalViewportIfNeeded(
+            data,
+            fileID: fileID
+        )
+
         let maxAttempts = 2
         for attempt in 1...maxAttempts {
             guard !Task.isCancelled else {
@@ -149,7 +154,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 }
             }
 
-            let result = await loadPreparedFile(fileID: fileID, data: data, force: force)
+            let result = await loadPreparedFile(fileID: fileID, data: dataForLoad, force: force)
 
             if validateCurrentParentFile {
                 let isStillCurrent = await MainActor.run {
@@ -330,10 +335,15 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 }
                 guard let existingContent else { return }
 
+                let fileDataForPersistence = try await canvasFileDataBySeparatingLocalViewportIfNeeded(
+                    fileData,
+                    currentFileID: currentFileID
+                )
+
                 let preparedUpdate = try await Task.detached(priority: .utility) { () async throws -> ExcalidrawFile.PreparedCanvasDataUpdate in
                     try ExcalidrawFile.prepareCanvasDataUpdate(
                         existingContent: existingContent,
-                        data: fileData
+                        data: fileDataForPersistence
                     )
                 }.value
 
@@ -358,6 +368,56 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         from snapshot: ExcalidrawCore.CurrentFileSnapshot
     ) throws -> ExcalidrawCore.ExcalidrawFileData {
         return .init(documentData: try snapshot.documentData(), elements: nil, files: [:])
+    }
+
+    private func dataByApplyingLocalViewportIfNeeded(
+        _ data: Data,
+        fileID: String
+    ) async -> Data {
+        guard await usesLocalViewportSidecar(fileID: fileID) else {
+            return data
+        }
+
+        do {
+            return try await ExcalidrawViewportStateStore.shared.contentDataByApplyingStoredViewport(
+                to: data,
+                fileID: fileID
+            )
+        } catch {
+            core?.logger.warning("Failed to apply local viewport state for file \(fileID): \(error)")
+            return data
+        }
+    }
+
+    private func canvasFileDataBySeparatingLocalViewportIfNeeded(
+        _ fileData: ExcalidrawCore.ExcalidrawFileData,
+        currentFileID: String?
+    ) async throws -> ExcalidrawCore.ExcalidrawFileData {
+        guard let currentFileID,
+              await usesLocalViewportSidecar(fileID: currentFileID) else {
+            return fileData
+        }
+
+        let documentData = try await ExcalidrawViewportStateStore.shared.contentDataBySeparatingViewport(
+            from: fileData.documentData,
+            fileID: currentFileID
+        )
+        return .init(
+            documentData: documentData,
+            elements: fileData.elements,
+            files: fileData.files
+        )
+    }
+
+    private func usesLocalViewportSidecar(fileID: String) async -> Bool {
+        await MainActor.run {
+            guard core?.parent?.type == .normal,
+                  let activeFile = core?.parent?.fileState.currentActiveFile,
+                  case .file(let file) = activeFile else {
+                return false
+            }
+            return file.id?.uuidString == fileID
+        }
     }
 
     private static func elements(
