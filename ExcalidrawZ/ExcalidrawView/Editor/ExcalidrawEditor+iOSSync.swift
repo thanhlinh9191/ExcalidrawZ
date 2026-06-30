@@ -11,9 +11,11 @@ import ChocofordUI
 
 
 #if os(iOS)
-/// ViewModifier that handles auto-sync for iCloud-synced files in read-only mode (iOS only)
-/// Supports: LocalFile (iCloud Drive), CoreData File, CollaborationFile
-/// Uses polling (5s interval) to detect changes from other devices
+/// ViewModifier that handles iOS local-file refresh for linked iCloud files.
+///
+/// FileStorage-backed app files use `FileStorageICloudStatusMonitor` instead.
+/// This polling fallback is kept for linked folders because those files live
+/// outside FileStorage and still rely on URL-based iCloud status checks.
 private struct IOSAutoSyncModifier: ViewModifier {
     @Environment(\.alertToast) var alertToast
     @Environment(\.scenePhase) var scenePhase
@@ -25,7 +27,6 @@ private struct IOSAutoSyncModifier: ViewModifier {
     var onUpdate: (Data) async -> Void
     
     @State private var autoSyncTask: Task<Void, Never>?
-    
     func body(content: Content) -> some View {
         content
             .watch(value: activeFile) { file in
@@ -61,7 +62,7 @@ private struct IOSAutoSyncModifier: ViewModifier {
             }
     }
     
-    /// Start auto-sync if in read-only mode with iCloud file
+    /// Start auto-sync if in read-only mode with a linked iCloud file.
     private func startAutoSyncIfNeeded(file activeFile: FileState.ActiveFile?) {
         // Only in read-only mode (drag mode)
         guard toolState.inDragMode else {
@@ -79,10 +80,7 @@ private struct IOSAutoSyncModifier: ViewModifier {
         switch activeFile {
             case .localFile(let url):
                 shouldSync = isICloudFile(url)
-            case .file, .collaborationFile:
-                // CoreData files are always in iCloud Drive container
-                shouldSync = true
-            case .temporaryFile, .none:
+            case .file, .collaborationFile, .temporaryFile, .none:
                 shouldSync = false
         }
         
@@ -104,84 +102,87 @@ private struct IOSAutoSyncModifier: ViewModifier {
                       activeFileLockState == .plaintext else { break }
                 
                 do {
-                    // Load latest content based on file type
-                    let latestData: Data
-                    
-                    switch activeFile {
-                        case .localFile(let url):
-                            // LocalFile: use FileSyncCoordinator
-                            latestData = try await FileSyncCoordinator.shared.openFile(url)
-                            
-                        case .file(let dbFile):
-                            guard let fileID = dbFile.id else { continue }
-                            // CoreData File: use FileStorageManager
-                            let relativePath = FileStorageContentType.file.generateRelativePath(
-                                fileID: fileID.uuidString
-                            )
-                            latestData = try await FileStorageManager.shared.loadContent(
-                                relativePath: relativePath,
-                                fileID: fileID.uuidString
-                            )
-                            
-                        case .collaborationFile(let collabFile):
-                            guard let fileID = collabFile.id else { continue }
-                            // CollaborationFile: use FileStorageManager
-                            let relativePath = FileStorageContentType.collaborationFile.generateRelativePath(
-                                fileID: fileID.uuidString
-                            )
-                            latestData = try await FileStorageManager.shared.loadContent(
-                                relativePath: relativePath,
-                                fileID: fileID.uuidString
-                            )
-                            // collaboration file no need to load file.
-                            return
-                        default:
-                            continue
-                    }
-
-                    guard !Task.isCancelled else { break }
-                    
-                    let currentData = localFileBinding.wrappedValue?.content
-                    
-                    // Reload if content changed
-                    if latestData != currentData {
-                        // Update file status to show sync indicator
-                        if case .localFile(let url) = activeFile {
-                            await FileSyncCoordinator.shared.updateFileStatus(
-                                for: url,
-                                status: .syncing
-                            )
-                            try? await Task.sleep(nanoseconds: UInt64(1e+9 * 2))
-                            guard !Task.isCancelled else { break }
-                            await FileSyncCoordinator.shared.updateFileStatus(
-                                for: url,
-                                status: .downloaded
-                            )
-                        } else if let fileID = activeFile?.id {
-                            await MainActor.run {
-                                FileStatusService.shared.updateICloudStatus(
-                                    fileID: fileID,
-                                    status: .syncing
-                                )
-                            }
-                            try? await Task.sleep(nanoseconds: UInt64(1e+9 * 2))
-                            guard !Task.isCancelled else { break }
-                            await MainActor.run {
-                                FileStatusService.shared.updateICloudStatus(
-                                    fileID: fileID,
-                                    status: .downloaded
-                                )
-                            }
-                        }
-
-                        guard !Task.isCancelled else { break }
-                        
-                        await onUpdate(latestData)
-                    }
+                    try await syncLatestContentIfNeeded(
+                        file: activeFile
+                    )
                 } catch {
                     alertToast(error)
                 }
             }
+        }
+    }
+
+    private func syncLatestContentIfNeeded(
+        file activeFile: FileState.ActiveFile?
+    ) async throws {
+        guard activeFileLockState == .plaintext,
+              let activeFile else {
+            return
+        }
+
+        let latestData: Data
+        do {
+            switch activeFile {
+                case .localFile(let url):
+                    latestData = try await FileSyncCoordinator.shared.openFile(url)
+
+                case .file, .collaborationFile, .temporaryFile:
+                    return
+            }
+        } catch {
+            throw error
+        }
+
+        guard !Task.isCancelled else { return }
+
+        let currentData = await MainActor.run {
+            localFileBinding.wrappedValue?.content
+        }
+
+        guard latestData != currentData else {
+            return
+        }
+
+        await markSyncInProgress(for: activeFile)
+
+        guard !Task.isCancelled else { return }
+
+        await onUpdate(latestData)
+        await markSyncCompleted(for: activeFile)
+    }
+
+    private func markSyncInProgress(for activeFile: FileState.ActiveFile) async {
+        switch activeFile {
+            case .localFile(let url):
+                await FileSyncCoordinator.shared.updateFileStatus(
+                    for: url,
+                    status: .syncing
+                )
+                await MainActor.run {
+                    FileStatusService.shared.markSyncInProgress(
+                        fileID: url.absoluteString,
+                        operation: .download
+                    )
+                }
+
+            case .file, .collaborationFile, .temporaryFile:
+                return
+        }
+    }
+
+    private func markSyncCompleted(for activeFile: FileState.ActiveFile) async {
+        switch activeFile {
+            case .localFile(let url):
+                await FileSyncCoordinator.shared.updateFileStatus(
+                    for: url,
+                    status: .downloaded
+                )
+                await MainActor.run {
+                    FileStatusService.shared.markSyncCompleted(fileID: url.absoluteString)
+                }
+
+            case .file, .collaborationFile, .temporaryFile:
+                return
         }
     }
     

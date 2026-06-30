@@ -190,7 +190,13 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         guard let core else { return }
 
         if let rejectionReason = receivedStateChangedRejectionReason(isCoreLoading: core.isLoading) {
+#if DEBUG
+            core.logger.debug(
+                "Ignored stateChanged during file load: \(rejectionReason) \(debugStateChangedSummary(data))"
+            )
+#else
             core.logger.debug("Ignored stateChanged during file load: \(rejectionReason)")
+#endif
             return
         }
 
@@ -335,7 +341,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 }
                 guard let existingContent else { return }
 
-                let fileDataForPersistence = try await canvasFileDataBySeparatingLocalViewportIfNeeded(
+                let fileDataForPersistence = try await canvasFileDataForPersistence(
                     fileData,
                     currentFileID: currentFileID
                 )
@@ -389,24 +395,25 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         }
     }
 
-    private func canvasFileDataBySeparatingLocalViewportIfNeeded(
+    private func canvasFileDataForPersistence(
         _ fileData: ExcalidrawCore.ExcalidrawFileData,
         currentFileID: String?
     ) async throws -> ExcalidrawCore.ExcalidrawFileData {
-        guard let currentFileID,
-              await usesLocalViewportSidecar(fileID: currentFileID) else {
-            return fileData
+        var fileDataForPersistence = fileData
+
+        if let currentFileID,
+           await usesLocalViewportSidecar(fileID: currentFileID) {
+            fileDataForPersistence.documentData = try await ExcalidrawViewportStateStore.shared.contentDataBySeparatingViewport(
+                from: fileData.documentData,
+                fileID: currentFileID
+            )
         }
 
-        let documentData = try await ExcalidrawViewportStateStore.shared.contentDataBySeparatingViewport(
-            from: fileData.documentData,
-            fileID: currentFileID
+        fileDataForPersistence.documentData = try ExcalidrawDocumentAppStatePersistence.documentData(
+            fileDataForPersistence.documentData,
+            settingNativeFileName: await nativeFileNameForPersistence(currentFileID: currentFileID)
         )
-        return .init(
-            documentData: documentData,
-            elements: fileData.elements,
-            files: fileData.files
-        )
+        return fileDataForPersistence
     }
 
     private func usesLocalViewportSidecar(fileID: String) async -> Bool {
@@ -417,6 +424,16 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 return false
             }
             return file.id?.uuidString == fileID
+        }
+    }
+
+    private func nativeFileNameForPersistence(currentFileID: String?) async -> String? {
+        await MainActor.run {
+            guard let activeFile = core?.parent?.fileState.currentActiveFile,
+                  currentFileID == nil || activeFile.id == currentFileID else {
+                return nil
+            }
+            return activeFile.name
         }
     }
 
@@ -612,6 +629,35 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             lhs.startedAt < rhs.startedAt
         }
     }
+
+#if DEBUG
+    private func debugStateChangedSummary(_ data: ExcalidrawCore.StateChangedMessageData) -> String {
+        if let metadata = data.metadata, data.fileData == nil {
+            return debugMetadataSummary(metadata)
+        }
+
+        if data.fileData != nil {
+            return "payload=fullSnapshot"
+        }
+
+        return "payload=empty"
+    }
+
+    private func debugMetadataSummary(_ metadata: ExcalidrawCore.StateChangedMetadata) -> String {
+        [
+            "payload=metadata",
+            "revision=\(metadata.revision.map(String.init) ?? "nil")",
+            "dirty=\(metadata.dirty.map(String.init) ?? "nil")",
+            "contentDirty=\(metadata.contentDirty.map(String.init) ?? "nil")",
+            "appStateDirty=\(metadata.appStateDirty.map(String.init) ?? "nil")",
+            "currentFileId=\(metadata.currentFileId ?? "nil")",
+            "elements=\(metadata.elementCount.map(String.init) ?? "nil")",
+            "fileElements=\(metadata.fileElementCount.map(String.init) ?? "nil")",
+            "appStateKeys=\(metadata.appStateKeyCount.map(String.init) ?? "nil")",
+            "appStateChars=\(metadata.appStateChars.map(String.init) ?? "nil")"
+        ].joined(separator: " ")
+    }
+#endif
 }
 
 extension ExcalidrawDocumentSyncController: ExcalidrawDocumentSnapshotCoordinatorDelegate {

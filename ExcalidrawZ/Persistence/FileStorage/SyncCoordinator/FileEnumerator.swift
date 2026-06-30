@@ -53,7 +53,9 @@ struct FileEnumerator {
                 logger.warning("Skipping file outside storage root: \(fullPath) (base: \(basePath))")
                 continue
             }
-            let relativePath = String(fullPath.dropFirst(basePath.count))
+            let relativePath = normalizedRelativePath(
+                String(fullPath.dropFirst(basePath.count))
+            )
 
             // Determine content type from file extension
             guard let contentType = FileStorageContentType.from(relativePath: relativePath) else {
@@ -125,7 +127,9 @@ struct FileEnumerator {
                 logger.warning("Skipping iCloud file outside container: \(fullPath) (base: \(basePath))")
                 continue
             }
-            let relativePath = String(fullPath.dropFirst(basePath.count))
+            let relativePath = normalizedRelativePath(
+                String(fullPath.dropFirst(basePath.count))
+            )
 
             // Determine content type from file extension
             guard let contentType = FileStorageContentType.from(relativePath: relativePath) else {
@@ -198,6 +202,10 @@ struct FileEnumerator {
         let filename = (normalizedPath as NSString).lastPathComponent
         let fileID = (filename as NSString).deletingPathExtension
         return fileID.isEmpty ? nil : fileID
+    }
+
+    private func normalizedRelativePath(_ path: String) -> String {
+        path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 
     /// Enumerate all files that should exist based on CoreData entities

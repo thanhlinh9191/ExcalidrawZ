@@ -12,7 +12,6 @@ import Combine
 enum iCloudDriveError: LocalizedError {
     case containerNotAvailable
     case invalidDataURL
-    case downloadTimeout
     case fileNotFound
     case conflictUnresolved
     case migrationFailed(String)
@@ -23,8 +22,6 @@ enum iCloudDriveError: LocalizedError {
                 return "iCloud Drive container is not available. Please ensure iCloud is enabled."
             case .invalidDataURL:
                 return "Invalid data URL format"
-            case .downloadTimeout:
-                return "Timeout waiting for iCloud file download"
             case .fileNotFound:
                 return "File not found in iCloud Drive"
             case .conflictUnresolved:
@@ -180,7 +177,7 @@ actor iCloudDriveFileManager {
         let fileURL = containerURL.appendingPathComponent(relativePath)
         return try await fileCoordinator.coordinatedRead(url: fileURL)
     }
-    
+
     /// Delete content from iCloud Drive
     /// - Parameter relativePath: The relative path to the file
     func deleteContent(relativePath: String) async throws {

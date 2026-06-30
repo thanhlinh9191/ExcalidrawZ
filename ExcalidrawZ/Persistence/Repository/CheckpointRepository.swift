@@ -195,6 +195,30 @@ actor CheckpointRepository {
         )
     }
 
+    func saveNewCheckpointContentToStorage(
+        content: Data,
+        checkpointID: UUID,
+        fileObjectID: NSManagedObjectID?,
+        updatedAt: Date?
+    ) async throws -> String {
+        let contentToSave = try await encryptedCheckpointContentIfNeeded(
+            content,
+            checkpointID: checkpointID,
+            fileObjectID: fileObjectID,
+            existingFilePath: nil,
+            recoveryKeyOverride: nil,
+            forceProtected: false
+        )
+        let relativePath = try await FileStorageManager.shared.saveContent(
+            contentToSave,
+            fileID: checkpointID.uuidString,
+            type: .checkpoint,
+            updatedAt: updatedAt
+        )
+        logger.debug("Saved checkpoint to storage: \(relativePath)")
+        return relativePath
+    }
+
     func encryptCheckpoints(
         for fileObjectID: NSManagedObjectID,
         recoveryKey: RecoveryKey
@@ -385,7 +409,25 @@ actor CheckpointRepository {
         recoveryKeyOverride: RecoveryKey?,
         forceProtected: Bool
     ) async throws -> Data {
-        let contentID = snapshot.checkpointID.uuidString
+        try await encryptedCheckpointContentIfNeeded(
+            content,
+            checkpointID: snapshot.checkpointID,
+            fileObjectID: snapshot.fileObjectID,
+            existingFilePath: snapshot.filePath,
+            recoveryKeyOverride: recoveryKeyOverride,
+            forceProtected: forceProtected
+        )
+    }
+
+    private func encryptedCheckpointContentIfNeeded(
+        _ content: Data,
+        checkpointID: UUID,
+        fileObjectID: NSManagedObjectID?,
+        existingFilePath: String?,
+        recoveryKeyOverride: RecoveryKey?,
+        forceProtected: Bool
+    ) async throws -> Data {
+        let contentID = checkpointID.uuidString
 
         if EncryptedContentService.isEncryptedEnvelope(content) {
             let envelope = try EncryptedContentService.decodeEnvelope(content)
@@ -401,7 +443,10 @@ actor CheckpointRepository {
             return content
         }
 
-        if let existingEncryptedContent = try await existingEncryptedCheckpointContent(snapshot: snapshot) {
+        if let existingEncryptedContent = try await existingEncryptedCheckpointContent(
+            filePath: existingFilePath,
+            checkpointID: checkpointID
+        ) {
             return try await LockedContentUnlockSession.shared.resealPayload(
                 content,
                 existingEnvelopeData: existingEncryptedContent,
@@ -413,7 +458,7 @@ actor CheckpointRepository {
         let shouldProtect = if forceProtected {
             true
         } else {
-            try await fileIsProtected(snapshot.fileObjectID)
+            try await fileIsProtected(fileObjectID)
         }
         guard shouldProtect else {
             return content
@@ -440,15 +485,16 @@ actor CheckpointRepository {
     }
 
     private func existingEncryptedCheckpointContent(
-        snapshot: RawCheckpointContentSnapshot
+        filePath: String?,
+        checkpointID: UUID
     ) async throws -> Data? {
-        guard let filePath = snapshot.filePath else {
+        guard let filePath else {
             return nil
         }
         do {
             let existingContent = try await FileStorageManager.shared.loadContent(
                 relativePath: filePath,
-                fileID: snapshot.checkpointID.uuidString
+                fileID: checkpointID.uuidString
             )
             return EncryptedContentService.isEncryptedEnvelope(existingContent) ? existingContent : nil
         } catch {

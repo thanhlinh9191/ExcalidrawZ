@@ -10,6 +10,10 @@ import Logging
 import Combine
 import CoreData
 
+extension Notification.Name {
+    static let coreDataRemoteMetadataDidChange = Notification.Name("CoreDataRemoteMetadataDidChange")
+}
+
 // MARK: - Errors
 
 enum FileStorageError: LocalizedError {
@@ -120,7 +124,7 @@ actor FileStorageManager {
     // Failure tracking for missing files
     private let failureTracker = FailureTracker()
 
-    // Remote change monitoring
+    // CoreData remote metadata monitoring
     private var lastKnownFileCount: Int = 0
     private var remoteChangeTask: Task<Void, Never>?
     private var diffScanDebounceTask: Task<Void, Never>?
@@ -154,11 +158,14 @@ actor FileStorageManager {
         )
         logger.info("FileStorage sync enabled")
 
-        // Start listening for CoreData remote changes
+        // Start listening for CoreData remote metadata changes
         startRemoteChangeListener()
     }
 
-    /// Start listening for NSPersistentStoreRemoteChange notifications
+    /// Start listening for CoreData remote metadata change hints.
+    ///
+    /// `NSPersistentStoreRemoteChange` only says that the CloudKit-backed
+    /// CoreData store changed. It does not mean any FileStorage bytes changed.
     /// Triggers DiffScan only when File entity count changes
     private func startRemoteChangeListener() {
         // Get initial file count
@@ -166,7 +173,7 @@ actor FileStorageManager {
             lastKnownFileCount = await getCurrentFileCount()
         }
 
-        // Listen for remote changes from CloudKit
+        // Listen for remote metadata changes from CloudKit/CoreData.
         remoteChangeTask = Task {
             let notifications = NotificationCenter.default.notifications(
                 named: .NSPersistentStoreRemoteChange,
@@ -179,7 +186,7 @@ actor FileStorageManager {
         }
     }
 
-    /// Handle remote change notification
+    /// Handle CoreData remote metadata notification.
     /// Debounced to avoid excessive DiffScans
     private func handleRemoteChange(_ notification: Notification) async {
         // Debounce: cancel previous task
@@ -191,6 +198,10 @@ actor FileStorageManager {
 
             guard !Task.isCancelled else {
                 return
+            }
+
+            await MainActor.run {
+                NotificationCenter.default.post(name: .coreDataRemoteMetadataDidChange, object: nil)
             }
 
             // Check if File entity count has changed
@@ -267,22 +278,52 @@ actor FileStorageManager {
                 data = try await localManager.loadContent(relativePath: relativePath)
             }
 
-            // Success - reset failure record and update status
-            await failureTracker.reset(fileID: fileID)
-            Task { @MainActor in
-                FileStatusService.shared.markAvailable(fileID: fileID)
-            }
-            return data
-
+            return await finishSuccessfulLoad(data, fileID: fileID)
         } catch {
-            // Record failure for file not found errors (passive tracking)
-            if case FileStorageError.fileNotFound = error {
-                let failureCount = await failureTracker.recordFailure(for: fileID)
-                Task { @MainActor in
-                    FileStatusService.shared.markMissing(fileID: fileID, failureCount: failureCount)
-                }
-            }
+            await recordLoadFailureIfNeeded(error, fileID: fileID)
             throw error
+        }
+    }
+
+    /// Load content after a file-specific iCloud Drive status event indicated
+    /// that the local cache may be stale.
+    ///
+    /// Unlike `loadContent`, this path does not rely only on timestamp
+    /// comparison. It asks the sync coordinator to refresh the local cache from
+    /// iCloud Drive when the remote file exists, then reads local storage.
+    func loadLatestContent(relativePath: String, fileID: String) async throws -> Data {
+        do {
+            let data: Data
+            if let syncCoordinator = syncCoordinator {
+                data = try await syncCoordinator.loadContentByRefreshingFromCloud(
+                    relativePath: relativePath,
+                    fileID: fileID
+                )
+            } else {
+                data = try await localManager.loadContent(relativePath: relativePath)
+            }
+
+            return await finishSuccessfulLoad(data, fileID: fileID)
+        } catch {
+            await recordLoadFailureIfNeeded(error, fileID: fileID)
+            throw error
+        }
+    }
+
+    private func finishSuccessfulLoad(_ data: Data, fileID: String) async -> Data {
+        await failureTracker.reset(fileID: fileID)
+        Task { @MainActor in
+            FileStatusService.shared.markAvailable(fileID: fileID)
+        }
+        return data
+    }
+
+    private func recordLoadFailureIfNeeded(_ error: Error, fileID: String) async {
+        guard case FileStorageError.fileNotFound = error else { return }
+
+        let failureCount = await failureTracker.recordFailure(for: fileID)
+        Task { @MainActor in
+            FileStatusService.shared.markMissing(fileID: fileID, failureCount: failureCount)
         }
     }
 
@@ -399,6 +440,36 @@ actor FileStorageManager {
         return await iCloudManager.getCurrentStatus()
     }
 
+    /// Resolve a FileStorage relative path to its iCloud Drive URL.
+    ///
+    /// Returns nil when the ubiquity container is unavailable. This avoids
+    /// handing callers the local fallback cache URL, which is useful for normal
+    /// reads but wrong for iCloud Drive status monitoring.
+    func iCloudFileURL(relativePath: String) async throws -> URL? {
+        let status = await iCloudManager.checkICloudAvailability()
+        guard status.isAvailable else { return nil }
+        return try await iCloudManager.getFileURL(relativePath: relativePath)
+    }
+
+    /// Ask iCloud Drive to download a FileStorage item without reading it.
+    ///
+    /// This is only a hint to iCloud Drive. Callers should wait for later
+    /// metadata/status updates before attempting to read the file content.
+    @discardableResult
+    func requestICloudDownload(relativePath: String, fileID: String) async throws -> Bool {
+        let status = await iCloudManager.checkICloudAvailability()
+        guard status.isAvailable else {
+            logger.debug("Skipped iCloud Drive download request because iCloud is unavailable: \(relativePath) id=\(fileID)")
+            return false
+        }
+
+        let fileURL = try await iCloudManager.getFileURL(relativePath: relativePath)
+        logger.debug("Requesting iCloud Drive download: \(relativePath) id=\(fileID)")
+        try FileManager.default.startDownloadingUbiquitousItem(at: fileURL)
+        logger.debug("Requested iCloud Drive download: \(relativePath) id=\(fileID)")
+        return true
+    }
+
     /// Get number of pending sync operations
     func getPendingSyncCount() async -> Int {
         guard let syncCoordinator = syncCoordinator else { return 0 }
@@ -468,6 +539,9 @@ actor FileStorageManager {
         guard let syncCoordinator = syncCoordinator else {
             return false
         }
-        return try await syncCoordinator.checkForICloudUpdate(relativePath: relativePath)
+        return try await syncCoordinator.checkForICloudUpdate(
+            relativePath: relativePath,
+            fileID: fileID
+        )
     }
 }
