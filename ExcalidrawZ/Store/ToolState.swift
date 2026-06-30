@@ -425,7 +425,7 @@ final class ToolState: ObservableObject {
         }
     }
 
-    private static let pencilInteractionModeDefaultsKey = "PencilInteractionMode"
+    static let pencilInteractionModeDefaultsKey = "PencilInteractionMode"
 
     private static func storedPencilInteractionMode() -> PencilInteractionMode {
         let rawValue = UserDefaults.standard.integer(forKey: pencilInteractionModeDefaultsKey)
@@ -458,10 +458,14 @@ final class ToolState: ObservableObject {
     }
     
     func toggleTool(_ tool: ExcalidrawTool) async throws {
-        logger.debug("Toggle tool: \(String(describing: tool))")
-
         let coordinator = excalidrawWebCoordinator
         let previousLastTool = coordinator?.lastTool
+        if coordinator != nil, previousLastTool == tool {
+            return
+        }
+
+        coordinator?.lastTool = tool
+        logger.debug("Toggle tool: \(String(describing: tool))")
 
         do {
             switch tool {
@@ -479,12 +483,13 @@ final class ToolState: ObservableObject {
                     }
             }
             await MainActor.run {
-                coordinator?.lastTool = tool
                 setActiveToolMirror(tool)
             }
         } catch {
             await MainActor.run {
-                coordinator?.lastTool = previousLastTool
+                if coordinator?.lastTool == tool {
+                    coordinator?.lastTool = previousLastTool
+                }
             }
             throw error
         }
@@ -566,6 +571,18 @@ final class ToolState: ObservableObject {
             }
         }
     }
+}
+
+struct PencilPenModeChangeRequest {
+    let enabled: Bool
+    let pencilConnected: Bool
+}
+
+extension Notification.Name {
+    static let pencilInteractionModeDidChange = Notification.Name("PencilInteractionModeDidChange")
+    static let pencilPenModeChangeRequested = Notification.Name("PencilPenModeChangeRequested")
+    static let pencilPenModeStateRequested = Notification.Name("PencilPenModeStateRequested")
+    static let pencilPenModeStateDidChange = Notification.Name("PencilPenModeStateDidChange")
 }
 
 fileprivate struct Cursor: Shape {

@@ -9,15 +9,26 @@ import SwiftUI
 import ChocofordUI
 
 struct PencilSettingsView: View {
-    @Environment(\.alertToast) private var alertToast
-    @EnvironmentObject private var toolState: ToolState
+    @AppStorage(ToolState.pencilInteractionModeDefaultsKey) private var pencilInteractionModeRawValue = ToolState.PencilInteractionMode.fingerSelect.rawValue
+    @State private var inPenMode = false
 #if DEBUG
     @AppStorage(ApplePencilDefaults.isFirstOpenPencilModeKey) private var isFirstOpenPencilMode = true
 #endif
+
+    private var pencilInteractionMode: ToolState.PencilInteractionMode {
+        ToolState.PencilInteractionMode(rawValue: pencilInteractionModeRawValue) ?? .fingerSelect
+    }
     
     var body: some View {
         SettingsFormContainer {
             content()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pencilPenModeStateDidChange)) { notification in
+            guard let inPenMode = notification.object as? Bool else { return }
+            self.inPenMode = inPenMode
+        }
+        .task {
+            NotificationCenter.default.post(name: .pencilPenModeStateRequested, object: nil)
         }
     }
     
@@ -25,11 +36,13 @@ struct PencilSettingsView: View {
     private func content() -> some View {
         Section {
             Picker(selection: Binding {
-                toolState.pencilInteractionMode
+                pencilInteractionMode
             } set: { mode in
-                Task {
-                    try? await toolState.setPencilInteractionMode(mode)
-                }
+                pencilInteractionModeRawValue = mode.rawValue
+                NotificationCenter.default.post(
+                    name: .pencilInteractionModeDidChange,
+                    object: mode
+                )
             }) {
                 Text(.localizable(.applePencilInterationModeOneFingerSelectTitle)).tag(ToolState.PencilInteractionMode.fingerSelect)
                 Text(.localizable(.applePencilInterationModeOneFingerMoveTitle)).tag(ToolState.PencilInteractionMode.fingerMove)
@@ -51,15 +64,15 @@ struct PencilSettingsView: View {
         
         Section {
             Toggle(isOn: Binding {
-                toolState.inPenMode
+                inPenMode
             } set: { enabled in
-                Task {
-                    do {
-                        try await toolState.togglePenMode(enabled: enabled, pencilConnected: enabled)
-                    } catch {
-                        alertToast(error)
-                    }
-                }
+                NotificationCenter.default.post(
+                    name: .pencilPenModeChangeRequested,
+                    object: PencilPenModeChangeRequest(
+                        enabled: enabled,
+                        pencilConnected: enabled
+                    )
+                )
             }) {
                 Text(.localizable(.applePencilConnectToPencil))
             }
@@ -77,20 +90,20 @@ struct PencilSettingsView: View {
             }
 
             LabeledContent("inPenMode") {
-                Text(toolState.inPenMode ? "true" : "false")
-                    .foregroundStyle(toolState.inPenMode ? .green : .secondary)
+                Text(inPenMode ? "true" : "false")
+                    .foregroundStyle(inPenMode ? .green : .secondary)
             }
 
             Button("Reset First Pencil Mode Tip") {
-                Task {
-                    isFirstOpenPencilMode = true
-                    if toolState.inPenMode {
-                        do {
-                            try await toolState.togglePenMode(enabled: false, pencilConnected: true)
-                        } catch {
-                            alertToast(error)
-                        }
-                    }
+                isFirstOpenPencilMode = true
+                if inPenMode {
+                    NotificationCenter.default.post(
+                        name: .pencilPenModeChangeRequested,
+                        object: PencilPenModeChangeRequest(
+                            enabled: false,
+                            pencilConnected: true
+                        )
+                    )
                 }
             }
         } header: {
@@ -104,7 +117,6 @@ struct PencilSettingsView: View {
     if #available(macOS 13.0, *) {
         NavigationStack {
             PencilSettingsView()
-                .environmentObject(ToolState())
         }
     }
 }

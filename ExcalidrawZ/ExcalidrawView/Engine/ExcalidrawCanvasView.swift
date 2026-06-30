@@ -133,6 +133,7 @@ struct ExcalidrawCanvasView: View {
                 }
             }
             .watch(value: interactionEnabled) { enabled in
+                updateToolStateCoordinatorBinding(isEnabled: enabled)
                 Task {
                     try? await excalidrawCore.toggleWebPointerEvents(enabled: enabled)
                 }
@@ -185,6 +186,10 @@ struct ExcalidrawCanvasView: View {
             }
             .onAppear {
                 setupCore()
+                updateToolStateCoordinatorBinding(isEnabled: interactionEnabled)
+            }
+            .onDisappear {
+                clearToolStateCoordinatorBindingIfNeeded()
             }
     }
     
@@ -198,7 +203,6 @@ struct ExcalidrawCanvasView: View {
     }
     
     private func setupCoordinators() {
-        toolState.excalidrawWebCoordinator = excalidrawCore
         switch type {
             case .normal:
                 exportState.excalidrawWebCoordinator = excalidrawCore
@@ -207,6 +211,23 @@ struct ExcalidrawCanvasView: View {
             case .collaboration:
                 exportState.excalidrawCollaborationWebCoordinator = excalidrawCore
                 fileState.excalidrawCollaborationWebCoordinator = excalidrawCore
+        }
+        updateToolStateCoordinatorBinding(isEnabled: interactionEnabled)
+    }
+
+    @MainActor
+    private func updateToolStateCoordinatorBinding(isEnabled: Bool) {
+        if isEnabled {
+            toolState.excalidrawWebCoordinator = excalidrawCore
+        } else {
+            clearToolStateCoordinatorBindingIfNeeded()
+        }
+    }
+
+    @MainActor
+    private func clearToolStateCoordinatorBindingIfNeeded() {
+        if toolState.excalidrawWebCoordinator === excalidrawCore {
+            toolState.excalidrawWebCoordinator = nil
         }
     }
     

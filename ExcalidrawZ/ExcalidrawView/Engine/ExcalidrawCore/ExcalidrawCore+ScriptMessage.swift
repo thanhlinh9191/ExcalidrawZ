@@ -64,20 +64,20 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     if message.data.type == .lasso { return }
                     if message.data.type == .hand {
                         self.lastTool = .hand
-                        DispatchQueue.main.async {
-                            self.parent?.toolState.setActiveToolFromWeb(.hand)
+                        self.withActiveToolbarToolState { toolState in
+                            toolState.setActiveToolFromWeb(.hand)
                         }
                     } else {
                         if let tool = ExcalidrawTool(from: message.data.type) {
                             self.lastTool = tool
-                            DispatchQueue.main.async {
-                                self.parent?.toolState.setActiveToolFromWeb(tool)
+                            self.withActiveToolbarToolState { toolState in
+                                toolState.setActiveToolFromWeb(tool)
                             }
                         }
                     }
                 case .didToggleToolLock(let message):
-                    DispatchQueue.main.async {
-                        self.parent?.toolState.isToolLocked = message.data
+                    self.withActiveToolbarToolState { toolState in
+                        toolState.isToolLocked = message.data
                     }
                 case .onLoadLibrary(let message):
                     self.onLoadLibrary(library: message.data)
@@ -92,7 +92,8 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     }
                 case .didPenDown:
                     Task { @MainActor in
-                        guard let toolState = self.parent?.toolState else { return }
+                        guard let toolState = self.parent?.toolState,
+                              toolState.excalidrawWebCoordinator === self else { return }
                         toolState.inPenMode = true
                         try? await toolState.setPencilInteractionMode(toolState.pencilInteractionMode)
                         NotificationCenter.default.post(name: .didPencilConnected, object: nil)
@@ -195,6 +196,17 @@ extension ExcalidrawCore: WKScriptMessageHandler {
         } catch {
             self.logger.error("[WKScriptMessageHandler] Decode received message failed. Raw data:\n\(String(describing: message.body))")
             self.publishError(error)
+        }
+    }
+
+    private func withActiveToolbarToolState(_ update: @escaping (ToolState) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  let toolState = self.parent?.toolState,
+                  toolState.excalidrawWebCoordinator === self else {
+                return
+            }
+            update(toolState)
         }
     }
 

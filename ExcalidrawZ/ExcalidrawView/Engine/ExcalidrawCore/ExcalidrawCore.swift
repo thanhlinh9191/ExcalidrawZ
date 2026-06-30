@@ -130,21 +130,28 @@ class ExcalidrawCore: NSObject, ObservableObject {
                         let toolOrder = self.parent?.appPreference.toolbarToolOrder
                             ?? ExcalidrawToolbarToolOrder()
                         if let tool = toolOrder.tool(forShortcutNumber: int) {
-                            try? await self.parent?.toolState.toggleTool(tool)
+                            guard let toolState = self.parent?.toolState,
+                                  toolState.excalidrawWebCoordinator === self else {
+                                return
+                            }
+                            try? await toolState.toggleTool(tool)
                         } else if self.parent == nil {
                             try? await self.toggleToolbarAction(key: int)
                         }
                     }
                 case .char(let character):
                     Task { @MainActor in
+                        guard self.parent?.toolState.excalidrawWebCoordinator === self else { return }
                         try? await self.toggleToolbarAction(key: character)
                     }
                 case .space:
                     Task { @MainActor in
+                        guard self.parent?.toolState.excalidrawWebCoordinator === self else { return }
                         try? await self.toggleToolbarAction(key: " ")
                     }
                 case .escape:
                     Task { @MainActor in
+                        guard self.parent?.toolState.excalidrawWebCoordinator === self else { return }
                         try? await self.toggleToolbarAction(key: "\u{1B}")
                     }
             }

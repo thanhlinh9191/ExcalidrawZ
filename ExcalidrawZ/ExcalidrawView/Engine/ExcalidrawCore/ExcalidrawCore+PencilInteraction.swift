@@ -31,7 +31,8 @@ extension ExcalidrawCore: UIPencilInteractionDelegate {
         guard shouldHandlePencilToolToggle() else { return }
         defer { isHandlingPencilToolToggle = false }
 
-        guard let toolState = self.parent?.toolState else { return }
+        guard let toolState = self.parent?.toolState,
+              toolState.excalidrawWebCoordinator === self else { return }
 
         do {
             if !toolState.inPenMode {

@@ -27,15 +27,6 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     @EnvironmentObject private var llmState: LLMStateObject
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
-    private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
-        switch fileState.currentActiveFile {
-            case .collaborationFile:
-                fileState.excalidrawCollaborationWebCoordinator ?? toolState.excalidrawWebCoordinator
-            default:
-                fileState.excalidrawWebCoordinator ?? toolState.excalidrawWebCoordinator
-        }
-    }
-
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .bottomBar) {
             if fileState.currentActiveFile != nil {
@@ -148,8 +139,8 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
             Spacer()
 
             if toolState.activatedTool == .cursor {
-                if let activeCoordinator {
-                    CursorModeTrailingButton(coordinator: activeCoordinator) {
+                if let coordinator = toolState.excalidrawWebCoordinator {
+                    CursorModeTrailingButton(coordinator: coordinator) {
                         toolState.setActivedTool(.hand)
                     }
                 } else {

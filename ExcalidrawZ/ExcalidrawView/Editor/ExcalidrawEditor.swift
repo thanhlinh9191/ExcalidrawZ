@@ -24,7 +24,6 @@ struct ExcalidrawEditor: View {
     @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var localFolderState: LocalFolderState
-    @EnvironmentObject var toolState: ToolState
     /// Drives the AI chat island overlay — its presentation toggle is global,
     /// but the *anchor* (bottom-center) is editor-local, hence the overlay
     /// lives here rather than at the NavigationSplitView level.
@@ -35,6 +34,8 @@ struct ExcalidrawEditor: View {
 
     @Binding var activeFile: FileState.ActiveFile?
     var interactionEnabled: Bool
+
+    @StateObject private var toolState = ToolState()
 
     @State private var isSettingsPresented = false
     @State private var excalidrawFile: ExcalidrawFile?
@@ -151,7 +152,7 @@ struct ExcalidrawEditor: View {
                         applyExcalidrawFile(val)
                     },
                     loadingState: $canvasLoadingState,
-                    interactionEnabled: interactionEnabled,
+                    interactionEnabled: interactionEnabled && !isInCollaborationSpace,
                     onDocumentLoadFinished: { fileID in
                         documentLoadCompletion = ExcalidrawDocumentLoadCompletion(fileID: fileID)
                         revealLoadedFileAfterRender(fileID: fileID)
@@ -302,6 +303,43 @@ struct ExcalidrawEditor: View {
             recordVisitTask?.cancel()
             recordVisitTask = nil
         }
+        .modifier(ExcalidrawEditorToolbarModifier())
+        .onReceive(NotificationCenter.default.publisher(for: .pencilInteractionModeDidChange)) { notification in
+            guard let mode = notification.object as? ToolState.PencilInteractionMode else { return }
+            Task {
+                do {
+                    try await toolState.setPencilInteractionMode(mode)
+                } catch {
+                    alertToast(error)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pencilPenModeChangeRequested)) { notification in
+            guard let request = notification.object as? PencilPenModeChangeRequest else { return }
+            Task {
+                do {
+                    try await toolState.togglePenMode(
+                        enabled: request.enabled,
+                        pencilConnected: request.pencilConnected
+                    )
+                } catch {
+                    alertToast(error)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pencilPenModeStateRequested)) { _ in
+            NotificationCenter.default.post(
+                name: .pencilPenModeStateDidChange,
+                object: toolState.inPenMode
+            )
+        }
+        .watch(value: toolState.inPenMode, initial: true) { _, inPenMode in
+            NotificationCenter.default.post(
+                name: .pencilPenModeStateDidChange,
+                object: inPenMode
+            )
+        }
+        .environmentObject(toolState)
     }
 
     private func collapseCompactAISurfacesIfCurrentFileIsTrashed() {

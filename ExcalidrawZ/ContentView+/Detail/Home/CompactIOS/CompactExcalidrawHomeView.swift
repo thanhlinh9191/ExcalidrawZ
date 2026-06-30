@@ -31,7 +31,6 @@ struct CompactExcalidrawHomeView: View {
                 )
                 .ignoresSafeArea()
                 .opacity(disableInteration || !fileHomeItemTransitionState.canShowExcalidrawCanvas ? 0 : 1)
-                .modifier(ExcalidrawEditorToolbarModifier())
                 .modifier(InspectorPresentationModifier())
             }
             
