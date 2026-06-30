@@ -1,7 +1,0 @@
-Performance and reliability improvements across everyday canvas work.
-
-- Smoother file opening, closing, and switching.
-- Faster saving and loading for larger drawings.
-- More reliable file covers, checkpoint previews, and library item previews.
-- Improved File History preview rows.
-- Better Mermaid editing and preview layout on Mac.

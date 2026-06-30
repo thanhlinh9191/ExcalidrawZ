@@ -1,0 +1,8 @@
+This update improves the iPhone and iPad experience, including Apple Pencil, iCloud sync, collaboration, and file navigation.
+
+- Refreshed Apple Pencil setup and improved finger interaction modes.
+- More reliable iCloud Drive refresh for open files.
+- Better collaboration room loading hints and transition covers.
+- Local canvas viewport is now kept per device instead of syncing between devices.
+- Fixed Trash/sidebar refresh issues and improved iPad active-file scrolling.
+- Improved Mermaid to Excalidraw sheet sizing on iPhone and iPad.

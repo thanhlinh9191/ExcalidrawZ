@@ -1,7 +1,0 @@
-Melhorias de desempenho e confiabilidade para o uso diário da tela.
-
-- Abertura, fechamento e troca de arquivos mais suaves.
-- Salvamento e carregamento mais rápidos em desenhos grandes.
-- Capas de arquivos, prévias de checkpoints e prévias de itens da biblioteca mais confiáveis.
-- Linhas de prévia aprimoradas no histórico de arquivos.
-- Melhor layout para editar e visualizar Mermaid no Mac.

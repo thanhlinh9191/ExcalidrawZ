@@ -373,17 +373,28 @@ func makeAttributedString(
     paragraphStyle.minimumLineHeight = fontSize * lineHeight
     paragraphStyle.maximumLineHeight = fontSize * lineHeight
 
+    let textColor = nsColor(
+        box.color
+            ?? config.defaultStyle.color
+            ?? "#FFFFFF"
+    )
+    let baseFont = font(for: fontSize, box: box, locale: locale, config: config)
     let attributes: [NSAttributedString.Key: Any] = [
-        .font: font(for: fontSize, box: box, locale: locale, config: config),
-        .foregroundColor: nsColor(
-            box.color
-                ?? config.defaultStyle.color
-                ?? "#FFFFFF"
-        ),
+        .font: baseFont,
+        .foregroundColor: textColor,
         .paragraphStyle: paragraphStyle
     ]
 
-    return NSAttributedString(string: text, attributes: attributes)
+    let attributedText = NSMutableAttributedString(string: text, attributes: attributes)
+    applyScriptFontOverrides(
+        to: attributedText,
+        text: text,
+        fontSize: fontSize,
+        box: box,
+        locale: locale,
+        config: config
+    )
+    return attributedText
 }
 
 func font(
@@ -411,6 +422,59 @@ func font(
                 ?? "semibold"
         )
     )
+}
+
+func applyScriptFontOverrides(
+    to attributedText: NSMutableAttributedString,
+    text: String,
+    fontSize: CGFloat,
+    box: TextBox,
+    locale: LocaleConfig,
+    config: PreviewConfig
+) {
+    let candidates = box.fontNames
+        ?? locale.fontNames
+        ?? config.defaultStyle.fontNames
+        ?? []
+    guard candidates.contains(where: { $0 == "XiaolaiSC" || $0 == "Xiaolai SC" }),
+          let cjkFont = candidates.lazy.compactMap({ NSFont(name: $0, size: fontSize) }).first(where: { $0.fontName == "XiaolaiSC" }),
+          let latinFont = candidates.lazy.compactMap({ NSFont(name: $0, size: fontSize) }).first(where: { $0.fontName == "Excalifont-Regular" }) else {
+        return
+    }
+
+    var location = 0
+    for character in text {
+        let range = NSRange(location: location, length: String(character).utf16.count)
+        attributedText.addAttribute(
+            .font,
+            value: character.containsCJKScalar ? cjkFont : latinFont,
+            range: range
+        )
+        location += range.length
+    }
+}
+
+extension Character {
+    var containsCJKScalar: Bool {
+        unicodeScalars.contains { scalar in
+            let value = scalar.value
+            switch value {
+                case 0x3000...0x303F,
+                     0x3400...0x4DBF,
+                     0x4E00...0x9FFF,
+                     0xF900...0xFAFF,
+                     0xFF00...0xFFEF,
+                     0x20000...0x2A6DF,
+                     0x2A700...0x2B73F,
+                     0x2B740...0x2B81F,
+                     0x2B820...0x2CEAF,
+                     0x2CEB0...0x2EBEF:
+                    return true
+                default:
+                    return false
+            }
+        }
+    }
 }
 
 func textAlignment(_ value: String) -> NSTextAlignment {

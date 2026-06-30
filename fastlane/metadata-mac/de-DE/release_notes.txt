@@ -1,0 +1,6 @@
+Dieses Update verbessert iCloud-Synchronisierung, Zusammenarbeit und Dateinavigation auf dem Mac.
+
+- Zuverlässigere iCloud Drive-Aktualisierung für geöffnete Dateien.
+- Bessere Ladehinweise und Übergangscover für Zusammenarbeitsräume.
+- Die Canvas-Position auf dem Mac bleibt lokal auf diesem Gerät, statt von anderen Geräten überschrieben zu werden.
+- Probleme beim Aktualisieren von Papierkorb und Seitenleiste wurden behoben.

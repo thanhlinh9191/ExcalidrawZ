@@ -1,3 +1,25 @@
+## 2.2.2
+
+#### Optimizations
+
+- Improved Apple Pencil setup with a refreshed first-run mode picker and clearer finger interaction options.
+- Improved iCloud Drive refresh for open files so remote changes are detected and applied more reliably while editing.
+- Improved collaboration rooms with clearer loading guidance, better transition covers, and more reliable local cleanup.
+- Improved viewport handling so each device can keep its own canvas position without syncing another device's scroll position.
+- Improved sidebar behavior on iPadOS, including scrolling the active file into view more reliably.
+- Improved Mermaid to Excalidraw sheet sizing on iPhone and iPad.
+- Improved MCP settings on iPhone and iPad by clearly marking MCP server features as macOS-only.
+
+#### Bug fixed
+
+- Fixed cases where Apple Pencil tool changes could leave the toolbar showing the wrong active tool.
+- Fixed cases where opening a collaboration room and returning to a normal file could leave tool actions bound to the wrong canvas.
+- Fixed cases where file save paths could miss metadata updates such as modified time.
+- Fixed cases where moving local files to Trash from Home did not refresh the UI immediately.
+- Fixed cases where the Trash group could disappear even when it still contained files.
+- Fixed cases where synced viewport state from one device could affect another device's canvas position.
+- Fixed Mermaid to Excalidraw sheet width issues on iPad.
+
 ## 2.2.1
 
 #### Optimizations

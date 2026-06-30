@@ -1,7 +1,0 @@
-Cải thiện hiệu năng và độ ổn định cho công việc hằng ngày trên canvas.
-
-- Mở, đóng và chuyển đổi tệp mượt mà hơn.
-- Lưu và tải bản vẽ lớn nhanh hơn.
-- Ảnh bìa tệp, bản xem trước checkpoint và bản xem trước mục thư viện đáng tin cậy hơn.
-- Cải thiện các hàng xem trước trong lịch sử tệp.
-- Bố cục chỉnh sửa và xem trước Mermaid tốt hơn trên Mac.

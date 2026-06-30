@@ -1,0 +1,6 @@
+Deze update verbetert iCloud-synchronisatie, samenwerking en bestandsnavigatie op Mac.
+
+- Betrouwbaardere iCloud Drive-verversing voor geopende bestanden.
+- Betere laadmeldingen en overgangscovers voor samenwerkingsruimtes.
+- De canvaspositie op Mac blijft lokaal op dit apparaat in plaats van door andere apparaten overschreven te worden.
+- Problemen met het verversen van Prullenmand en zijbalk opgelost.

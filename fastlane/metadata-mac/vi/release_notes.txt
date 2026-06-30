@@ -1,0 +1,6 @@
+Bản cập nhật này cải thiện đồng bộ iCloud, cộng tác và điều hướng tệp trên Mac.
+
+- Làm mới iCloud Drive đáng tin cậy hơn cho các tệp đang mở.
+- Cải thiện gợi ý tải và ảnh bìa chuyển cảnh cho phòng cộng tác.
+- Vị trí canvas trên Mac nay được giữ cục bộ trên thiết bị này, không bị thiết bị khác ghi đè.
+- Đã khắc phục lỗi làm mới Thùng rác và thanh bên.

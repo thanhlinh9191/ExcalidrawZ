@@ -1,7 +1,0 @@
-Améliorations des performances et de la fiabilité pour le travail quotidien sur le canevas.
-
-- Ouverture, fermeture et changement de fichiers plus fluides.
-- Enregistrement et chargement plus rapides pour les grands dessins.
-- Couvertures de fichiers, aperçus de points de contrôle et aperçus d'éléments de bibliothèque plus fiables.
-- Lignes d'aperçu améliorées dans l'historique des fichiers.
-- Meilleure mise en page pour l'édition et l'aperçu Mermaid sur Mac.

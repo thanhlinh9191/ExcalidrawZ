@@ -1,0 +1,8 @@
+本次更新改进了 iPhone 和 iPad 上的 Apple Pencil、iCloud 同步、协作和文件导航体验。
+
+- 重新设计 Apple Pencil 初次设置，并优化手指交互模式。
+- 打开文件时的 iCloud Drive 更新检测更加可靠。
+- 改进协作房间的加载提示和切换封面。
+- 画布视口改为按设备保留，避免不同设备互相同步滚动位置。
+- 修复废纸篓和侧边栏刷新问题，并改进 iPad 当前文件滚动定位。
+- 优化 iPhone 和 iPad 上 Mermaid to Excalidraw 的 Sheet 尺寸。

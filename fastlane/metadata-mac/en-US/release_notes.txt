@@ -1,0 +1,6 @@
+This update improves iCloud sync, collaboration, and file navigation on Mac.
+
+- More reliable iCloud Drive refresh for open files.
+- Better collaboration room loading hints and transition covers.
+- The Mac canvas position is now kept local to this device instead of being overwritten by other devices.
+- Fixed Trash and sidebar refresh issues.

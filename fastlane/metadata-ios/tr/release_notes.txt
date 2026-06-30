@@ -1,0 +1,8 @@
+Bu güncelleme iPhone ve iPad deneyimini; Apple Pencil, iCloud eşzamanlama, işbirliği ve dosya gezinmesi dahil olmak üzere iyileştirir.
+
+- Apple Pencil ilk kurulum ekranı yenilendi ve parmak etkileşim modları iyileştirildi.
+- Açık dosyalar için iCloud Drive yenilemesi daha güvenilir.
+- İşbirliği odaları için yükleme ipuçları ve geçiş kapakları iyileştirildi.
+- Tuval görünümü artık cihaz bazında korunur; kaydırma konumu cihazlar arasında eşzamanlanmaz.
+- Çöp Kutusu ve kenar çubuğu yenileme sorunları düzeltildi; iPad'de aktif dosyaya kaydırma iyileştirildi.
+- iPhone ve iPad'de Mermaid to Excalidraw sayfa boyutu iyileştirildi.

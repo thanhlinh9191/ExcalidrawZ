@@ -1,7 +1,0 @@
-Usprawnienia wydajności i niezawodności podczas codziennej pracy na płótnie.
-
-- Płynniejsze otwieranie, zamykanie i przełączanie plików.
-- Szybsze zapisywanie i wczytywanie większych rysunków.
-- Bardziej niezawodne okładki plików, podglądy punktów kontrolnych i podglądy elementów biblioteki.
-- Ulepszone wiersze podglądu w historii plików.
-- Lepszy układ edycji i podglądu Mermaid na Macu.

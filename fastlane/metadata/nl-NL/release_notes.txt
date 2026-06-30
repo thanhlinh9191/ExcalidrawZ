@@ -1,7 +1,0 @@
-Prestatie- en betrouwbaarheidsverbeteringen voor dagelijks canvaswerk.
-
-- Bestanden openen, sluiten en wisselen voelt vloeiender.
-- Grote tekeningen worden sneller opgeslagen en geladen.
-- Betrouwbaardere bestandscovers, checkpointvoorbeelden en voorbeelden van bibliotheekitems.
-- Verbeterde voorbeeldrijen in de bestandsgeschiedenis.
-- Betere indeling voor Mermaid bewerken en bekijken op Mac.

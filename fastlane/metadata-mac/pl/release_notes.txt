@@ -1,0 +1,6 @@
+Ta aktualizacja ulepsza synchronizację iCloud, współpracę i nawigację po plikach na Macu.
+
+- Bardziej niezawodne odświeżanie iCloud Drive dla otwartych plików.
+- Lepsze komunikaty ładowania i okładki przejść dla pokojów współpracy.
+- Pozycja płótna na Macu jest teraz przechowywana lokalnie na tym urządzeniu i nie jest nadpisywana przez inne urządzenia.
+- Naprawiono problemy z odświeżaniem Kosza i paska bocznego.

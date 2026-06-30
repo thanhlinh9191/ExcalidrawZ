@@ -1,0 +1,8 @@
+Esta actualización mejora la experiencia en iPhone y iPad, incluidos Apple Pencil, la sincronización con iCloud, la colaboración y la navegación de archivos.
+
+- Configuración inicial de Apple Pencil rediseñada y mejores modos de interacción con el dedo.
+- Actualización de iCloud Drive más fiable para archivos abiertos.
+- Mejores avisos de carga y portadas de transición para salas de colaboración.
+- La posición del lienzo se conserva por dispositivo, en lugar de sincronizar el desplazamiento entre dispositivos.
+- Corregidos problemas de actualización en Papelera y barra lateral; mejor desplazamiento al archivo activo en iPad.
+- Mejor tamaño de la hoja Mermaid to Excalidraw en iPhone y iPad.

@@ -1,0 +1,6 @@
+Bu güncelleme Mac'te iCloud eşzamanlama, işbirliği ve dosya gezinmesini iyileştirir.
+
+- Açık dosyalar için iCloud Drive yenilemesi daha güvenilir.
+- İşbirliği odaları için yükleme ipuçları ve geçiş kapakları iyileştirildi.
+- Mac tuval konumu artık bu cihazda yerel olarak tutulur ve diğer cihazlar tarafından üzerine yazılmaz.
+- Çöp Kutusu ve kenar çubuğu yenileme sorunları düzeltildi.

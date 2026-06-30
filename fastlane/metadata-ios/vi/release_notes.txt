@@ -1,0 +1,8 @@
+Bản cập nhật này cải thiện trải nghiệm trên iPhone và iPad, bao gồm Apple Pencil, đồng bộ iCloud, cộng tác và điều hướng tệp.
+
+- Làm mới bước thiết lập Apple Pencil lần đầu và cải thiện các chế độ thao tác bằng ngón tay.
+- Làm mới iCloud Drive đáng tin cậy hơn cho các tệp đang mở.
+- Cải thiện gợi ý tải và ảnh bìa chuyển cảnh cho phòng cộng tác.
+- Vị trí canvas nay được giữ riêng theo từng thiết bị, không đồng bộ vị trí cuộn giữa các thiết bị.
+- Sửa lỗi làm mới Thùng rác và thanh bên, đồng thời cải thiện cuộn đến tệp đang mở trên iPad.
+- Cải thiện kích thước sheet Mermaid to Excalidraw trên iPhone và iPad.

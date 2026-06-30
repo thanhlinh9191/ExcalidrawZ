@@ -1,0 +1,6 @@
+Esta atualização melhora a sincronização do iCloud, a colaboração e a navegação de arquivos no Mac.
+
+- Atualização do iCloud Drive mais confiável para arquivos abertos.
+- Melhores avisos de carregamento e capas de transição para salas de colaboração.
+- A posição da tela no Mac agora fica local neste dispositivo, sem ser substituída por outros dispositivos.
+- Corrigidos problemas de atualização da Lixeira e da barra lateral.
