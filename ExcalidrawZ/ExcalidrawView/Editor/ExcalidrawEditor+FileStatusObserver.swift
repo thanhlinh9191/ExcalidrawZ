@@ -51,33 +51,6 @@ private struct FileStatusObserverModifier: ViewModifier {
             .observeFileStatus(for: activeFile) { status in
                 handleFileStatusChange(status)
             }
-            .overlay(alignment: .top) {
-                if isSyncing {
-                    HStack {
-                        if #available(macOS 26.0, iOS 26.0, *) {
-                            Image(systemSymbol: .icloudAndArrowDown)
-                                .drawOnAppear(options: .speed(2))
-                        } else {
-                            Image(systemSymbol: .icloudAndArrowDown)
-                        }
-                        Text(.localizable(.iCloudStatusSyncing))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background {
-                        if #available(iOS 26.0, macOS 26.0, *) {
-                            Capsule()
-                                .fill(.background)
-                                .glassEffect(.clear, in: Capsule())
-                        } else {
-                            Capsule().fill(.ultraThinMaterial)
-                        }
-                    }
-                    .padding()
-                    .transition(.move(edge: .top))
-                }
-            }
-            .animation(.smooth, value: isSyncing)
             .sheet(isPresented: Binding {
                 conflictFileURL != nil
             } set: {

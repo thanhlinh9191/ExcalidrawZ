@@ -680,8 +680,8 @@ struct ExcalidrawEditor: View {
                     logger.debug("Ignored canvas update: no persistent changes id=\(file.id)")
                     return .ignoredNoChanges
                 }
-                logger.debug("Persisting library canvas update id=\(file.id) elements=\(file.elements.count)")
-                return fileState.updateFile(activeFile, with: file) ? .accepted : .rejected
+                logger.debug("Mirroring library canvas update id=\(activeFile.id?.uuidString ?? file.id) elements=\(file.elements.count)")
+                return .accepted
 
             case .localFile(let url):
                 guard case .localFolder(let folder) = fileState.currentActiveGroup else { return .rejected }

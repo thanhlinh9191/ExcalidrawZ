@@ -883,14 +883,8 @@ final class FileState: ObservableObject {
         return fileID
     }
     
-    func updateCurrentFile(with excalidrawFile: ExcalidrawFile) {
-        if case .file(let file) = self.currentActiveFile {
-            updateFile(file, with: excalidrawFile)
-        }
-    }
-    
     @discardableResult
-    func updateFile(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
+    func persistPreparedLibraryCanvasUpdate(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
         let activeFile = ActiveFile.file(file)
         let didUpdateFlag = didUpdateFileState[.file(file)] ?? false
         guard !file.inTrash,

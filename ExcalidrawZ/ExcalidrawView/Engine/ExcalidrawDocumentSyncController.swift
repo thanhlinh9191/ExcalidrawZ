@@ -363,6 +363,14 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                     if markProgrammaticCommit, let currentFileID {
                         core.parent?.fileState.noteProgrammaticCanvasMutation(fileID: currentFileID)
                     }
+                    guard persistPreparedLibraryCanvasUpdateIfNeeded(
+                        preparedUpdate,
+                        currentFileID: currentFileID,
+                        type: type,
+                        core: core
+                    ) else {
+                        return
+                    }
                     core.parent?.file?.apply(preparedUpdate)
                 }
         }
@@ -435,6 +443,34 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             }
             return activeFile.name
         }
+    }
+
+    @MainActor
+    private func persistPreparedLibraryCanvasUpdateIfNeeded(
+        _ preparedUpdate: ExcalidrawFile.PreparedCanvasDataUpdate,
+        currentFileID: String?,
+        type: ExcalidrawCanvasView.ExcalidrawType?,
+        core: ExcalidrawCore
+    ) -> Bool {
+        guard type == .normal else {
+            return true
+        }
+        guard let currentFileID,
+              let fileState = core.parent?.fileState,
+              case .file(let activeFile) = fileState.currentActiveFile else {
+            return true
+        }
+        guard activeFile.id?.uuidString == currentFileID else {
+            core.logger.debug(
+                "Skipped persisting prepared library canvas update: active file mismatch expected=\(currentFileID) actual=\(activeFile.id?.uuidString ?? "nil")"
+            )
+            return false
+        }
+
+        var file = ExcalidrawFile()
+        file.id = currentFileID
+        file.apply(preparedUpdate)
+        return fileState.persistPreparedLibraryCanvasUpdate(activeFile, with: file)
     }
 
     private static func elements(
