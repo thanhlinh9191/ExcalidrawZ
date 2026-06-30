@@ -83,6 +83,7 @@ fastlane/screenshots/**/*.png
 fastlane/previews/assets/**/*.png
 fastlane/previews/output/**/*.png
 fastlane/test_output
+fastlane/.generated/
 fastlane/.env
 fastlane/.env.local
 fastlane/AuthKey_*.p8
