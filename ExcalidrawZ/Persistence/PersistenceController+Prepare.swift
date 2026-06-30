@@ -30,13 +30,19 @@ extension PersistenceController {
                     let groups = try groupsFetch.execute()
 
                     let defaultGroup = groups.first { $0.groupType == .default }
+                    var didChange = false
 
                     files.forEach { file in
                         if file.group?.groupType == .trash {
                             file.group = defaultGroup
                             file.inTrash = true
                             file.deletedAt = .now
+                            didChange = true
                         }
+                    }
+
+                    if didChange {
+                        try context.save()
                     }
                 }
             } catch {

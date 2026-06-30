@@ -41,7 +41,11 @@ struct GroupsView: View {
         self.group = group
         self.fileState = fileState
         let fetchRequest = NSFetchRequest<Group>(entityName: "Group")
-        fetchRequest.predicate = NSPredicate(format: "parent = %@", group)
+        fetchRequest.predicate = NSPredicate(
+            format: "parent = %@ AND type != %@",
+            group,
+            Group.GroupType.trash.rawValue
+        )
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Group.name, ascending: true)]
         self._children = FetchRequest(fetchRequest: fetchRequest)
         

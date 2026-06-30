@@ -366,7 +366,10 @@ private struct DatabaseGroupsListView: View {
         self.fileState = fileState
         self._groups = FetchRequest(
             sortDescriptors: sortDescriptors,
-            predicate: NSPredicate(format: "parent = nil")
+            predicate: NSPredicate(
+                format: "parent = nil OR type == %@",
+                Group.GroupType.trash.rawValue
+            )
         )
     }
 

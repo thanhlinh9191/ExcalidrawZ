@@ -1679,6 +1679,7 @@ final class FileState: ObservableObject {
             let defaultGroups = groups.filter({$0.groupType == .default})
             var theEearlisetGroup: Group?
             var didMoveFiles = false
+            var didChange = false
             // Merge default groups
             if defaultGroups.count > 1 {
                 theEearlisetGroup = defaultGroups.sorted(by: {
@@ -1693,17 +1694,50 @@ final class FileState: ObservableObject {
                         defaultGroupFiles.forEach { file in
                             file.group = theEearlisetGroup
                             didMoveFiles = true
+                            didChange = true
                         }
                         context.delete(group)
+                        didChange = true
                     }
                 }
             }
             
             let trashGroups = groups.filter({$0.groupType == .trash})
-            trashGroups.dropFirst().forEach { trash in
-                context.delete(trash)
+            if let defaultGroup = theEearlisetGroup ?? defaultGroups.sorted(by: {
+                ($0.createdAt ?? .distantFuture) < ($1.createdAt ?? .distantFuture)
+            }).first, !trashGroups.isEmpty {
+                let trashedGroupFilesFetchRequest = NSFetchRequest<File>(entityName: "File")
+                trashedGroupFilesFetchRequest.predicate = NSPredicate(format: "group IN %@", trashGroups)
+                let trashedGroupFiles = try context.fetch(trashedGroupFilesFetchRequest)
+                trashedGroupFiles.forEach { file in
+                    file.group = defaultGroup
+                    file.inTrash = true
+                    if file.deletedAt == nil {
+                        file.deletedAt = .now
+                    }
+                    didChange = true
+                }
             }
-            try context.save()
+
+            let primaryTrashGroup = trashGroups.sorted {
+                ($0.createdAt ?? .distantFuture) < ($1.createdAt ?? .distantFuture)
+            }.first
+
+            if let primaryTrashGroup, primaryTrashGroup.parent != nil {
+                primaryTrashGroup.parent = nil
+                didChange = true
+            }
+
+            trashGroups
+                .filter { $0 != primaryTrashGroup }
+                .forEach { trash in
+                    context.delete(trash)
+                    didChange = true
+                }
+
+            if didChange {
+                try context.save()
+            }
             return didMoveFiles
         }
 

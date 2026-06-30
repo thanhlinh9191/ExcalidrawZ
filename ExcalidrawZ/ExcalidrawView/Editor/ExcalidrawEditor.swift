@@ -201,6 +201,21 @@ struct ExcalidrawEditor: View {
             AIChatIslandOverlay(canvasSize: editorContentSize)
 #endif
         }
+//#if DEBUG
+//        .overlay(alignment: .bottomTrailing) {
+//#if os(iOS)
+//            if !usesCompactIOSAIChatSurfaces {
+//                IndicatorOverlay()
+//                    .padding(.trailing, 8)
+//                    .ignoresSafeArea(.container, edges: .bottom)
+//            }
+//#else
+//            IndicatorOverlay()
+//                .padding(.trailing, 8)
+//                .padding(.bottom, 18)
+//#endif
+//        }
+//#endif
 #if os(iOS)
         .overlay(alignment: .bottom) {
             CompactAIChatInputOverlay()
