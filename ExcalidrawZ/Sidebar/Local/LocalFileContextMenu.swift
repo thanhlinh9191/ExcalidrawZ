@@ -477,36 +477,36 @@ struct LocalFileRowMenuItems: View {
 
         Task {
             do {
-                if case .localFolder(let folder) = fileState.currentActiveGroup {
-                    try await folder.withSecurityScopedURL { _ async throws in
-                        // Item removed will be handled in `LocalFilesListView`
-                        for file in filesToDelete {
-                            _ = try await FileCoordinator.shared.coordinatedTrash(url: file)
-                            let scope = AIConversationFileScope(
-                                kind: .localFile,
-                                id: file.absoluteString
-                            )
-                            do {
-                                try await PersistenceController.shared.aiConversationRepository
-                                    .deleteConversations(
-                                        forFileScope: scope
-                                    )
-                                AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
-                            } catch {
-                                localFileContextMenuLogger.warning("Failed to delete AI conversations for local file \(file): \(error)")
-                            }
-                        }
+                for file in filesToDelete {
+                    try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: file) {
+                        _ = try await FileCoordinator.shared.coordinatedTrash(url: file)
                     }
-
+                    let scope = AIConversationFileScope(
+                        kind: .localFile,
+                        id: file.absoluteString
+                    )
+                    do {
+                        try await PersistenceController.shared.aiConversationRepository
+                            .deleteConversations(
+                                forFileScope: scope
+                            )
+                        AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
+                    } catch {
+                        localFileContextMenuLogger.warning("Failed to delete AI conversations for local file \(file): \(error)")
+                    }
                     await MainActor.run {
-                        if let currentActiveFile = {
-                            if case .localFile(let file) = fileState.currentActiveFile {
-                                return file
-                            }
-                            return nil
-                        }(), filesToDelete.contains(currentActiveFile) {
-                            fileState.setActiveFile(nil)
+                        localFolderState.itemRemovedPublisher.send(file.filePath)
+                    }
+                }
+
+                await MainActor.run {
+                    if let currentActiveFile = {
+                        if case .localFile(let file) = fileState.currentActiveFile {
+                            return file
                         }
+                        return nil
+                    }(), filesToDelete.contains(currentActiveFile) {
+                        fileState.setActiveFile(nil)
                     }
                 }
             } catch {

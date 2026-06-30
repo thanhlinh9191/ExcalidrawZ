@@ -145,7 +145,7 @@ struct NewRoomModifier: ViewModifier {
             .sheet(isPresented: $state.isJoinRoomSheetPresented) {
                 JoinRoomSheetView()
 #if os(iOS)
-                    .presentationDetents([.height(160)])
+                    .presentationDetents([.height(240)])
 #endif
             }
             .environmentObject(state)

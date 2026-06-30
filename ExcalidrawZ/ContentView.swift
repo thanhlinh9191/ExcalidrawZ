@@ -238,6 +238,8 @@ struct ContentView: View {
                 }
             }
         }
+
+        try? await fileState.mergeDefaultGroupAndTrashIfNeeded(context: viewContext)
     }
 }
 

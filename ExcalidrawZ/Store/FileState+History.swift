@@ -78,7 +78,22 @@ extension FileState {
                     object: parsedFile
                 )
 
-            case .temporaryFile, .collaborationFile, nil:
+            case .collaborationFile(let collaborationFile):
+                let activeFile = ActiveFile.collaborationFile(collaborationFile)
+                var restoredFile = try ExcalidrawFile(data: content, id: activeFile.id)
+                restoredFile.name = filename ?? collaborationFile.name
+                restoredFile.roomID = collaborationFile.roomID
+
+                // Collaboration rooms are server-authoritative; restore the live canvas
+                // first and let the normal collaboration update path refresh local backup.
+                guard currentActiveFile?.id == activeFile.id else { return }
+                await excalidrawCollaborationWebCoordinator?.loadFile(from: restoredFile, force: true)
+                NotificationCenter.default.post(
+                    name: .activeCanvasFileDidRestore,
+                    object: restoredFile
+                )
+
+            case .temporaryFile, nil:
                 throw AIChatEditError.unsupportedFile
         }
     }

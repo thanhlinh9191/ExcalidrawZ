@@ -219,6 +219,10 @@ struct ExcalidrawCanvasView: View {
     private func updateToolStateCoordinatorBinding(isEnabled: Bool) {
         if isEnabled {
             toolState.excalidrawWebCoordinator = excalidrawCore
+            if type == .collaboration {
+                exportState.excalidrawCollaborationWebCoordinator = excalidrawCore
+                fileState.excalidrawCollaborationWebCoordinator = excalidrawCore
+            }
         } else {
             clearToolStateCoordinatorBindingIfNeeded()
         }

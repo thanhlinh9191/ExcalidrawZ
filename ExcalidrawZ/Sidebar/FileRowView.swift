@@ -17,7 +17,7 @@ struct FileRowView: View {
     @Environment(\.alertToast) private var alertToast
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
     
-    var file: File
+    @ObservedObject var file: File
     var files: FetchedResults<File>
     var fileState: FileState
     

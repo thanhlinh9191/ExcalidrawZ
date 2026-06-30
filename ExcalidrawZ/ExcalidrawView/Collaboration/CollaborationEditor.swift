@@ -12,9 +12,11 @@ import ChocofordUI
 struct CollaborationEditor: View {
     @Environment(\.managedObjectContext) var viewContext
     @Environment(\.alertToast) var alertToast
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject private var collaborationState: CollaborationState
+    @EnvironmentObject private var fileHomeItemTransitionState: FileHomeItemTransitionState
 
     var file: CollaborationFile
 
@@ -37,6 +39,10 @@ struct CollaborationEditor: View {
     @State private var excalidrawFile: ExcalidrawFile?
     @State private var loadedContent: Data?
     @State private var loadedRoomID: String?
+    @State private var didShowRoomSyncNotice = false
+    @State private var isRoomSyncNoticePresented = false
+    @State private var roomSyncNoticeTask: Task<Void, Never>?
+    @State private var loadingOverlayCoverImage: PlatformImage?
 
     var body: some View {
         ZStack {
@@ -45,18 +51,24 @@ struct CollaborationEditor: View {
                     type: .collaboration,
                     file: $excalidrawFile,
                     loadingState: $loadingState,
-                    interactionEnabled: isActive
+                    interactionEnabled: isActive && canShowCanvasContent
                 ) { error in
                     alertToast(error)
                 }
                 .preferredColorScheme(appPreference.excalidrawAppearance.colorScheme)
-                .opacity(isProgressViewPresented ? 0 : 1)
+                .opacity(isProgressViewPresented || !canShowCanvasContent ? 0 : 1)
                 .onChange(of: loadingState, debounce: 0.3) { newVal in
                     isProgressViewPresented = newVal == .loading
+                    if newVal == .loading {
+                        loadingOverlayCoverImage = loadingCoverImage
+                    } else {
+                        loadingOverlayCoverImage = nil
+                    }
                     
                     fileState.collaboratingFilesState[file] = newVal
                     
                     if newVal == .loaded {
+                        showRoomSyncNoticeIfNeeded()
                         Task {
                             do {
                                 try await fileState.excalidrawCollaborationWebCoordinator?
@@ -88,7 +100,7 @@ struct CollaborationEditor: View {
                 }
             }
             
-            if case .error(let error) = loadingState {
+            if case .error(let error) = loadingState, canShowCanvasContent {
                 Color(red: 255 / 255.0, green: 200 / 255.0, blue: 200 / 255.0, opacity: 1.0)
                     .overlay {
                         VStack(spacing: 20) {
@@ -117,7 +129,9 @@ struct CollaborationEditor: View {
                         }
                     }
 
-            } else if isProgressViewPresented {
+            } else if isProgressViewPresented, canShowLoadingOverlay {
+                loadingOverlayBackground
+
                 VStack {
                     ProgressView()
                         .progressViewStyle(.circular)
@@ -125,8 +139,21 @@ struct CollaborationEditor: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            if isRoomSyncNoticePresented {
+                collaborationRoomSyncNotice
+                    .padding(.top, 72)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: isRoomSyncNoticePresented)
         .opacity(isActive ? 1 : 0)
+        .watch(value: isActive) { active in
+            guard active, loadingState == .loaded else { return }
+            showRoomSyncNoticeIfNeeded()
+        }
         .task {
+            loadingOverlayCoverImage = loadingCoverImage
             do {
                 // Load content from CollaborationFile
                 let content = try await file.loadContent()
@@ -154,6 +181,149 @@ struct CollaborationEditor: View {
         }
         .onDisappear {
             fileState.collaboratingFilesState[file] = nil
+            loadingOverlayCoverImage = nil
+            roomSyncNoticeTask?.cancel()
+            roomSyncNoticeTask = nil
+            isRoomSyncNoticePresented = false
+        }
+    }
+
+    private var collaborationRoomSyncNotice: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.callout.weight(.semibold))
+                .symbolRenderingMode(.hierarchical)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(.localizable(.collaborationRoomSyncNoticeTitle))
+                    .font(.callout)
+                    .lineLimit(1)
+
+                Text(.localizable(.collaborationRoomSyncNoticeSubtitle))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .background {
+            if #available(macOS 26.0, iOS 26.0, *) {
+                Capsule()
+                    .fill(.clear)
+                    .glassEffect(.regular, in: Capsule())
+            } else {
+                Capsule()
+                    .fill(.ultraThinMaterial)
+            }
+        }
+        .overlay {
+            Capsule()
+                .stroke(.primary.opacity(0.08), lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
+    }
+
+    private var canShowCanvasContent: Bool {
+        !fileHomeItemTransitionState.canShowItemContainerView
+    }
+
+    private var canShowLoadingOverlay: Bool {
+        canShowCanvasContent
+    }
+
+    @ViewBuilder
+    private var loadingOverlayBackground: some View {
+        GeometryReader { geometry in
+            let rect = adjustedLoadingOverlayBackgroundRect(in: geometry)
+
+            loadingOverlayBackgroundContent
+                .frame(width: rect.width, height: rect.height)
+                .clipped()
+                .offset(x: rect.minX, y: rect.minY)
+        }
+    }
+
+    @ViewBuilder
+    private var loadingOverlayBackgroundContent: some View {
+        if let image = effectiveLoadingOverlayCoverImage {
+            Image(platformImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            fallbackLoadingOverlayBackground
+        }
+    }
+
+    private func adjustedLoadingOverlayBackgroundRect(in geometry: GeometryProxy) -> CGRect {
+        let rect = CGRect(origin: .zero, size: geometry.size)
+#if os(macOS)
+        let topInset = max(
+            geometry.safeAreaInsets.top,
+            geometry.frame(in: .global).minY
+        )
+        guard topInset > 0 else { return rect }
+        return CGRect(
+            x: rect.minX,
+            y: rect.minY - topInset,
+            width: rect.width,
+            height: rect.height + topInset
+        )
+#elseif os(iOS)
+        return FileHomeCoverTransitionGeometry.rectClosestToImageAspect(
+            rect,
+            alternate: FileHomeCoverTransitionGeometry.rectIncludingIgnoredSafeArea(
+                rect,
+                in: geometry
+            ),
+            image: effectiveLoadingOverlayCoverImage
+        )
+#else
+        return rect
+#endif
+    }
+
+    private var effectiveLoadingOverlayCoverImage: PlatformImage? {
+        loadingOverlayCoverImage ?? loadingCoverImage
+    }
+
+    private var loadingCoverImage: PlatformImage? {
+        guard let fileID = file.id?.uuidString else { return nil }
+        return FileItemPreviewCache.shared.getPreviewCache(
+            forID: fileID,
+            colorScheme: colorScheme
+        )
+    }
+
+    @ViewBuilder
+    private var fallbackLoadingOverlayBackground: some View {
+        if #available(macOS 14.0, iOS 17.0, *) {
+            Rectangle()
+                .fill(.windowBackground)
+        } else {
+            Rectangle()
+                .fill(Color.windowBackgroundColor)
+        }
+    }
+
+    private func showRoomSyncNoticeIfNeeded() {
+        guard isActive,
+              !didShowRoomSyncNotice,
+              file.roomID?.isEmpty == false else {
+            return
+        }
+
+        didShowRoomSyncNotice = true
+        roomSyncNoticeTask?.cancel()
+        roomSyncNoticeTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled else { return }
+            isRoomSyncNoticePresented = true
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard !Task.isCancelled else { return }
+            isRoomSyncNoticePresented = false
+            roomSyncNoticeTask = nil
         }
     }
 }

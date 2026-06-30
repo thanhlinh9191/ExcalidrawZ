@@ -48,7 +48,7 @@ struct JoinRoomSheetView: View {
                 TextField(
                     .localizable(.collaborationJoinRoomLinkFieldLabel),
                     text: $invitationLink,
-                    prompt: Text("https://excalidraw.com/#room=...")
+                    prompt: Text("excalidraw.com/#room=...")
                 )
                 .textFieldStyle(.roundedBorder)
                 .watch(value: invitationLink) { newValue in

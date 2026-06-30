@@ -1674,12 +1674,32 @@ final class FileState: ObservableObject {
     
     func mergeDefaultGroupAndTrashIfNeeded(context: NSManagedObjectContext) async throws {
         let didMoveFiles = try await context.perform {
-            let groups = try context.fetch(NSFetchRequest<Group>(entityName: "Group"))
+            var groups = try context.fetch(NSFetchRequest<Group>(entityName: "Group"))
+            var didChange = false
+
+            if groups.first(where: { $0.groupType == .default }) == nil {
+                let group = Group(context: context)
+                group.id = UUID()
+                group.groupType = .default
+                group.name = "default"
+                group.createdAt = .now
+                groups.append(group)
+                didChange = true
+            }
+
+            if groups.first(where: { $0.groupType == .trash }) == nil {
+                let group = Group(context: context)
+                group.id = UUID()
+                group.groupType = .trash
+                group.name = "Recently Deleted"
+                group.createdAt = .now
+                groups.append(group)
+                didChange = true
+            }
             
             let defaultGroups = groups.filter({$0.groupType == .default})
             var theEearlisetGroup: Group?
             var didMoveFiles = false
-            var didChange = false
             // Merge default groups
             if defaultGroups.count > 1 {
                 theEearlisetGroup = defaultGroups.sorted(by: {
