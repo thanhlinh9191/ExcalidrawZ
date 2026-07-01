@@ -9,7 +9,7 @@ import SwiftUI
 
 import ChocofordUI
 
-private struct BackupFolderItem: Hashable {
+private struct BackupFolderItem: Hashable, Sendable {
     let url: URL
     let isDirectory: Bool
     let isEncrypted: Bool
@@ -36,7 +36,7 @@ struct BackupFoldersView: View {
     @State private var content: [BackupFolderItem] = []
     
     var body: some View {
-        TreeStructureView(children: content, id: \.url, paddingLeading: 6) {
+        TreeStructureView(children: content, id: \.url, paddingLeading: 6, usesLazyChildren: false) {
             HStack(spacing: 4) {
                 let folderName = folder.lastPathComponent
                 Label(
@@ -75,36 +75,43 @@ struct BackupFoldersView: View {
             }
         }
         .task(id: folder) {
-            loadContent()
+            await loadContent()
         }
     }
 
-    private func loadContent() {
+    @MainActor
+    private func loadContent() async {
         do {
-            self.content = try FileManager.default.contentsOfDirectory(
-                at: folder,
-                includingPropertiesForKeys: [.nameKey, .isDirectoryKey],
-                options: .skipsHiddenFiles
-            )
-            .map { url in
-                let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-                return BackupFolderItem(
-                    url: url,
-                    isDirectory: isDirectory,
-                    isEncrypted: isDirectory ? false : isLegacyLockedBackupFile(url)
-                )
+            let folderURL = folder
+            let loadedContent = try await Task.detached(priority: .utility) {
+                try Self.loadFolderContent(from: folderURL)
+            }.value
+            guard !Task.isCancelled else {
+                return
             }
+            self.content = loadedContent
         } catch {
             alertToast(error)
         }
     }
 
-    private func isLegacyLockedBackupFile(_ url: URL) -> Bool {
-        guard url.pathExtension == "excalidraw",
-              let data = try? Data(contentsOf: url) else {
-            return false
+    private static func loadFolderContent(from folder: URL) throws -> [BackupFolderItem] {
+        try FileManager.default.contentsOfDirectory(
+            at: folder,
+            includingPropertiesForKeys: [.nameKey, .isDirectoryKey],
+            options: .skipsHiddenFiles
+        )
+        .compactMap { url in
+            let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+            guard isDirectory || url.pathExtension == "excalidraw" else {
+                return nil
+            }
+            return BackupFolderItem(
+                url: url,
+                isDirectory: isDirectory,
+                isEncrypted: false
+            )
         }
-        return EncryptedContentService.isEncryptedEnvelope(data)
     }
 }
 

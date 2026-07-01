@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+private struct BackupSummary: Sendable {
+    let rootFolders: [URL]
+    let totalSize: Int
+}
+
 struct BackupContentView: View {
     @Environment(\.alertToast) var alertToast
 
@@ -30,7 +35,7 @@ struct BackupContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             ScrollView {
-                LazyVStack(spacing: 0) {
+                VStack(spacing: 0) {
                     ForEach(backupRootFolders, id: \.self) { folder in
                         BackupFoldersView(selection: $selectedFile, folder: folder)
                     }
@@ -47,51 +52,51 @@ struct BackupContentView: View {
             }
         }
         .task(id: backup) {
-            loadSelectedBackup()
+            await loadSelectedBackup()
         }
     }
     
-    private func loadSelectedBackup() {
-        // selectedBackupDirs.removeAll()
-        var accSize: Int = 0
+    @MainActor
+    private func loadSelectedBackup() async {
         do {
-            let groups: [URL] = try FileManager.default.contentsOfDirectory(
-                at: backup,
-                includingPropertiesForKeys: [.nameKey, .isDirectoryKey]
-            ).filter({ (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true })
-            
-            self.backupRootFolders = groups
-            
-            guard let enumerator = FileManager.default.enumerator(
-                at: backup,
-                includingPropertiesForKeys: [.nameKey, .isDirectoryKey, .fileSizeKey]
-            ) else {
+            let backupURL = backup
+            let summary = try await Task.detached(priority: .utility) {
+                try Self.loadBackupSummary(from: backupURL)
+            }.value
+            guard !Task.isCancelled else {
                 return
             }
-            
-            for case let url as URL in enumerator {
-                guard url.pathExtension == "excalidraw" else { continue }
-                accSize += ((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize) ?? 0
-            }
-            self.selectedBackupSize = accSize
-
-            
-//            for group in groups {
-//                let files: [URL] = try FileManager.default.contentsOfDirectory(
-//                    at: group,
-//                    includingPropertiesForKeys: [.nameKey, .fileSizeKey]
-//                )
-//                selectedBackupDirs.updateValue(files, forKey: group.lastPathComponent)
-//                
-//                accSize += files.reduce(0) { partialResult, url in
-//                    partialResult + ((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
-//                }
-//            }
-//            
-//            self.selectedBackupSize = accSize
+            self.backupRootFolders = summary.rootFolders
+            self.selectedBackupSize = summary.totalSize
         } catch {
             alertToast(error)
         }
+    }
+
+    private static func loadBackupSummary(from backup: URL) throws -> BackupSummary {
+        let groups = try FileManager.default.contentsOfDirectory(
+            at: backup,
+            includingPropertiesForKeys: [.nameKey, .isDirectoryKey],
+            options: .skipsHiddenFiles
+        )
+        .filter { url in
+            (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        }
+
+        var totalSize = 0
+        guard let enumerator = FileManager.default.enumerator(
+            at: backup,
+            includingPropertiesForKeys: [.nameKey, .isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return BackupSummary(rootFolders: groups, totalSize: totalSize)
+        }
+
+        for case let url as URL in enumerator where url.pathExtension == "excalidraw" {
+            totalSize += ((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize) ?? 0
+        }
+
+        return BackupSummary(rootFolders: groups, totalSize: totalSize)
     }
 
 }
