@@ -105,7 +105,7 @@ struct ExcalidrawCanvasView: View {
     // MARK: - Body
     
     var body: some View {
-        ExcalidrawViewRepresentable()
+        ExcalidrawViewRepresentable(nativeInteractionEnabled: interactionEnabled)
             .modifier(MediaItemSyncModifier())
             .modifier(MathImageEditSheetViewModifier(coordinator: excalidrawCore, onError: onError))
             .environmentObject(excalidrawCore)

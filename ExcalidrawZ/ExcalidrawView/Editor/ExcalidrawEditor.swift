@@ -8,6 +8,9 @@
 import SwiftUI
 import Combine
 import CoreData
+#if os(macOS)
+import AppKit
+#endif
 #if os(iOS)
 import UIKit
 #endif
@@ -133,6 +136,16 @@ struct ExcalidrawEditor: View {
     private var nativeViewportInsetsForWeb: ExcalidrawNativeViewportInsets {
         shouldFloatNavigationToolbarOverCanvas ? measuredNativeViewportInsets : .zero
     }
+
+#if os(macOS)
+    private var shouldShowFloatingToolbarDragRegion: Bool {
+        shouldFloatNavigationToolbarOverCanvas && activeFile != nil && !isLoadingFile
+    }
+
+    private var floatingToolbarDragRegionHeight: CGFloat {
+        max(measuredNativeViewportInsets.top, 72)
+    }
+#endif
     
     
     @State private var canvasLoadingState: ExcalidrawCanvasView.LoadingState = .loading
@@ -186,6 +199,16 @@ struct ExcalidrawEditor: View {
                     }
 #endif
             }
+
+#if os(macOS)
+            if shouldShowFloatingToolbarDragRegion {
+                WindowDragRegion()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: floatingToolbarDragRegionHeight)
+                    .ignoresSafeArea(.container, edges: .top)
+                    .transition(.opacity)
+            }
+#endif
 
             ExcalidrawTrailingControls()
                 .opacity(isLoadingFile ? 0 : 1)
@@ -751,6 +774,32 @@ private struct NativeViewportInsetsMeasurementView: View {
         .allowsHitTesting(false)
     }
 }
+
+#if os(macOS)
+private struct WindowDragRegion: NSViewRepresentable {
+    func makeNSView(context: Context) -> DragView {
+        DragView()
+    }
+
+    func updateNSView(_ nsView: DragView, context: Context) {}
+
+    final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            bounds.contains(point) ? self : nil
+        }
+
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+            true
+        }
+
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+    }
+}
+#endif
 
 #if os(iOS)
 private extension View {
