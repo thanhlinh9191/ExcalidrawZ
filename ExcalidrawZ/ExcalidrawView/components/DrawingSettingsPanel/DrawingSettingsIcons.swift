@@ -172,6 +172,86 @@ struct FillSolidIcon: Shape {
     }
 }
 
+// MARK: - Stroke Variability
+
+struct StrokeVariabilityConstantIcon: View {
+    var body: some View {
+        StrokeVariabilityIcon(strokeWidths: [1, 1, 1, 1])
+    }
+}
+
+struct StrokeVariabilityVariableIcon: View {
+    var body: some View {
+        StrokeVariabilityIcon(strokeWidths: [1.5, 2, 2.75, 3.25])
+    }
+}
+
+private struct StrokeVariabilityIcon: View {
+    static let viewBox = CGRect(x: 0, y: 0, width: 20, height: 20)
+
+    let strokeWidths: [CGFloat]
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                StrokeVariabilityWaveShape(segment: 0)
+                    .stroke(.primary, style: StrokeStyle(lineWidth: strokeWidths[0], lineCap: .round, lineJoin: .round))
+                StrokeVariabilityWaveShape(segment: 1)
+                    .stroke(.primary, style: StrokeStyle(lineWidth: strokeWidths[1], lineCap: .round, lineJoin: .round))
+                StrokeVariabilityWaveShape(segment: 2)
+                    .stroke(.primary, style: StrokeStyle(lineWidth: strokeWidths[2], lineCap: .round, lineJoin: .round))
+                StrokeVariabilityWaveShape(segment: 3)
+                    .stroke(.primary, style: StrokeStyle(lineWidth: strokeWidths[3], lineCap: .round, lineJoin: .round))
+            }
+            .frame(width: Self.viewBox.width, height: Self.viewBox.height, alignment: .topLeading)
+            .scaleEffect(
+                x: proxy.size.width / Self.viewBox.width,
+                y: proxy.size.height / Self.viewBox.height
+            )
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+}
+
+private struct StrokeVariabilityWaveShape: Shape {
+    let segment: Int
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        switch segment {
+            case 0:
+                path.move(to: CGPoint(x: rect.minX + 4, y: rect.minY + 12))
+                path.addCurve(
+                    to: CGPoint(x: rect.minX + 8, y: rect.minY + 12),
+                    control1: CGPoint(x: rect.minX + 5, y: rect.minY + 8),
+                    control2: CGPoint(x: rect.minX + 6, y: rect.minY + 8)
+                )
+            case 1:
+                path.move(to: CGPoint(x: rect.minX + 8, y: rect.minY + 12))
+                path.addCurve(
+                    to: CGPoint(x: rect.minX + 12, y: rect.minY + 12),
+                    control1: CGPoint(x: rect.minX + 9, y: rect.minY + 16),
+                    control2: CGPoint(x: rect.minX + 10, y: rect.minY + 16)
+                )
+            case 2:
+                path.move(to: CGPoint(x: rect.minX + 12, y: rect.minY + 12))
+                path.addCurve(
+                    to: CGPoint(x: rect.minX + 16, y: rect.minY + 12),
+                    control1: CGPoint(x: rect.minX + 14, y: rect.minY + 8),
+                    control2: CGPoint(x: rect.minX + 15, y: rect.minY + 8)
+                )
+            default:
+                path.move(to: CGPoint(x: rect.minX + 16, y: rect.minY + 12))
+                path.addCurve(
+                    to: CGPoint(x: rect.minX + 19, y: rect.minY + 12),
+                    control1: CGPoint(x: rect.minX + 17, y: rect.minY + 16),
+                    control2: CGPoint(x: rect.minX + 18, y: rect.minY + 16)
+                )
+        }
+        return path
+    }
+}
+
 // MARK: - Sloppiness
 
 struct SloppinessArchitectIcon: View {

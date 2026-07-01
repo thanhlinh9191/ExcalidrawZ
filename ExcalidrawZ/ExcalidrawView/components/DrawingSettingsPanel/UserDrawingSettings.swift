@@ -9,7 +9,8 @@ import Foundation
 
 /// User drawing settings for Excalidraw
 struct UserDrawingSettings: Codable, Equatable {
-    var currentItemStrokeWidth: Double?
+    var currentItemStrokeWidthKey: StrokeWidthKey?
+    var currentItemStrokeVariability: StrokeVariability?
     var currentItemStrokeColor: String?
     var currentItemBackgroundColor: String?
     var currentItemStrokeStyle: ExcalidrawStrokeStyle?
@@ -24,6 +25,41 @@ struct UserDrawingSettings: Codable, Equatable {
     var currentItemStartArrowhead: Nullable<Arrowhead>?
     var currentItemEndArrowhead: Nullable<Arrowhead>?
 
+    var strokeWidth: Double? {
+        currentItemStrokeWidthKey?.strokeWidth
+    }
+
+    mutating func setStrokeWidth(_ strokeWidth: Double?) {
+        currentItemStrokeWidthKey = strokeWidth.flatMap(StrokeWidthKey.init(strokeWidth:))
+    }
+
+    init() {}
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.currentItemStrokeWidthKey = try container.decodeIfPresent(StrokeWidthKey.self, forKey: .currentItemStrokeWidthKey)
+        if self.currentItemStrokeWidthKey == nil,
+           let legacyStrokeWidth = try container.decodeIfPresent(Double.self, forKey: .currentItemStrokeWidth) {
+            self.currentItemStrokeWidthKey = StrokeWidthKey(strokeWidth: legacyStrokeWidth)
+        }
+        self.currentItemStrokeVariability = try container.decodeIfPresent(StrokeVariability.self, forKey: .currentItemStrokeVariability)
+
+        self.currentItemStrokeColor = try container.decodeIfPresent(String.self, forKey: .currentItemStrokeColor)
+        self.currentItemBackgroundColor = try container.decodeIfPresent(String.self, forKey: .currentItemBackgroundColor)
+        self.currentItemStrokeStyle = try container.decodeIfPresent(ExcalidrawStrokeStyle.self, forKey: .currentItemStrokeStyle)
+        self.currentItemFillStyle = try container.decodeIfPresent(ExcalidrawFillStyle.self, forKey: .currentItemFillStyle)
+        self.currentItemRoughness = try container.decodeIfPresent(Double.self, forKey: .currentItemRoughness)
+        self.currentItemOpacity = try container.decodeIfPresent(Double.self, forKey: .currentItemOpacity)
+        self.currentItemFontFamily = try container.decodeIfPresent(FontFamily.self, forKey: .currentItemFontFamily)
+        self.currentItemFontSize = try container.decodeIfPresent(Double.self, forKey: .currentItemFontSize)
+        self.currentItemTextAlign = try container.decodeIfPresent(String.self, forKey: .currentItemTextAlign)
+        self.currentItemRoundness = try container.decodeIfPresent(ExcalidrawStrokeSharpness.self, forKey: .currentItemRoundness)
+        self.currentItemArrowType = try container.decodeIfPresent(ArrowType.self, forKey: .currentItemArrowType)
+        self.currentItemStartArrowhead = try container.decodeIfPresent(Nullable<Arrowhead>.self, forKey: .currentItemStartArrowhead)
+        self.currentItemEndArrowhead = try container.decodeIfPresent(Nullable<Arrowhead>.self, forKey: .currentItemEndArrowhead)
+    }
+
     /// Convert to JSON string for JavaScript
     func toJSONString() -> String? {
         guard let data = try? JSONEncoder().encode(self),
@@ -35,7 +71,8 @@ struct UserDrawingSettings: Codable, Equatable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(currentItemStrokeWidth, forKey: .currentItemStrokeWidth)
+        try container.encodeIfPresent(currentItemStrokeWidthKey, forKey: .currentItemStrokeWidthKey)
+        try container.encodeIfPresent(currentItemStrokeVariability, forKey: .currentItemStrokeVariability)
         try container.encodeIfPresent(currentItemStrokeColor, forKey: .currentItemStrokeColor)
         try container.encodeIfPresent(currentItemBackgroundColor, forKey: .currentItemBackgroundColor)
         try container.encodeIfPresent(currentItemStrokeStyle, forKey: .currentItemStrokeStyle)
@@ -52,7 +89,10 @@ struct UserDrawingSettings: Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
+        case currentItemStrokeWidthKey
+        // Decode-only legacy key from old Excalidraw appState.
         case currentItemStrokeWidth
+        case currentItemStrokeVariability
         case currentItemStrokeColor
         case currentItemBackgroundColor
         case currentItemStrokeStyle
@@ -84,7 +124,16 @@ struct UserDrawingSettings: Codable, Equatable {
     /// Create from dictionary (from JavaScript message)
     static func from(dict: [String: Any]) -> UserDrawingSettings {
         var settings = UserDrawingSettings()
-        settings.currentItemStrokeWidth = dict["currentItemStrokeWidth"] as? Double
+        if let strokeWidthKey = dict["currentItemStrokeWidthKey"] as? String {
+            settings.currentItemStrokeWidthKey = StrokeWidthKey(rawValue: strokeWidthKey)
+        }
+        if settings.currentItemStrokeWidthKey == nil,
+           let legacyStrokeWidth = numberValue(dict["currentItemStrokeWidth"]) {
+            settings.currentItemStrokeWidthKey = StrokeWidthKey(strokeWidth: legacyStrokeWidth)
+        }
+        if let strokeVariability = dict["currentItemStrokeVariability"] as? String {
+            settings.currentItemStrokeVariability = StrokeVariability(rawValue: strokeVariability)
+        }
         settings.currentItemStrokeColor = dict["currentItemStrokeColor"] as? String
         settings.currentItemBackgroundColor = dict["currentItemBackgroundColor"] as? String
 
@@ -138,6 +187,19 @@ struct UserDrawingSettings: Codable, Equatable {
 
         return settings
     }
+
+    private static func numberValue(_ value: Any?) -> Double? {
+        switch value {
+            case let value as Double:
+                value
+            case let value as Int:
+                Double(value)
+            case let value as NSNumber:
+                value.doubleValue
+            default:
+                nil
+        }
+    }
 }
 
 extension UserDrawingSettings {
@@ -146,7 +208,9 @@ extension UserDrawingSettings {
     /// these so the two stay in sync — drift here would silently break the
     /// canvas-vs-global comparison.
     enum Defaults {
-        static let strokeWidth: Double = 2
+        static let strokeWidthKey: StrokeWidthKey = .medium
+        static let strokeWidth: Double = strokeWidthKey.strokeWidth
+        static let strokeVariability: StrokeVariability = .constant
         static let strokeColor: String = "#1e1e1e"
         static let backgroundColor: String = "transparent"
         static let strokeStyle: ExcalidrawStrokeStyle = .solid
@@ -166,7 +230,8 @@ extension UserDrawingSettings {
     /// Used by `matches(template:)` to fill nil fields before comparison.
     static let uiDefaults: UserDrawingSettings = {
         var s = UserDrawingSettings()
-        s.currentItemStrokeWidth = Defaults.strokeWidth
+        s.currentItemStrokeWidthKey = Defaults.strokeWidthKey
+        s.currentItemStrokeVariability = Defaults.strokeVariability
         s.currentItemStrokeColor = Defaults.strokeColor
         s.currentItemBackgroundColor = Defaults.backgroundColor
         s.currentItemStrokeStyle = Defaults.strokeStyle
@@ -187,7 +252,8 @@ extension UserDrawingSettings {
     /// are kept untouched (the inverse of `merging(template:)`).
     func filling(defaults: UserDrawingSettings) -> UserDrawingSettings {
         var result = self
-        if result.currentItemStrokeWidth == nil { result.currentItemStrokeWidth = defaults.currentItemStrokeWidth }
+        if result.currentItemStrokeWidthKey == nil { result.currentItemStrokeWidthKey = defaults.currentItemStrokeWidthKey }
+        if result.currentItemStrokeVariability == nil { result.currentItemStrokeVariability = defaults.currentItemStrokeVariability }
         if result.currentItemStrokeColor == nil { result.currentItemStrokeColor = defaults.currentItemStrokeColor }
         if result.currentItemBackgroundColor == nil { result.currentItemBackgroundColor = defaults.currentItemBackgroundColor }
         if result.currentItemStrokeStyle == nil { result.currentItemStrokeStyle = defaults.currentItemStrokeStyle }
@@ -209,7 +275,8 @@ extension UserDrawingSettings {
     /// Pairs with `matches(template:)` — `merging` is the action that makes `matches` true.
     func merging(template: UserDrawingSettings) -> UserDrawingSettings {
         var result = self
-        if let v = template.currentItemStrokeWidth { result.currentItemStrokeWidth = v }
+        if let v = template.currentItemStrokeWidthKey { result.currentItemStrokeWidthKey = v }
+        if let v = template.currentItemStrokeVariability { result.currentItemStrokeVariability = v }
         if let v = template.currentItemStrokeColor { result.currentItemStrokeColor = v }
         if let v = template.currentItemBackgroundColor { result.currentItemBackgroundColor = v }
         if let v = template.currentItemStrokeStyle { result.currentItemStrokeStyle = v }
@@ -239,6 +306,34 @@ extension UserDrawingSettings {
 }
 
 extension UserDrawingSettings {
+    enum StrokeWidthKey: String, Codable {
+        case thin
+        case medium
+        case bold
+
+        var strokeWidth: Double {
+            switch self {
+                case .thin: 1
+                case .medium: 2
+                case .bold: 4
+            }
+        }
+
+        init?(strokeWidth: Double) {
+            switch strokeWidth {
+                case 1: self = .thin
+                case 2: self = .medium
+                case 4: self = .bold
+                default: return nil
+            }
+        }
+    }
+
+    enum StrokeVariability: String, Codable {
+        case constant
+        case variable
+    }
+
     enum FontFamily: Int, Codable {
         case handDrawn = 5
         case normal = 6

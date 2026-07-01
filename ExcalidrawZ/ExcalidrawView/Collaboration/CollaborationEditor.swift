@@ -142,7 +142,7 @@ struct CollaborationEditor: View {
         .overlay(alignment: .top) {
             if isRoomSyncNoticePresented {
                 collaborationRoomSyncNotice
-                    .padding(.top, 72)
+                    .padding(.top, collaborationRoomSyncNoticeTopPadding)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
@@ -223,6 +223,14 @@ struct CollaborationEditor: View {
                 .stroke(.primary.opacity(0.08), lineWidth: 0.5)
         }
         .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
+    }
+
+    private var collaborationRoomSyncNoticeTopPadding: CGFloat {
+#if os(iOS)
+        104
+#else
+        72
+#endif
     }
 
     private var canShowCanvasContent: Bool {

@@ -1013,7 +1013,8 @@ extension ExcalidrawCore {
         let currentItemFontSize, currentItemOpacity, currentItemRoughness: Int
 //        let currentItemStartArrowhead: JSONNull?
         let currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle: String
-        let currentItemStrokeWidth: Int
+        let currentItemStrokeWidthKey: String?
+        let currentItemStrokeVariability: String?
         let currentItemTextAlign, cursorButton: String
 //        let editingGroupID: JSONNull?
         let activeTool: ActiveTool
@@ -1036,7 +1037,7 @@ extension ExcalidrawCore {
 //        let selectedLinearElement: JSONNull?
 
         enum CodingKeys: String, CodingKey {
-            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
+            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidthKey, currentItemStrokeVariability, currentItemTextAlign, cursorButton
             
             case activeTool, penMode, penDetected, exportBackground, exportScale, exportEmbedScene, exportWithDarkMode, defaultSidebarDockedPreference, lastPointerDownWith, name
             case previousSelectedElementIDS = "previousSelectedElementIds"

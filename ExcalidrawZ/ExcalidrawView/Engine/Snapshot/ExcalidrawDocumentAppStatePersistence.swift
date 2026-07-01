@@ -25,7 +25,6 @@ enum ExcalidrawDocumentAppStatePersistence {
         "stats",
 
         // Drawing defaults
-        "currentItemStrokeWidth",
         "currentItemStrokeWidthKey",
         "currentItemStrokeColor",
         "currentItemBackgroundColor",
