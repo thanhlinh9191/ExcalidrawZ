@@ -1,3 +1,11 @@
+## 2.2.3
+
+#### Bug fixed
+
+- Fixed compatibility with the latest Excalidraw stroke width settings, including the newer stroke width key used by recent drawing settings.
+- Fixed cases where drawings or backups containing newer stroke data could fail to load or back up correctly.
+- Improved support for pen pressure and stroke settings in the drawing settings panel.
+
 ## 2.2.2
 
 #### Optimizations

@@ -1,8 +1,5 @@
-This update improves the iPhone and iPad experience, including Apple Pencil, iCloud sync, collaboration, and file navigation.
+This update fixes an important drawing compatibility issue and is recommended for all users.
 
-- Refreshed Apple Pencil setup and improved finger interaction modes.
-- More reliable iCloud Drive refresh for open files.
-- Better collaboration room loading hints and transition covers.
-- Local canvas viewport is now kept per device instead of syncing between devices.
-- Fixed Trash/sidebar refresh issues and improved iPad active-file scrolling.
-- Improved Mermaid to Excalidraw sheet sizing on iPhone and iPad.
+- Fixed compatibility with the latest Excalidraw stroke width settings.
+- Fixed an issue where some drawings or backups could fail to load when newer stroke data was present.
+- Improved support for pen pressure and stroke settings.

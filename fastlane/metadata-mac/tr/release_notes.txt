@@ -1,6 +1,5 @@
-Bu güncelleme Mac'te iCloud eşzamanlama, işbirliği ve dosya gezinmesini iyileştirir.
+Bu güncelleme önemli bir çizim uyumluluğu sorununu giderir ve tüm kullanıcılara önerilir.
 
-- Açık dosyalar için iCloud Drive yenilemesi daha güvenilir.
-- İşbirliği odaları için yükleme ipuçları ve geçiş kapakları iyileştirildi.
-- Mac tuval konumu artık bu cihazda yerel olarak tutulur ve diğer cihazlar tarafından üzerine yazılmaz.
-- Çöp Kutusu ve kenar çubuğu yenileme sorunları düzeltildi.
+- En yeni Excalidraw çizgi kalınlığı ayarlarıyla uyumluluk düzeltildi.
+- Daha yeni çizgi verileri içeren bazı çizimlerin veya yedeklerin yüklenememesine neden olabilen sorun düzeltildi.
+- Kalem basıncı ve çizgi ayarları desteği iyileştirildi.

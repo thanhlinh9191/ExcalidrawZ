@@ -1,6 +1,5 @@
-Cette mise à jour améliore la synchronisation iCloud, la collaboration et la navigation dans les fichiers sur Mac.
+Cette mise à jour corrige un important problème de compatibilité de dessin et est recommandée à tous les utilisateurs.
 
-- Actualisation iCloud Drive plus fiable pour les fichiers ouverts.
-- Meilleurs messages de chargement et couvertures de transition pour les salons de collaboration.
-- La position du canevas sur Mac reste locale à cet appareil au lieu d'être écrasée par d'autres appareils.
-- Correction des problèmes d’actualisation de la corbeille et de la barre latérale.
+- Correction de la compatibilité avec les derniers réglages de largeur de trait d'Excalidraw.
+- Correction d'un problème pouvant empêcher le chargement de certains dessins ou sauvegardes contenant de nouvelles données de trait.
+- Amélioration de la prise en charge de la pression du stylet et des réglages de trait.

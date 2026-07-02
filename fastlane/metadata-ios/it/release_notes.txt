@@ -1,8 +1,5 @@
-Questo aggiornamento migliora l'esperienza su iPhone e iPad, inclusi Apple Pencil, sincronizzazione iCloud, collaborazione e navigazione dei file.
+Questo aggiornamento risolve un importante problema di compatibilità del disegno ed è consigliato a tutti gli utenti.
 
-- Configurazione iniziale di Apple Pencil ridisegnata e modalità di interazione con le dita migliorate.
-- Aggiornamento iCloud Drive più affidabile per i file aperti.
-- Indicazioni di caricamento e copertine di transizione migliori per le stanze collaborative.
-- La posizione del canvas viene mantenuta per dispositivo, invece di sincronizzare lo scorrimento tra dispositivi.
-- Risolti problemi di aggiornamento di Cestino e barra laterale; migliorato lo scorrimento al file attivo su iPad.
-- Migliorata la dimensione del foglio Mermaid to Excalidraw su iPhone e iPad.
+- Risolta la compatibilità con le ultime impostazioni di larghezza tratto di Excalidraw.
+- Risolto un problema che poteva impedire il caricamento di alcuni disegni o backup con dati tratto più recenti.
+- Migliorato il supporto per pressione della penna e impostazioni del tratto.

@@ -1,8 +1,5 @@
-Ta aktualizacja ulepsza działanie na iPhonie i iPadzie, w tym Apple Pencil, synchronizację iCloud, współpracę i nawigację po plikach.
+Ta aktualizacja naprawia ważny problem ze zgodnością rysowania i jest zalecana wszystkim użytkownikom.
 
-- Odświeżona pierwsza konfiguracja Apple Pencil i ulepszone tryby obsługi palcem.
-- Bardziej niezawodne odświeżanie iCloud Drive dla otwartych plików.
-- Lepsze komunikaty ładowania i okładki przejść dla pokojów współpracy.
-- Pozycja płótna jest teraz przechowywana osobno na każdym urządzeniu, bez synchronizacji przewijania między urządzeniami.
-- Naprawiono odświeżanie Kosza i paska bocznego oraz poprawiono przewijanie do aktywnego pliku na iPadzie.
-- Ulepszono rozmiar arkusza Mermaid to Excalidraw na iPhonie i iPadzie.
+- Naprawiono zgodność z najnowszymi ustawieniami szerokości kreski Excalidraw.
+- Naprawiono problem, przez który niektóre rysunki lub kopie zapasowe z nowszymi danymi kreski mogły się nie wczytywać.
+- Ulepszono obsługę nacisku pióra i ustawień kreski.

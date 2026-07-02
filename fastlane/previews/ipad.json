@@ -3,9 +3,9 @@
     "fastlane/previews/assets/ipad/AppStore_iPad_Previews-{locale}.png",
     "fastlane/previews/assets/ipad/AppStore_iPad_Previews.png"
   ],
-  "fontDirectories": [
-    "ExcalidrawZ/Resources/excalidraw-latest-backup/fonts/Excalifont",
-    "ExcalidrawZ/Resources/excalidraw-latest-backup/fonts/Xiaolai"
+  "fontFiles": [
+    "ExcalidrawZ/Resources/Fonts/Excalifont-Regular.woff2",
+    "fastlane/previews/fonts/Xiaolai-Regular.ttf"
   ],
   "output": "fastlane/previews/output/ipad/AppStore_iPad_Previews.{locale}.png",
   "sliceWidth": 2732,
@@ -185,9 +185,10 @@
     },
     "ko": {
       "fontNames": [
-        "AppleSDGothicNeo-SemiBold",
-        "AppleGothic",
-        "ArialUnicodeMS"
+        "XiaolaiSC",
+        "Xiaolai SC",
+        "Excalifont-Regular",
+        "Excalifont"
       ],
       "texts": {
         "fileManagementTitle": "Excalidraw 파일 관리",
@@ -236,9 +237,10 @@
     },
     "ja": {
       "fontNames": [
-        "HiraginoSans-W6",
-        "HiraginoSans-W5",
-        "ArialUnicodeMS"
+        "XiaolaiSC",
+        "Xiaolai SC",
+        "Excalifont-Regular",
+        "Excalifont"
       ],
       "texts": {
         "fileManagementTitle": "Excalidrawファイルを管理",

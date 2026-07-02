@@ -460,6 +460,11 @@ extension Character {
             let value = scalar.value
             switch value {
                 case 0x3000...0x303F,
+                     0x3040...0x309F,
+                     0x30A0...0x30FF,
+                     0x31F0...0x31FF,
+                     0x3130...0x318F,
+                     0xAC00...0xD7AF,
                      0x3400...0x4DBF,
                      0x4E00...0x9FFF,
                      0xF900...0xFAFF,

@@ -1,6 +1,5 @@
-Questo aggiornamento migliora sincronizzazione iCloud, collaborazione e navigazione dei file su Mac.
+Questo aggiornamento risolve un importante problema di compatibilità del disegno ed è consigliato a tutti gli utenti.
 
-- Aggiornamento iCloud Drive più affidabile per i file aperti.
-- Indicazioni di caricamento e copertine di transizione migliori per le stanze collaborative.
-- La posizione del canvas su Mac resta locale a questo dispositivo, invece di essere sovrascritta da altri dispositivi.
-- Risolti problemi di aggiornamento del Cestino e della barra laterale.
+- Risolta la compatibilità con le ultime impostazioni di larghezza tratto di Excalidraw.
+- Risolto un problema che poteva impedire il caricamento di alcuni disegni o backup con dati tratto più recenti.
+- Migliorato il supporto per pressione della penna e impostazioni del tratto.
