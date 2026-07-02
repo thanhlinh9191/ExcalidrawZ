@@ -1,7 +1,0 @@
-Miglioramenti di prestazioni e affidabilità nel lavoro quotidiano sul canvas.
-
-- Apertura, chiusura e cambio dei file più fluidi.
-- Salvataggio e caricamento più rapidi per i disegni grandi.
-- Copertine dei file, anteprime dei checkpoint e anteprime degli elementi della libreria più affidabili.
-- Righe di anteprima migliorate nella cronologia dei file.
-- Layout migliore per modifica e anteprima Mermaid su Mac.

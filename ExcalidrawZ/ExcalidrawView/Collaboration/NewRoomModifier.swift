@@ -145,33 +145,24 @@ struct NewRoomModifier: ViewModifier {
             .sheet(isPresented: $state.isJoinRoomSheetPresented) {
                 JoinRoomSheetView()
 #if os(iOS)
-                    .presentationDetents([.height(160)])
+                    .presentationDetents([.height(240)])
 #endif
             }
             .environmentObject(state)
     }
     
     private func createRoom(name: String, file: ExcalidrawFile = ExcalidrawFile()) {
-        let context = PersistenceController.shared.newTaskContext()
         Task.detached {
             do {
-                try await context.perform {
-                    let collabFile = CollaborationFile(
-                        name: name,
-                        content: file.content,
-                        isOwner: true,
-                        context: context
-                    )
-                    collabFile.roomID = nil
-                    try context.save()
-                    
-                    let fileID = collabFile.objectID
-                    Task {
-                        await MainActor.run {
-                            if let collabFile = viewContext.object(with: fileID) as? CollaborationFile {
-                                fileState.setActiveFile(.collaborationFile(collabFile))
-                            }
-                        }
+                let fileID = try await PersistenceController.shared.collaborationFileRepository.createCollaborationFile(
+                    name: name,
+                    content: file.content,
+                    isOwner: true
+                )
+
+                await MainActor.run {
+                    if let collabFile = viewContext.object(with: fileID) as? CollaborationFile {
+                        fileState.setActiveFile(.collaborationFile(collabFile))
                     }
                 }
             } catch {

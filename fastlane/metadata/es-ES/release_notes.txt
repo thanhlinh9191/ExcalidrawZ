@@ -1,7 +1,0 @@
-Mejoras de rendimiento y fiabilidad para el trabajo diario en el lienzo.
-
-- Apertura, cierre y cambio de archivos más fluidos.
-- Guardado y carga más rápidos en dibujos grandes.
-- Portadas de archivos, vistas previas de puntos de control y vistas previas de la biblioteca más fiables.
-- Filas de vista previa mejoradas en el historial de archivos.
-- Mejor diseño para editar y previsualizar Mermaid en Mac.

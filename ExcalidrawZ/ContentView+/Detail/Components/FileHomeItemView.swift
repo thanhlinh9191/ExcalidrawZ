@@ -28,6 +28,15 @@ struct FileHomeItemPreferenceKey: PreferenceKey {
     }
 }
 
+enum FileHomeItemTransitionPreferenceID {
+    static let destination = "DEST"
+    static let viewportDestination = "VIEWPORT_DEST"
+
+    static func source(for fileID: String) -> String {
+        fileID + "SOURCE"
+    }
+}
+
 struct FileHomeItemView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.managedObjectContext) var viewContext
@@ -298,7 +307,7 @@ private struct FileHomeItemContentView: View {
             Color.clear
                 .anchorPreference(key: FileHomeItemPreferenceKey.self, value: .bounds) { value in
                     fileHomeItemTransitionItemState.sourceFileID == fileID
-                    ? [fileID+"SOURCE": value]
+                    ? [FileHomeItemTransitionPreferenceID.source(for: fileID): value]
                     : [:]
                 }
         }

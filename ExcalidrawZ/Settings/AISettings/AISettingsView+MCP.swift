@@ -48,30 +48,53 @@ extension AISettingsView {
 
             Spacer(minLength: 8)
 
-            mcpConnectionGuideButton
+            if canRunMCPServer {
+                mcpConnectionGuideButton
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
     var mcpRows: some View {
-        Toggle(isOn: mcpServerEnabledBinding) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(localizable: .settingsAIMCPServerToggleTitle)
+        if canRunMCPServer {
+            Toggle(isOn: mcpServerEnabledBinding) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(localizable: .settingsAIMCPServerToggleTitle)
 
-                Text(localizable: .settingsAIMCPServerToggleHelp)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    Text(localizable: .settingsAIMCPServerToggleHelp)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-        }
 
-        mcpServiceModeRow
+            mcpServiceModeRow
 
-        if usesCompactSettingsLayout {
-            compactMCPStatusRow
+            if usesCompactSettingsLayout {
+                compactMCPStatusRow
+            } else {
+                regularMCPStatusRow
+            }
         } else {
-            regularMCPStatusRow
+            mcpMacOnlyRow
         }
+    }
+
+    @ViewBuilder
+    var mcpMacOnlyRow: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemSymbol: .infoCircle)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+
+            Text(localizable: .settingsAIMCPMacOnlyMessage)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
     }
 
     @ViewBuilder

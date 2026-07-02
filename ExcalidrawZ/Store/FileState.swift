@@ -883,14 +883,8 @@ final class FileState: ObservableObject {
         return fileID
     }
     
-    func updateCurrentFile(with excalidrawFile: ExcalidrawFile) {
-        if case .file(let file) = self.currentActiveFile {
-            updateFile(file, with: excalidrawFile)
-        }
-    }
-    
     @discardableResult
-    func updateFile(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
+    func persistPreparedLibraryCanvasUpdate(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
         let activeFile = ActiveFile.file(file)
         let didUpdateFlag = didUpdateFileState[.file(file)] ?? false
         guard !file.inTrash,
@@ -1000,7 +994,8 @@ final class FileState: ObservableObject {
                     try await PersistenceController.shared.fileRepository.updateElements(
                         fileObjectID: fileObjectID,
                         fileData: content,
-                        checkpoint: .suppress
+                        checkpoint: .suppress,
+                        updateMetadataWhenPathUnchanged: false
                     )
                     logger.debug("Background appState-only file update saved: \(fileName)")
 
@@ -1031,6 +1026,7 @@ final class FileState: ObservableObject {
 
         try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
             try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
+            touchLocalFileModificationDate(url, logger: logger)
         }
 
         guard !suppressCheckpoint else {
@@ -1101,7 +1097,8 @@ final class FileState: ObservableObject {
                         try await PersistenceController.shared.fileRepository.updateElements(
                             fileObjectID: fileObjectID,
                             fileData: content,
-                            checkpoint: .suppress
+                            checkpoint: .suppress,
+                            updateMetadataWhenPathUnchanged: false
                         )
                         self.logger.debug("AppState-only file update saved")
                     } catch {
@@ -1184,6 +1181,7 @@ final class FileState: ObservableObject {
         // Use FileCoordinator for safe atomic write
         guard let data = excalidrawFile.content else { return }
         try await FileCoordinator.shared.coordinatedWrite(url: url, data: data)
+        Self.touchLocalFileModificationDate(url, logger: logger)
 
         // Skip checkpoint writes entirely while an automated mutation session
         // is active — file content still saves, history doesn't. Mirrors the
@@ -1192,7 +1190,10 @@ final class FileState: ObservableObject {
             self.automaticCheckpointWritesSuppressed
         }
         if suppressCheckpoint {
-            await MainActor.run { self.didUpdateFile = true }
+            await MainActor.run {
+                self.didUpdateFile = true
+                self.objectWillChange.send()
+            }
             return
         }
 
@@ -1238,6 +1239,22 @@ final class FileState: ObservableObject {
 
         await MainActor.run {
             self.didUpdateFile = true
+            self.objectWillChange.send()
+        }
+    }
+
+    static func touchLocalFileModificationDate(
+        _ url: URL,
+        date: Date = Date(),
+        logger: Logger
+    ) {
+        do {
+            try FileManager.default.setAttributes(
+                [.modificationDate: date],
+                ofItemAtPath: url.filePath
+            )
+        } catch {
+            logger.warning("Failed to update local file modification date for \(url.lastPathComponent): \(error.localizedDescription)")
         }
     }
     
@@ -1281,6 +1298,7 @@ final class FileState: ObservableObject {
                 
                 await MainActor.run {
                     self.didUpdateFile = true
+                    self.objectWillChange.send()
                 }
             } catch {
                 self.logger.error("Failed to update collaboration file: \(error)")
@@ -1650,7 +1668,28 @@ final class FileState: ObservableObject {
     
     func mergeDefaultGroupAndTrashIfNeeded(context: NSManagedObjectContext) async throws {
         let didMoveFiles = try await context.perform {
-            let groups = try context.fetch(NSFetchRequest<Group>(entityName: "Group"))
+            var groups = try context.fetch(NSFetchRequest<Group>(entityName: "Group"))
+            var didChange = false
+
+            if groups.first(where: { $0.groupType == .default }) == nil {
+                let group = Group(context: context)
+                group.id = UUID()
+                group.groupType = .default
+                group.name = "default"
+                group.createdAt = .now
+                groups.append(group)
+                didChange = true
+            }
+
+            if groups.first(where: { $0.groupType == .trash }) == nil {
+                let group = Group(context: context)
+                group.id = UUID()
+                group.groupType = .trash
+                group.name = "Recently Deleted"
+                group.createdAt = .now
+                groups.append(group)
+                didChange = true
+            }
             
             let defaultGroups = groups.filter({$0.groupType == .default})
             var theEearlisetGroup: Group?
@@ -1669,17 +1708,50 @@ final class FileState: ObservableObject {
                         defaultGroupFiles.forEach { file in
                             file.group = theEearlisetGroup
                             didMoveFiles = true
+                            didChange = true
                         }
                         context.delete(group)
+                        didChange = true
                     }
                 }
             }
             
             let trashGroups = groups.filter({$0.groupType == .trash})
-            trashGroups.dropFirst().forEach { trash in
-                context.delete(trash)
+            if let defaultGroup = theEearlisetGroup ?? defaultGroups.sorted(by: {
+                ($0.createdAt ?? .distantFuture) < ($1.createdAt ?? .distantFuture)
+            }).first, !trashGroups.isEmpty {
+                let trashedGroupFilesFetchRequest = NSFetchRequest<File>(entityName: "File")
+                trashedGroupFilesFetchRequest.predicate = NSPredicate(format: "group IN %@", trashGroups)
+                let trashedGroupFiles = try context.fetch(trashedGroupFilesFetchRequest)
+                trashedGroupFiles.forEach { file in
+                    file.group = defaultGroup
+                    file.inTrash = true
+                    if file.deletedAt == nil {
+                        file.deletedAt = .now
+                    }
+                    didChange = true
+                }
             }
-            try context.save()
+
+            let primaryTrashGroup = trashGroups.sorted {
+                ($0.createdAt ?? .distantFuture) < ($1.createdAt ?? .distantFuture)
+            }.first
+
+            if let primaryTrashGroup, primaryTrashGroup.parent != nil {
+                primaryTrashGroup.parent = nil
+                didChange = true
+            }
+
+            trashGroups
+                .filter { $0 != primaryTrashGroup }
+                .forEach { trash in
+                    context.delete(trash)
+                    didChange = true
+                }
+
+            if didChange {
+                try context.save()
+            }
             return didMoveFiles
         }
 

@@ -326,7 +326,8 @@ struct CompactBrowserDestinationView: View {
                             Section {
                                 LocalFolderMenuItems(
                                     folder: folder,
-                                    canExpand: false
+                                    canExpand: false,
+                                    showsRemoveObservation: false
                                 ) {
                                     triggers.onToogleCreateSubfolder()
                                 } onToggleRemoveObservation: {

@@ -95,7 +95,7 @@ extension MathInputSheetView {
             workspaceSegmentedPickerBackground
         }
         .fixedSize(horizontal: true, vertical: true)
-        .onChange(of: activeWorkspace) { newValue in
+        .watch(value: activeWorkspace) { newValue in
             if isLatexAIModePresented {
                 cancelLatexAIMode()
             }
@@ -177,7 +177,7 @@ extension MathInputSheetView {
         .controlSize(.regular)
         .mathNativeCapsuleSegmentedPicker()
         .frame(maxWidth: .infinity)
-        .onChange(of: formulaTab) { _ in
+        .watch(value: formulaTab) { _ in
             templateSearchText = ""
         }
     }

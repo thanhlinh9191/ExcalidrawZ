@@ -42,17 +42,20 @@ where Children.Element : Hashable {
     var paddingLeading: CGFloat
     var children: Children
     var childrenID: KeyPath<Children.Element, ID>
+    var usesLazyChildren: Bool
     var childView: (Children.Element) -> ChildView
     
     init<Root: View>(
         children: Children,
         paddingLeading: CGFloat = 0,
+        usesLazyChildren: Bool = true,
         @ViewBuilder root: () -> Root,
         @ViewBuilder childView: @escaping (Children.Element) -> ChildView
     ) where Children.Element : Identifiable, ID == Children.Element.ID {
         self.children = children
         self.childrenID = \.id
         self.paddingLeading = paddingLeading
+        self.usesLazyChildren = usesLazyChildren
         self.root = AnyView(root())
         self.childView = childView
     }
@@ -62,12 +65,14 @@ where Children.Element : Hashable {
         children: Children,
         id: KeyPath<Children.Element, ID>,
         paddingLeading: CGFloat = 0,
+        usesLazyChildren: Bool = true,
         @ViewBuilder root: () -> Root,
         @ViewBuilder childView: @escaping (Children.Element) -> ChildView
     ) {
         self.children = children
         self.childrenID = id
         self.paddingLeading = paddingLeading
+        self.usesLazyChildren = usesLazyChildren
         self.root = AnyView(root())
         self.childView = childView
     }
@@ -87,35 +92,7 @@ where Children.Element : Hashable {
             root
                 .readHeight($height)
             
-            LazyVStack(alignment: .leading, spacing: 0) {
-                ForEach(children, id: childrenID) { child in
-                    let isLast = child == children.last
-
-                    childView(child)
-                        .environment(\.treeStructureDepth, depth+1)
-                        .environment(\.treeStructureIsLast, isLast)
-                        .padding(.leading, paddingBase)
-                        .overlay(alignment: .topLeading) {
-                            HStack(spacing: 0) {
-                                VStack(spacing: 0) {
-                                    Rectangle()
-                                        .fill(fillStyle)
-                                        .frame(width: 1, height: height / 2)
-                                    
-                                    Rectangle()
-                                        .fill(fillStyle)
-                                        .frame(width: 1, height: height / 2)
-                                        .opacity(isLast ? 0 : 1)
-                                }
-                                
-                                Rectangle()
-                                    .fill(fillStyle)
-                                    .frame(width: 5, height: 1)
-                            }
-                            .padding(.leading, 6 + paddingLeading)
-                        }
-                }
-            }
+            childrenStack(fillStyle: fillStyle)
             .overlay(alignment: .leading) {
                 if !isLast {
                     Rectangle()
@@ -124,6 +101,50 @@ where Children.Element : Hashable {
                         .offset(x: -8 + paddingLeading)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func childrenStack(fillStyle: AnyShapeStyle) -> some View {
+        if usesLazyChildren {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                childRows(fillStyle: fillStyle)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 0) {
+                childRows(fillStyle: fillStyle)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func childRows(fillStyle: AnyShapeStyle) -> some View {
+        ForEach(children, id: childrenID) { child in
+            let isLast = child == children.last
+
+            childView(child)
+                .environment(\.treeStructureDepth, depth+1)
+                .environment(\.treeStructureIsLast, isLast)
+                .padding(.leading, paddingBase)
+                .overlay(alignment: .topLeading) {
+                    HStack(spacing: 0) {
+                        VStack(spacing: 0) {
+                            Rectangle()
+                                .fill(fillStyle)
+                                .frame(width: 1, height: height / 2)
+
+                            Rectangle()
+                                .fill(fillStyle)
+                                .frame(width: 1, height: height / 2)
+                                .opacity(isLast ? 0 : 1)
+                        }
+
+                        Rectangle()
+                            .fill(fillStyle)
+                            .frame(width: 5, height: 1)
+                    }
+                    .padding(.leading, 6 + paddingLeading)
+                }
         }
     }
 }

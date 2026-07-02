@@ -179,7 +179,8 @@ actor FileRepository {
     func updateElements(
         fileObjectID: NSManagedObjectID,
         fileData: Data,
-        checkpoint: CheckpointWriteOptions
+        checkpoint: CheckpointWriteOptions,
+        updateMetadataWhenPathUnchanged: Bool = true
     ) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
@@ -192,7 +193,7 @@ actor FileRepository {
         try await saveFileContentToStorage(
             fileObjectID: fileObjectID,
             content: contentData,
-            updateMetadataWhenPathUnchanged: false
+            updateMetadataWhenPathUnchanged: updateMetadataWhenPathUnchanged
         )
 
         // Step 2: Write checkpoint per policy.
@@ -414,7 +415,7 @@ actor FileRepository {
     ) async throws -> UUID {
         let context = PersistenceController.shared.newTaskContext()
 
-        let (checkpointID, checkpointObjectID) = try await context.perform {
+        let (checkpointID, checkpointUpdatedAt) = try await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
                 throw AppError.fileError(.notFound)
             }
@@ -422,7 +423,6 @@ actor FileRepository {
             let checkpoint = FileCheckpoint(context: context)
             let checkpointID = UUID()
             checkpoint.id = checkpointID
-            checkpoint.content = content
             checkpoint.filename = file.name
             checkpoint.updatedAt = .now
             // New AI-history fields. For pure user edits we still write
@@ -441,11 +441,27 @@ actor FileRepository {
                 file.removeFromCheckpoints(checkpoints.last!)
             }
 
-            return (checkpointID, checkpoint.objectID)
+            return (checkpointID, checkpoint.updatedAt)
         }
 
-        // Save checkpoint to storage using CheckpointRepository
-        try await PersistenceController.shared.checkpointRepository.saveCheckpointToStorage(checkpointObjectID: checkpointObjectID)
+        let relativePath = try await PersistenceController.shared.checkpointRepository
+            .saveNewCheckpointContentToStorage(
+                content: content,
+                checkpointID: checkpointID,
+                fileObjectID: fileObjectID,
+                updatedAt: checkpointUpdatedAt
+            )
+
+        try await context.perform {
+            let fetchRequest = NSFetchRequest<FileCheckpoint>(entityName: "FileCheckpoint")
+            fetchRequest.predicate = NSPredicate(format: "id == %@", checkpointID as CVarArg)
+            fetchRequest.fetchLimit = 1
+            guard let checkpoint = try context.fetch(fetchRequest).first else {
+                throw AppError.fileError(.notFound)
+            }
+            checkpoint.updateAfterSavingToStorage(filePath: relativePath)
+            try context.save()
+        }
         return checkpointID
     }
 

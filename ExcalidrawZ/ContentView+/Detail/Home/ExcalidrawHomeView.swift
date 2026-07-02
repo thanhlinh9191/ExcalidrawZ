@@ -16,8 +16,6 @@ struct ExcalidrawHomeView: View {
     @EnvironmentObject private var fileHomeItemTransitionState: FileHomeItemTransitionState
     
     @Binding var isSettingsPresented: Bool
-    
-    @StateObject private var toolState = ToolState()
 
     var disableInteration: Bool {
         fileState.currentActiveFile == nil

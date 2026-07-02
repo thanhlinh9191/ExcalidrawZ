@@ -26,6 +26,13 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     }
 
     static let shared = ExcalidrawZMCPServerController()
+    nonisolated static var isAvailable: Bool {
+#if os(macOS)
+        true
+#else
+        false
+#endif
+    }
 
     private static let isEnabledDefaultsKey = "ExcalidrawZMCPServerEnabled"
     private static let serviceModeDefaultsKey = "ExcalidrawZMCPServiceMode"
@@ -42,6 +49,12 @@ final class ExcalidrawZMCPServerController: ObservableObject {
 
     private init(port: UInt16 = ExcalidrawZMCPServer.defaultPort) {
         self.port = port
+        guard Self.isAvailable else {
+            self.isEnabled = false
+            self.serviceMode = .basic
+            return
+        }
+
         self.isEnabled = UserDefaults.standard.bool(forKey: Self.isEnabledDefaultsKey)
         let loadedServiceMode = Self.loadServiceMode()
         let authorizedServiceMode = Self.authorizedServiceMode(loadedServiceMode)
@@ -57,6 +70,12 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     }
 
     func setEnabled(_ enabled: Bool) {
+        guard Self.isAvailable else {
+            isEnabled = false
+            state = .off
+            return
+        }
+
         guard isEnabled != enabled else { return }
         isEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: Self.isEnabledDefaultsKey)
@@ -69,6 +88,11 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     }
 
     func setServiceMode(_ mode: ExcalidrawMCPServiceMode) {
+        guard Self.isAvailable else {
+            serviceMode = .basic
+            return
+        }
+
         let authorizedMode = Self.authorizedServiceMode(mode)
         guard serviceMode != authorizedMode else {
             if authorizedMode != mode {
@@ -87,6 +111,11 @@ final class ExcalidrawZMCPServerController: ObservableObject {
     }
 
     func startServerIfNeeded() {
+        guard Self.isAvailable else {
+            state = .off
+            return
+        }
+
         guard serverTask == nil else { return }
 
         let router = ExcalidrawMCPToolRouter(serviceMode: serviceMode)

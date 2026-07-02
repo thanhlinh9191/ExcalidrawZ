@@ -435,6 +435,27 @@ private func archivedFileData(
     )
 }
 
+private func backupFileData(
+    for file: File,
+    includeLockedFiles: Bool = true
+) async throws -> ArchivedFileData? {
+    let fileObjectID = file.objectID
+    let snapshot = try await archiveFileSnapshot(for: file)
+    let fallbackName = snapshot.name ?? String(localizable: .newFileNamePlaceholder)
+    guard let content = try await rawContentForBackup(
+        from: snapshot,
+        includeLockedFiles: includeLockedFiles
+    ) else {
+        return nil
+    }
+
+    let hydratedContent = await backupContentByMergingMediaFiles(
+        content,
+        fileObjectID: fileObjectID
+    )
+    return ArchivedFileData(name: fallbackName, content: hydratedContent)
+}
+
 func backupAllCloudFiles(
     to url: URL,
     context: NSManagedObjectContext,
@@ -458,10 +479,10 @@ func backupAllCloudFiles(
         }
 
         for file in files {
+            let fileObjectID = file.objectID
             do {
-                guard let archiveData = try await archivedFileData(
+                guard let archiveData = try await backupFileData(
                     for: file,
-                    context: context,
                     includeLockedFiles: includeLockedFiles
                 ) else {
                     continue
@@ -488,11 +509,25 @@ func backupAllCloudFiles(
                 }
             } catch let error as EncryptedContentError {
                 if error.isContentLocked {
-                    archiveFilesLogger.debug("Skipping locked file during backup")
+                    let fileContext = await backupFileLogContext(
+                        fileObjectID: fileObjectID,
+                        context: context
+                    )
+                    archiveFilesLogger.debug("Skipping locked file during backup \(fileContext)")
                     continue
                 }
+                let fileContext = await backupFileLogContext(
+                    fileObjectID: fileObjectID,
+                    context: context
+                )
+                archiveFilesLogger.warning("Failed to backup cloud file \(fileContext): \(error)")
                 errorDuringBackup = error
             } catch {
+                let fileContext = await backupFileLogContext(
+                    fileObjectID: fileObjectID,
+                    context: context
+                )
+                archiveFilesLogger.warning("Failed to backup cloud file \(fileContext): \(error)")
                 errorDuringBackup = error
             }
         }
@@ -500,6 +535,105 @@ func backupAllCloudFiles(
 
     if let errorDuringBackup {
         throw errorDuringBackup
+    }
+}
+
+private func rawContentForBackup(
+    from snapshot: ArchiveFileSnapshot,
+    includeLockedFiles: Bool
+) async throws -> Data? {
+    let content: Data
+    if let filePath = snapshot.filePath, let fileID = snapshot.fileID {
+        do {
+            content = try await FileStorageManager.shared.loadContent(
+                relativePath: filePath,
+                fileID: fileID.uuidString
+            )
+        } catch {
+            guard let fallbackContent = snapshot.fallbackContent else {
+                throw error
+            }
+            content = fallbackContent
+        }
+    } else if let fallbackContent = snapshot.fallbackContent {
+        content = fallbackContent
+    } else {
+        throw AppError.fileError(.contentNotAvailable(filename: snapshot.name ?? String(localizable: .generalUnknown)))
+    }
+
+    guard EncryptedContentService.isEncryptedEnvelope(content) else {
+        return content
+    }
+
+    guard includeLockedFiles else {
+        return nil
+    }
+    guard let fileID = snapshot.fileID else {
+        throw LockedContentSystemUnlockError.noSavedRecoveryKey
+    }
+
+    return try await LockedContentUnlockSession.shared.decrypt(
+        content,
+        expectedContentType: "file",
+        expectedContentID: fileID.uuidString
+    )
+}
+
+private func backupContentByMergingMediaFiles(
+    _ content: Data,
+    fileObjectID: NSManagedObjectID
+) async -> Data {
+    do {
+        guard var contentObject = try JSONSerialization.jsonObject(with: content) as? [String: Any] else {
+            return content
+        }
+
+        let resourceFiles = try await PersistenceController.shared.mediaItemRepository.getResourceFiles(
+            forFile: fileObjectID
+        )
+        guard !resourceFiles.isEmpty else {
+            return content
+        }
+
+        let mediaFiles = resourceFiles.reduce(into: [String: ExcalidrawFile.ResourceFile]()) { result, file in
+            result[file.id] = file
+        }
+        let encodedMediaFiles = try JSONEncoder().encode(mediaFiles)
+        guard var filesObject = try JSONSerialization.jsonObject(with: encodedMediaFiles) as? [String: Any] else {
+            return content
+        }
+
+        if let existingFiles = contentObject["files"] as? [String: Any] {
+            filesObject.merge(existingFiles) { _, existing in existing }
+        }
+        contentObject["files"] = filesObject
+
+        return try JSONSerialization.data(withJSONObject: contentObject)
+    } catch {
+        archiveFilesLogger.warning("Failed to merge media files into backup content objectID=\(fileObjectID.uriRepresentation().absoluteString): \(error). Backing up raw content.")
+        return content
+    }
+}
+
+private func backupFileLogContext(
+    fileObjectID: NSManagedObjectID,
+    context: NSManagedObjectContext
+) async -> String {
+    do {
+        return try await context.perform {
+            guard let file = try context.existingObject(with: fileObjectID) as? File else {
+                return "objectID=\(fileObjectID.uriRepresentation().absoluteString)"
+            }
+
+            return [
+                "id=\(file.id?.uuidString ?? "nil")",
+                "name=\(file.name ?? "Untitled")",
+                "filePath=\(file.filePath ?? "nil")",
+                "objectID=\(fileObjectID.uriRepresentation().absoluteString)"
+            ].joined(separator: " ")
+        }
+    } catch {
+        return "objectID=\(fileObjectID.uriRepresentation().absoluteString) lookupError=\(error)"
     }
 }
 

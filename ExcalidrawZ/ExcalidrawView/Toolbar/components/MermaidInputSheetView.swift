@@ -16,6 +16,7 @@ import UIKit
 
 struct MermaidInputSheetViewModifier: ViewModifier {
     @Environment(\.alertToast) private var alertToast
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @EnvironmentObject private var fileState: FileState
 
     @Binding var isPresented: Bool
@@ -23,22 +24,44 @@ struct MermaidInputSheetViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(isPresented: $isPresented) {
-                NavigationStack {
-                    MermaidInputSheetView { definition in
-                        do {
-                            var options = ExcalidrawCore.MermaidInsertOptions()
-                            options.focus = .mode(.center)
-                            guard let coordinator = activeCoordinator else {
-                                throw MermaidInputSheetError.noActiveCanvas
-                            }
-                            _ = try await coordinator.insertFromMermaid(definition, options: options)
-                        } catch {
-                            alertToast(error)
-                            throw error
-                        }
-                    }
-                }
+                sheetContent
             }
+    }
+
+    @ViewBuilder
+    private var sheetContent: some View {
+        let content = NavigationStack {
+            MermaidInputSheetView { definition in
+                try await insertMermaidDefinition(definition)
+            }
+        }
+
+#if os(iOS)
+        if #available(iOS 18.0, *), containerHorizontalSizeClass != .compact {
+            content
+                .presentationSizing(.page)
+                .presentationDragIndicator(.hidden)
+        } else {
+            content
+        }
+#else
+        content
+#endif
+    }
+
+    @MainActor
+    private func insertMermaidDefinition(_ definition: String) async throws {
+        do {
+            var options = ExcalidrawCore.MermaidInsertOptions()
+            options.focus = .mode(.center)
+            guard let coordinator = activeCoordinator else {
+                throw MermaidInputSheetError.noActiveCanvas
+            }
+            _ = try await coordinator.insertFromMermaid(definition, options: options)
+        } catch {
+            alertToast(error)
+            throw error
+        }
     }
 
     private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
@@ -187,7 +210,12 @@ struct MermaidInputSheetView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+#if os(macOS)
         .frame(minWidth: 820, idealWidth: 900, minHeight: 460, idealHeight: 520)
+#else
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 460, idealHeight: 520)
+#endif
     }
 
     private var usesCompactLayout: Bool {

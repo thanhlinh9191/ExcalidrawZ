@@ -15,7 +15,7 @@ extension File {
     /// Load file content from storage (local/iCloud)
     /// Automatically checks iCloud for newer versions before returning
     /// Falls back to CoreData content if storage is unavailable
-    func loadContent() async throws -> Data {
+    func loadContent(applyingLocalViewport: Bool = false) async throws -> Data {
         guard let context = self.managedObjectContext else {
             struct NoContextError: LocalizedError {
                 var errorDescription: String? { "File object has no managed object context" }
@@ -41,13 +41,22 @@ extension File {
                 Self.logger.debug("Loaded file content from storage id=\(fileID.uuidString) bytes=\(data.count.formatted(.byteCount(style: .file)))")
                 if EncryptedContentService.isEncryptedEnvelope(data) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
-                    return try await LockedContentUnlockSession.shared.decrypt(
+                    let decryptedData = try await LockedContentUnlockSession.shared.decrypt(
                         data,
                         expectedContentType: "file",
                         expectedContentID: fileID.uuidString
                     )
+                    return try await dataByApplyingLocalViewportIfNeeded(
+                        decryptedData,
+                        fileID: fileID,
+                        applyingLocalViewport: applyingLocalViewport
+                    )
                 }
-                return data
+                return try await dataByApplyingLocalViewportIfNeeded(
+                    data,
+                    fileID: fileID,
+                    applyingLocalViewport: applyingLocalViewport
+                )
             } catch let error as EncryptedContentError {
                 throw error
             } catch {
@@ -61,19 +70,45 @@ extension File {
                 Self.logger.warning("Falling back to Core Data file content id=\(fileID.uuidString) bytes=\(content.count.formatted(.byteCount(style: .file)))")
                 if EncryptedContentService.isEncryptedEnvelope(content) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
-                    return try await LockedContentUnlockSession.shared.decrypt(
+                    let decryptedData = try await LockedContentUnlockSession.shared.decrypt(
                         content,
                         expectedContentType: "file",
                         expectedContentID: fileID.uuidString
+                    )
+                    return try await dataByApplyingLocalViewportIfNeeded(
+                        decryptedData,
+                        fileID: fileID,
+                        applyingLocalViewport: applyingLocalViewport
                     )
                 }
             } else {
                 Self.logger.warning("Falling back to Core Data file content id=nil bytes=\(content.count.formatted(.byteCount(style: .file)))")
             }
-            return content
+            return try await dataByApplyingLocalViewportIfNeeded(
+                content,
+                fileID: fileID,
+                applyingLocalViewport: applyingLocalViewport
+            )
         }
 
         throw AppError.fileError(.contentNotAvailable(filename: name ?? String(localizable: .generalUnknown)))
+    }
+
+    private func dataByApplyingLocalViewportIfNeeded(
+        _ data: Data,
+        fileID: UUID?,
+        applyingLocalViewport: Bool
+    ) async throws -> Data {
+        guard applyingLocalViewport,
+              let fileID else {
+            return data
+        }
+
+        return try await ExcalidrawViewportStateStore.shared
+            .contentDataByApplyingStoredViewport(
+                to: data,
+                fileID: fileID.uuidString
+            )
     }
 
     /// Update file path and clear content (call this after successfully saving to storage)

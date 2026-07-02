@@ -11,12 +11,23 @@ import Combine
 import Logging
 import QuartzCore
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#endif
 #if os(iOS)
 import UIKit
 #endif
 
 class ExcalidrawWebView: WKWebView {
     var shouldHandleInput = true
+    var nativeInteractionEnabled = true {
+        didSet {
+            guard nativeInteractionEnabled != oldValue else { return }
+#if os(macOS)
+            window?.invalidateCursorRects(for: self)
+#endif
+        }
+    }
 #if os(iOS)
     private var indirectScrollForwarder: ExcalidrawIndirectScrollForwarder?
 #endif
@@ -50,6 +61,16 @@ class ExcalidrawWebView: WKWebView {
 #endif
     
 #if canImport(AppKit)
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard nativeInteractionEnabled else { return nil }
+        return super.hitTest(point)
+    }
+
+    override func resetCursorRects() {
+        guard nativeInteractionEnabled else { return }
+        super.resetCursorRects()
+    }
+
     override func keyDown(with event: NSEvent) {
         if shouldHandleInput,
            let char = event.characters {
@@ -69,6 +90,13 @@ class ExcalidrawWebView: WKWebView {
         } else {
             super.keyDown(with: event)
         }
+    }
+#endif
+
+#if os(iOS)
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        guard nativeInteractionEnabled else { return false }
+        return super.point(inside: point, with: event)
     }
 #endif
 }
@@ -246,12 +274,24 @@ extension Notification.Name {
 /// Minimal wrapper to bridge WKWebView to SwiftUI
 struct ExcalidrawViewRepresentable {
     @EnvironmentObject private var core: ExcalidrawCore
+    var nativeInteractionEnabled: Bool = true
     
     func makeExcalidrawWebView(context: Context) -> ExcalidrawWebView {
-        return context.coordinator.webView
+        let webView = context.coordinator.webView
+        updateNativeInteraction(enabled: nativeInteractionEnabled, webView: webView)
+        return webView
     }
     
     func updateExcalidrawWebView(_ webView: ExcalidrawWebView, context: Context) {
+        updateNativeInteraction(enabled: nativeInteractionEnabled, webView: webView)
+    }
+
+    private func updateNativeInteraction(enabled: Bool, webView: ExcalidrawWebView) {
+        webView.nativeInteractionEnabled = enabled
+        webView.isHidden = !enabled
+#if os(iOS)
+        webView.isUserInteractionEnabled = enabled
+#endif
     }
     
     func makeCoordinator() -> ExcalidrawCore {

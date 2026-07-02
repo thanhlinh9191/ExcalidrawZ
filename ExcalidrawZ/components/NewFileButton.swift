@@ -50,7 +50,7 @@ struct NewFileButton: View {
     
     var body: some View {
 #if os(iOS)
-        if fileState.currentActiveGroup != nil, containerHorizontalSizeClass != .compact {
+        if canShowImportButton, containerHorizontalSizeClass != .compact {
             Button {
                 isFileImporterPresented.toggle()
             } label: {
@@ -84,6 +84,13 @@ struct NewFileButton: View {
         }
     }
     
+    private var canShowImportButton: Bool {
+        guard case .group(let group) = fileState.currentActiveGroup else {
+            return false
+        }
+        return group.groupType != .trash
+    }
+
     @ViewBuilder
     private func localNewButton() -> some View {
         Menu {

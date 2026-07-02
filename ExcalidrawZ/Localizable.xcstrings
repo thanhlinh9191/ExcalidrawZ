@@ -14581,6 +14581,345 @@
         }
       }
     },
+    "applePencilInterationModeNoneDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**None**\n    • Use Excalidraw's default pointer behavior\n    • Finger and Pencil follow the same input rules"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**无**\n    • 使用 Excalidraw 的默认指针行为\n    • 手指和铅笔遵循相同的输入规则"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**無**\n    • 使用 Excalidraw 的預設指標行為\n    • 手指和 Pencil 遵循相同的輸入規則"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**لا شيء**\n    • استخدم سلوك المؤشر الافتراضي ل Excalidraw\n    • تعمل الأصابع والقلم بنفس قواعد الإدخال"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Keine**\n    • Verwenden Sie das Standardzeigerverhalten von Excalidraw\n    • Finger und Stift folgen denselben Eingaberegeln"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Ninguno**\n    • Utiliza el comportamiento de puntero predeterminado de Excalidraw\n    • El dedo y el lápiz siguen las mismas reglas de entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Aucun**\n    • Utilisez le comportement par défaut du pointeur d'Excalidraw\n    • Doigt et Stylet suivent les mêmes règles d'entrée"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**कोई नहीं**\n    • Excalidraw के डिफ़ॉल्ट पॉइंटर व्यवहार का उपयोग करें\n    • ऊंगली और पेंसिल समान इनपुट नियमों का पालन करते हैं"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Nessuno**\n    • Utilizza il comportamento predefinito del puntatore di Excalidraw\n    • Il dito e la matita seguono le stesse regole di input"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**無し**\n    • Excalidrawのデフォルトのポインタ動作を使用\n    • 指とペンシルは同じ入力ルールに従います"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**없음**\n    • Excalidraw의 기본 포인터 동작 사용\n    • 손가락과 펜슬은 동일한 입력 규칙 따름"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Geen**\n    • Gebruik de standaard pointergedrag van Excalidraw\n    • Vinger en Pencil volgen dezelfde invoerregels"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Brak**\n    • Użyj domyślnego zachowania wskaźnika Excalidraw\n    • Palec i ołówek podążają za tymi samymi zasadami wejścia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Nenhum**\n    • Use o comportamento padrão do ponteiro do Excalidraw\n    • Dedo e Lápis seguem as mesmas regras de entrada"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Нет**\n    • Используйте поведение указателя по умолчанию Excalidraw\n    • Палец и карандаш следуют одним и тем же правилам ввода"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**ไม่มี**\n    • ใช้พฤติกรรมของตัวชี้เริ่มต้นของ Excalidraw\n    • นิ้วและดินสอจะปฏิบัติตามกฎการป้อนข้อมูลเดียวกัน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Hiçbiri**\n    • Excalidraw'ın varsayılan imleç davranışını kullanın\n    • Parmak ve Kalem aynı giriş kurallarını izler"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Không**\n    • Sử dụng hành vi con trỏ mặc định của Excalidraw\n    • Ngón tay và Bút đều theo cùng một quy tắc đầu vào"
+          }
+        }
+      }
+    },
+    "applePencilInterationModeNoneTipsDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Use Excalidraw's default pointer behavior\n• Finger and Pencil follow the same input rules"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• 使用 Excalidraw 的默认指针行为\n• 手指和铅笔遵循相同的输入规则"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• 使用 Excalidraw 的預設指標行為\n• 手指和 Pencil 遵循相同的輸入規則"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• استخدم سلوك المؤشر الافتراضي ل Excalidraw\n• تعمل الأصابع والقلم بنفس قواعد الإدخال"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Verwenden Sie das Standardzeigerverhalten von Excalidraw\n• Finger und Stift folgen denselben Eingaberegeln"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Utiliza el comportamiento de puntero predeterminado de Excalidraw\n• El dedo y el lápiz siguen las mismas reglas de entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Utilisez le comportement par défaut du pointeur d'Excalidraw\n• Doigt et Stylet suivent les mêmes règles d'entrée"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Excalidraw के डिफ़ॉल्ट पॉइंटर व्यवहार का उपयोग करें\n• ऊंगली और पेंसिल समान इनपुट नियमों का पालन करते हैं"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Utilizza il comportamento predefinito del puntatore di Excalidraw\n• Il dito e la matita seguono le stesse regole di input"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Excalidrawのデフォルトのポインタ動作を使用\n• 指とペンシルは同じ入力ルールに従います"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Excalidraw의 기본 포인터 동작 사용\n• 손가락과 펜슬은 동일한 입력 규칙 따름"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Gebruik de standaard pointergedrag van Excalidraw\n• Vinger en Pencil volgen dezelfde invoerregels"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Użyj domyślnego zachowania wskaźnika Excalidraw\n• Palec i ołówek podążają za tymi samymi zasadami wejścia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Use o comportamento padrão do ponteiro do Excalidraw\n• Dedo e Lápis seguem as mesmas regras de entrada"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Используйте поведение указателя по умолчанию Excalidraw\n• Палец и карандаш следуют одним и тем же правилам ввода"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• ใช้พฤติกรรมของตัวชี้เริ่มต้นของ Excalidraw\n• นิ้วและดินสอจะปฏิบัติตามกฎการป้อนข้อมูลเดียวกัน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Excalidraw'ın varsayılan imleç davranışını kullanın\n• Parmak ve Kalem aynı giriş kurallarını izler"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• Sử dụng hành vi con trỏ mặc định của Excalidraw\n• Ngón tay và Bút đều theo cùng một quy tắc đầu vào"
+          }
+        }
+      }
+    },
+    "applePencilInterationModeNoneTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا شيء"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguno"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कोई नहीं"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuno"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無し"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "없음"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brak"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ไม่มี"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbiri"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Không"
+          }
+        }
+      }
+    },
     "applePencilInterationModeOneFingerSelectDescription": {
       "extractionState": "manual",
       "localizations": {
@@ -20228,6 +20567,232 @@
           "stringUnit": {
             "state": "translated",
             "value": "創建房間"
+          }
+        }
+      }
+    },
+    "collaborationRoomSyncNoticeSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يستغرق هذا عادةً من 10 إلى 30 ثانية."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dies dauert normalerweise 10-30 Sekunden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This usually takes 10-30 seconds."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esto suele tardar entre 10 y 30 segundos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela prend généralement 10 à 30 secondes."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसमें आमतौर पर 10-30 सेकंड लगते हैं।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Di solito richiede 10-30 secondi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通常 10～30 秒かかります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "보통 10~30초 정도 걸립니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dit duurt meestal 10-30 seconden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwykle zajmuje to 10-30 sekund."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Isso geralmente leva de 10 a 30 segundos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обычно это занимает 10-30 секунд."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "โดยปกติจะใช้เวลา 10-30 วินาที"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu genellikle 10-30 saniye sürer."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thao tác này thường mất 10-30 giây."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通常需要 10-30 秒。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通常需要 10-30 秒。"
+          }
+        }
+      }
+    },
+    "collaborationRoomSyncNoticeTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ مزامنة غرفة التعاون..."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kollaborationsraum wird synchronisiert..."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing collaboration room..."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando sala de colaboración..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation de la salle de collaboration..."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सहयोग कक्ष सिंक हो रहा है..."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizzazione della stanza di collaborazione..."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コラボレーションルームを同期中..."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "협업 방 동기화 중..."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Samenwerkingsruimte synchroniseren..."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronizowanie pokoju współpracy..."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando sala de colaboração..."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синхронизация комнаты совместной работы..."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังซิงค์ห้องทำงานร่วมกัน..."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İş birliği odası eşitleniyor..."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang đồng bộ phòng cộng tác..."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在同步协作房间..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在同步協作房間..."
           }
         }
       }
@@ -34582,6 +35147,119 @@
           "stringUnit": {
             "state": "translated",
             "value": "完成"
+          }
+        }
+      }
+    },
+    "generalButtonSelect": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionner"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चुनें"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecteren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecionar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เลือก"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seç"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chọn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇"
           }
         }
       }
@@ -83523,6 +84201,119 @@
         }
       }
     },
+    "settingsAIMCPMacOnlyMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوفر MCP على macOS. افتح ExcalidrawZ على Mac لتشغيل خادم MCP المحلي والاتصال بعملاء الذكاء الاصطناعي على سطح المكتب."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP ist auf macOS verfügbar. Öffne ExcalidrawZ auf dem Mac, um den lokalen MCP-Server auszuführen und Desktop-KI-Clients zu verbinden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP is available on macOS. Open ExcalidrawZ on your Mac to run the local MCP server and connect desktop AI clients."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP está disponible en macOS. Abre ExcalidrawZ en tu Mac para ejecutar el servidor MCP local y conectar clientes de IA de escritorio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP est disponible sur macOS. Ouvrez ExcalidrawZ sur votre Mac pour lancer le serveur MCP local et connecter des clients IA de bureau."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP macOS पर उपलब्ध है। स्थानीय MCP सर्वर चलाने और डेस्कटॉप AI क्लाइंट कनेक्ट करने के लिए अपने Mac पर ExcalidrawZ खोलें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP è disponibile su macOS. Apri ExcalidrawZ sul Mac per eseguire il server MCP locale e collegare client AI desktop."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP は macOS で利用できます。Mac で ExcalidrawZ を開き、ローカル MCP サーバーを実行してデスクトップ AI クライアントを接続してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP는 macOS에서 사용할 수 있습니다. Mac에서 ExcalidrawZ를 열어 로컬 MCP 서버를 실행하고 데스크톱 AI 클라이언트를 연결하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP is beschikbaar op macOS. Open ExcalidrawZ op je Mac om de lokale MCP-server te draaien en desktop-AI-clients te verbinden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP jest dostępne w macOS. Otwórz ExcalidrawZ na Macu, aby uruchomić lokalny serwer MCP i połączyć klientów AI na komputerze."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O MCP está disponível no macOS. Abra o ExcalidrawZ no Mac para executar o servidor MCP local e conectar clientes de IA desktop."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP доступен на macOS. Откройте ExcalidrawZ на Mac, чтобы запустить локальный MCP-сервер и подключить настольные AI-клиенты."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP ใช้งานได้บน macOS เปิด ExcalidrawZ บน Mac เพื่อเรียกใช้เซิร์ฟเวอร์ MCP ในเครื่องและเชื่อมต่อไคลเอนต์ AI บนเดสก์ท็อป"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP macOS'te kullanılabilir. Yerel MCP sunucusunu çalıştırmak ve masaüstü AI istemcilerini bağlamak için Mac'inizde ExcalidrawZ'yi açın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP khả dụng trên macOS. Mở ExcalidrawZ trên máy Mac để chạy máy chủ MCP cục bộ và kết nối các ứng dụng khách AI trên desktop."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 功能目前仅在 macOS 可用。请在 Mac 上打开 ExcalidrawZ 来运行本地 MCP 服务器，并连接桌面端 AI 客户端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 功能目前僅在 macOS 可用。請在 Mac 上開啟 ExcalidrawZ 來執行本機 MCP 伺服器，並連接桌面端 AI 用戶端。"
+          }
+        }
+      }
+    },
     "settingsAIMCPTitle": {
       "extractionState": "manual",
       "localizations": {
@@ -92901,6 +93692,119 @@
           "stringUnit": {
             "state": "translated",
             "value": "描邊寬度"
+          }
+        }
+      }
+    },
+    "settingsExcalidrawDrawingSettingsPressureTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الضغط"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Druck"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressure"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pression"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दबाव"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "筆圧"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "필압"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Druk"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nacisk"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressão"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажим"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แรงกด"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basınç"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lực nhấn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "压感"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壓感"
           }
         }
       }

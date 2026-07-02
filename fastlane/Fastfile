@@ -1,12 +1,89 @@
 require "cgi"
 require "fileutils"
+require "json"
 require "rexml/document"
+require "shellwords"
 
 default_platform(:mac)
 
+PREVIEW_DEVICES = {
+  "iphone" => {
+    config: "previews/iphone.json",
+    source_dir: "previews/output/iphone",
+    basename: "AppStore_iPhone_Previews",
+    slice_width: 1284,
+    gap_width: 0,
+    slice_count: 5,
+    output_prefix: "iphone_6_7"
+  },
+  "ipad" => {
+    config: "previews/ipad.json",
+    source_dir: "previews/output/ipad",
+    basename: "AppStore_iPad_Previews",
+    slice_width: 2732,
+    gap_width: 0,
+    slice_count: 3,
+    output_prefix: "ipad_13"
+  },
+  "mac" => {
+    config: "previews/mac.json",
+    source_dir: "previews/output/mac",
+    basename: "AppStore_Mac_Previews",
+    slice_width: 2880,
+    gap_width: 0,
+    slice_count: nil,
+    output_prefix: "mac"
+  }
+}.freeze
+
+APP_STORE_APP_IDENTIFIER = "com.chocoford.excalidraw"
+APP_STORE_PLATFORMS = {
+  "mac" => "osx",
+  "ios" => "ios"
+}.freeze
+
+def preview_device_options(value)
+  device = (value || "iphone").to_s
+  options = PREVIEW_DEVICES[device]
+  return options if options
+
+  UI.user_error!("Unknown preview device '#{device}'. Expected one of: #{PREVIEW_DEVICES.keys.join(', ')}")
+end
+
+def preview_device_value(options)
+  options[:device] || options[:preview_device] || options[:target] || options[:preview_platform] || options[:platform]
+end
+
+def preview_json(path)
+  return {} unless File.exist?(path)
+
+  JSON.parse(File.read(path))
+rescue JSON::ParserError => error
+  UI.user_error!("Invalid preview config #{path}: #{error.message}")
+end
+
+def app_store_platform_targets(value, default: nil)
+  raw_value = value || default
+  if raw_value.to_s.strip.empty?
+    UI.user_error!("Pass platform:ios or platform:mac. Use platforms:mac,ios only when both platforms should receive the same metadata source.")
+  end
+
+  targets = raw_value.to_s.split(",").map { |item| item.strip.downcase }.reject(&:empty?)
+  UI.user_error!("App Store platform list is empty.") if targets.empty?
+
+  targets.map do |target|
+    asc_platform = APP_STORE_PLATFORMS[target]
+    unless asc_platform
+      UI.user_error!("Unknown App Store platform '#{target}'. Expected one of: #{APP_STORE_PLATFORMS.keys.join(', ')}")
+    end
+
+    [target, asc_platform]
+  end
+end
+
 def current_project_version
   get_version_number(
-    xcodeproj: "ExcalidrawZ.xcodeproj",
+    xcodeproj: File.expand_path("../ExcalidrawZ.xcodeproj", __dir__),
     target: "ExcalidrawZ"
   )
 end
@@ -51,6 +128,83 @@ def release_note_locales(metadata_path)
   Dir.glob(File.join(metadata_path, "*", "release_notes.txt"))
      .map { |path| File.basename(File.dirname(path)) }
      .sort
+end
+
+def metadata_locales(metadata_path)
+  Dir.glob(File.join(metadata_path, "*"))
+     .select { |path| File.directory?(path) }
+     .map { |path| File.basename(path) }
+     .reject { |locale| locale.start_with?(".") }
+     .sort
+end
+
+def copy_metadata_tree(source_path, destination_path, exclude_filenames: [])
+  return unless Dir.exist?(source_path)
+
+  Dir.glob(File.join(source_path, "**", "*"), File::FNM_DOTMATCH).each do |source|
+    basename = File.basename(source)
+    next if [".", "..", ".DS_Store"].include?(basename)
+    next if exclude_filenames.include?(basename)
+    next if File.directory?(source)
+
+    relative_path = source.delete_prefix("#{source_path}/")
+    destination = File.join(destination_path, relative_path)
+    FileUtils.mkdir_p(File.dirname(destination))
+    FileUtils.cp(source, destination)
+  end
+end
+
+def staged_metadata_path(app_platform:, metadata_path: nil)
+  return File.expand_path(metadata_path, __dir__) if metadata_path
+
+  shared_path = File.expand_path("metadata", __dir__)
+  override_path = File.expand_path("metadata-#{app_platform}", __dir__)
+  destination_path = File.expand_path(".generated/metadata/#{app_platform}", __dir__)
+
+  FileUtils.rm_rf(destination_path)
+  FileUtils.mkdir_p(destination_path)
+  copy_metadata_tree(shared_path, destination_path, exclude_filenames: ["release_notes.txt"])
+  copy_metadata_tree(override_path, destination_path)
+
+  if Dir.glob(File.join(destination_path, "*", "*.txt")).empty?
+    UI.user_error!("No metadata files staged for #{app_platform}. Checked #{shared_path} and #{override_path}.")
+  end
+
+  missing_release_note_locales = metadata_locales(shared_path) - release_note_locales(destination_path)
+  unless missing_release_note_locales.empty?
+    UI.user_error!(
+      "Missing #{app_platform} release notes for locales: #{missing_release_note_locales.join(', ')}. " \
+      "Add fastlane/metadata-#{app_platform}/<locale>/release_notes.txt."
+    )
+  end
+
+  destination_path
+end
+
+def upload_app_store_connect_assets(
+  app_platform:,
+  asc_platform:,
+  version:,
+  metadata_path:,
+  screenshots_path:,
+  include_screenshots:
+)
+  UI.message("Uploading #{app_platform} metadata#{include_screenshots ? ' and screenshots' : ''}.")
+
+  deliver(
+    app_identifier: APP_STORE_APP_IDENTIFIER,
+    platform: asc_platform,
+    app_version: version,
+    metadata_path: metadata_path,
+    screenshots_path: screenshots_path,
+    skip_binary_upload: true,
+    skip_screenshots: !include_screenshots,
+    overwrite_screenshots: include_screenshots,
+    submit_for_review: false,
+    run_precheck_before_submit: false,
+    force: true,
+    api_key: app_store_connect_api_key_from_env
+  )
 end
 
 def release_notes_html(version, locale, text)
@@ -181,36 +335,187 @@ def patch_sparkle_appcast_release_notes(version:, output_dir:, output_base_name:
   true
 end
 
-platform :mac do
-  desc "Upload App Store Connect metadata only. Build upload stays manual."
-  lane :upload_metadata do |options|
-    version = options[:version] || current_project_version
-    metadata_path = "./fastlane/metadata"
-    locales = release_note_locales(metadata_path)
+desc "Upload App Store Connect metadata for one explicit platform. Build upload stays manual."
+lane :upload_metadata do |options|
+  version = options[:version] || current_project_version
+  screenshots_path = File.expand_path("screenshots", __dir__)
+  platforms = app_store_platform_targets(options[:platform] || options[:platforms])
 
-    UI.message("Preparing to upload App Store Connect metadata.")
-    UI.message("Target version: #{version}")
-    UI.message("Locales: #{locales.join(', ')}")
-    UI.confirm("Upload metadata to App Store Connect version #{version}?")
+  UI.message("Preparing to upload App Store Connect metadata.")
+  UI.message("Target version: #{version}")
+  UI.message("Platforms: #{platforms.map(&:first).join(', ')}")
 
-    deliver(
-      app_identifier: "com.chocoford.excalidraw",
-      platform: "osx",
-      app_version: version,
-      metadata_path: metadata_path,
-      skip_binary_upload: true,
-      skip_screenshots: true,
-      submit_for_review: false,
-      run_precheck_before_submit: false,
-      force: true,
-      api_key: app_store_connect_api_key_from_env
+  staged_platforms = platforms.map do |app_platform, asc_platform|
+    metadata_path = staged_metadata_path(
+      app_platform: app_platform,
+      metadata_path: options[:metadata_path]
     )
+    locales = release_note_locales(metadata_path)
+    UI.message("#{app_platform} metadata path: #{metadata_path}")
+    UI.message("#{app_platform} locales: #{locales.join(', ')}")
+
+    [app_platform, asc_platform, metadata_path]
   end
 
+  if options[:dry_run]
+    UI.message("Dry run only. No App Store Connect upload was performed.")
+  else
+    UI.confirm("Upload metadata to App Store Connect version #{version} for #{platforms.map(&:first).join(', ')}?")
+  end
+
+  staged_platforms.each do |app_platform, asc_platform, metadata_path|
+    next if options[:dry_run]
+
+    upload_app_store_connect_assets(
+      app_platform: app_platform,
+      asc_platform: asc_platform,
+      version: version,
+      metadata_path: metadata_path,
+      screenshots_path: screenshots_path,
+      include_screenshots: false
+    )
+  end
+end
+
+desc "Upload iOS App Store metadata and iOS/iPadOS screenshots. Build upload stays manual."
+lane :upload_ios_release_assets do |options|
+  version = options[:version] || current_project_version
+  screenshots_path = options[:screenshots_path] || File.expand_path("screenshots", __dir__)
+  metadata_path = staged_metadata_path(
+    app_platform: "ios",
+    metadata_path: options[:metadata_path]
+  )
+  locales = release_note_locales(metadata_path)
+
+  UI.message("Preparing to upload iOS App Store Connect release assets.")
+  UI.message("Target version: #{version}")
+  UI.message("iOS metadata path: #{metadata_path}")
+  UI.message("iOS locales: #{locales.join(', ')}")
+  UI.message("iOS screenshots path: #{screenshots_path}")
+  if options[:dry_run]
+    UI.message("Dry run only. No App Store Connect upload was performed.")
+  else
+    UI.confirm("Upload iOS metadata and screenshots to App Store Connect version #{version}?")
+  end
+
+  unless options[:dry_run]
+    upload_app_store_connect_assets(
+      app_platform: "ios",
+      asc_platform: APP_STORE_PLATFORMS.fetch("ios"),
+      version: version,
+      metadata_path: metadata_path,
+      screenshots_path: screenshots_path,
+      include_screenshots: true
+    )
+  end
+end
+
+desc "Split localized App Store preview strips into fastlane screenshot folders."
+lane :split_screenshots do |options|
+  device_options = preview_device_options(preview_device_value(options))
+  config_path = options[:config] || File.expand_path(device_options[:config], __dir__)
+  config_json = preview_json(config_path)
+  args = [
+    "python3",
+    File.expand_path("scripts/split_app_store_previews.py", __dir__),
+    "--source-dir",
+    options[:source_dir] || File.expand_path(device_options[:source_dir], __dir__),
+    "--basename",
+    options[:basename] || device_options[:basename],
+    "--output-dir",
+    options[:output_dir] || File.expand_path("screenshots", __dir__),
+    "--slice-width",
+    (options[:slice_width] || config_json["sliceWidth"] || device_options[:slice_width]).to_s,
+    "--gap-width",
+    (options[:gap_width] || config_json["gapWidth"] || device_options[:gap_width]).to_s,
+    "--legacy-locale",
+    options[:legacy_locale] || "zh-Hans",
+    "--output-prefix",
+    options[:output_prefix] || device_options[:output_prefix]
+  ]
+
+  slice_count = options[:slice_count] || config_json["sliceCount"] || device_options[:slice_count]
+  args += ["--slice-count", slice_count.to_s] if slice_count
+  args += ["--locales", options[:locales]] if options[:locales]
+  args << "--include-remainder" if options[:include_remainder]
+  args << "--no-clean" if options[:no_clean]
+  args << "--dry-run" if options[:dry_run]
+
+  sh(args.shelljoin)
+end
+
+desc "Render localized App Store preview strips from a text-free template."
+lane :render_preview_strips do |options|
+  device_options = preview_device_options(preview_device_value(options))
+  args = [
+    "env",
+    "CLANG_MODULE_CACHE_PATH=/private/tmp/excalidrawz-clang-module-cache",
+    "swift",
+    File.expand_path("scripts/render_app_store_previews.swift", __dir__),
+    "--config",
+    options[:config] || File.expand_path(device_options[:config], __dir__),
+    "--repo-root",
+    File.expand_path("..", __dir__)
+  ]
+
+  args += ["--template", options[:template]] if options[:template]
+  args += ["--output", options[:output]] if options[:output]
+  args += ["--locales", options[:locales]] if options[:locales]
+  args << "--dry-run" if options[:dry_run]
+
+  sh(args.shelljoin)
+end
+
+desc "Render localized preview strips and split them into App Store screenshots."
+lane :generate_previews do |options|
+  device = preview_device_value(options)
+  render_options = {
+    device: device,
+    config: options[:config],
+    template: options[:template],
+    output: options[:output],
+    locales: options[:locales],
+    dry_run: options[:dry_run]
+  }.compact
+
+  split_options = {
+    device: device,
+    config: options[:config],
+    source_dir: options[:source_dir],
+    basename: options[:basename],
+    output_dir: options[:output_dir],
+    slice_width: options[:slice_width],
+    gap_width: options[:gap_width],
+    slice_count: options[:slice_count],
+    legacy_locale: options[:legacy_locale],
+    output_prefix: options[:output_prefix],
+    locales: options[:locales],
+    include_remainder: options[:include_remainder],
+    no_clean: options[:no_clean],
+    dry_run: options[:dry_run]
+  }.compact
+
+  render_preview_strips(render_options)
+  split_screenshots(split_options)
+end
+
+desc "Generate only en-US and zh-Hans preview samples for visual checks."
+lane :generate_preview_samples do |options|
+  sample_options = options.to_h
+  sample_options[:device] ||= preview_device_value(sample_options) || "ipad"
+  sample_options[:locales] ||= "en-US,zh-Hans"
+
+  generate_previews(sample_options)
+end
+
+platform :mac do
   desc "Generate localized Sparkle release notes and patch local website appcast."
   lane :generate_sparkle_release_notes do |options|
     version = options[:version] || current_project_version
-    metadata_path = File.expand_path("metadata", __dir__)
+    metadata_path = staged_metadata_path(
+      app_platform: "mac",
+      metadata_path: options[:metadata_path]
+    )
     output_dir = File.expand_path("../WebPage/public/downloads", __dir__)
     output_base_name = options[:output_base_name] || "ExcalidrawZ.#{version}"
     feed_base_url = options[:feed_base_url] || "https://excalidrawz.chocoford.com/downloads/"

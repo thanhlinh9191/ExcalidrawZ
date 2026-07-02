@@ -302,10 +302,16 @@ final class FileCoverCacheCoordinator: ObservableObject {
             }
             return fileState?.excalidrawWebCoordinator
         }()
+        let requiresLoadedFileMatch: Bool = {
+            if case .collaborationFile = activeFile {
+                return false
+            }
+            return true
+        }()
         guard !shouldSkipLockedSource(source),
               let coordinator,
               !coordinator.isLoading,
-              coordinator.documentSyncController.currentLoadedFileID == activeFile.id else {
+              (!requiresLoadedFileMatch || coordinator.documentSyncController.currentLoadedFileID == activeFile.id) else {
             return
         }
 
@@ -536,7 +542,7 @@ final class FileCoverCacheCoordinator: ObservableObject {
                                     return .completed
                                 }
                             }
-                            let content = try await file.loadContent()
+                            let content = try await file.loadContent(applyingLocalViewport: true)
                             excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
 
                         case .localFile(let url):

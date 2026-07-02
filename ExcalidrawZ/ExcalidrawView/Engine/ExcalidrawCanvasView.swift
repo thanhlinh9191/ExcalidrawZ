@@ -105,7 +105,7 @@ struct ExcalidrawCanvasView: View {
     // MARK: - Body
     
     var body: some View {
-        ExcalidrawViewRepresentable()
+        ExcalidrawViewRepresentable(nativeInteractionEnabled: interactionEnabled)
             .modifier(MediaItemSyncModifier())
             .modifier(MathImageEditSheetViewModifier(coordinator: excalidrawCore, onError: onError))
             .environmentObject(excalidrawCore)
@@ -133,6 +133,7 @@ struct ExcalidrawCanvasView: View {
                 }
             }
             .watch(value: interactionEnabled) { enabled in
+                updateToolStateCoordinatorBinding(isEnabled: enabled)
                 Task {
                     try? await excalidrawCore.toggleWebPointerEvents(enabled: enabled)
                 }
@@ -185,6 +186,10 @@ struct ExcalidrawCanvasView: View {
             }
             .onAppear {
                 setupCore()
+                updateToolStateCoordinatorBinding(isEnabled: interactionEnabled)
+            }
+            .onDisappear {
+                clearToolStateCoordinatorBindingIfNeeded()
             }
     }
     
@@ -198,7 +203,6 @@ struct ExcalidrawCanvasView: View {
     }
     
     private func setupCoordinators() {
-        toolState.excalidrawWebCoordinator = excalidrawCore
         switch type {
             case .normal:
                 exportState.excalidrawWebCoordinator = excalidrawCore
@@ -207,6 +211,27 @@ struct ExcalidrawCanvasView: View {
             case .collaboration:
                 exportState.excalidrawCollaborationWebCoordinator = excalidrawCore
                 fileState.excalidrawCollaborationWebCoordinator = excalidrawCore
+        }
+        updateToolStateCoordinatorBinding(isEnabled: interactionEnabled)
+    }
+
+    @MainActor
+    private func updateToolStateCoordinatorBinding(isEnabled: Bool) {
+        if isEnabled {
+            toolState.excalidrawWebCoordinator = excalidrawCore
+            if type == .collaboration {
+                exportState.excalidrawCollaborationWebCoordinator = excalidrawCore
+                fileState.excalidrawCollaborationWebCoordinator = excalidrawCore
+            }
+        } else {
+            clearToolStateCoordinatorBindingIfNeeded()
+        }
+    }
+
+    @MainActor
+    private func clearToolStateCoordinatorBindingIfNeeded() {
+        if toolState.excalidrawWebCoordinator === excalidrawCore {
+            toolState.excalidrawWebCoordinator = nil
         }
     }
     
@@ -224,6 +249,7 @@ struct ExcalidrawCanvasView: View {
 
 #if os(iOS)
             if !isLoading, loadingFileID == nil {
+                await applyPencilInteractionModeAfterLoadIfNeeded()
                 await enterCompactDragModeAfterLoadIfNeeded()
             }
 #endif
@@ -231,6 +257,16 @@ struct ExcalidrawCanvasView: View {
     }
 
 #if os(iOS)
+    @MainActor
+    private func applyPencilInteractionModeAfterLoadIfNeeded() async {
+        guard toolState.inPenMode else { return }
+        do {
+            try await toolState.setPencilInteractionMode(toolState.pencilInteractionMode)
+        } catch {
+            logger.warning("Failed to apply Apple Pencil interaction mode after load: \(error)")
+        }
+    }
+
     @MainActor
     private func enterCompactDragModeAfterLoadIfNeeded() async {
         guard containerHorizontalSizeClass == .compact,
@@ -348,6 +384,12 @@ struct ExcalidrawCanvasView: View {
                 loadingState = .loaded
                 onDocumentLoadFinished(newFile.id)
             }
+
+#if os(iOS)
+            if outcome.didLoad {
+                await enterCompactDragModeAfterLoadIfNeeded()
+            }
+#endif
         }
     }
     

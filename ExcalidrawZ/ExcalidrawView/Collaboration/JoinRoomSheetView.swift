@@ -7,7 +7,6 @@
 
 import SwiftUI
 import ChocofordUI
-import CoreData
 
 struct JoinRoomSheetView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -49,7 +48,7 @@ struct JoinRoomSheetView: View {
                 TextField(
                     .localizable(.collaborationJoinRoomLinkFieldLabel),
                     text: $invitationLink,
-                    prompt: Text("https://excalidraw.com/#room=...")
+                    prompt: Text("excalidraw.com/#room=...")
                 )
                 .textFieldStyle(.roundedBorder)
                 .watch(value: invitationLink) { newValue in
@@ -199,37 +198,20 @@ struct JoinRoomSheetView: View {
     
     private func joinRoom() {
         guard error == nil, let roomID else { return }
-        let context = PersistenceController.shared.container.newBackgroundContext()
         let name = name
         
         Task.detached {
             do {
-                try await context.perform {
-                    // fetch first
-                    let fetchRequest = NSFetchRequest<CollaborationFile>(entityName: "CollaborationFile")
-                    fetchRequest.predicate = NSPredicate(format: "roomID = %@", roomID)
-                    
-                    let room: CollaborationFile
-                    if let firstRoom = try context.fetch(fetchRequest).first {
-                        room = firstRoom
-                    } else {
-                        room = CollaborationFile(
-                            name: name.isEmpty ? String(localizable: .generalUntitled) : name,
-                            content: ExcalidrawFile().content,
-                            isOwner: false,
-                            context: context
-                        )
-                        room.roomID = roomID
-                        context.insert(room)
-                        try context.save()
-                    }
-                    let roomID = room.objectID
-                    Task {
-                        await MainActor.run {
-                            if let room = viewContext.object(with: roomID) as? CollaborationFile {
-                                fileState.setActiveFile(.collaborationFile(room))
-                            }
-                        }
+                let roomObjectID = try await PersistenceController.shared.collaborationFileRepository.findOrCreateCollaborationFile(
+                    name: name.isEmpty ? String(localizable: .generalUntitled) : name,
+                    content: ExcalidrawFile().content,
+                    isOwner: false,
+                    roomID: roomID
+                )
+
+                await MainActor.run {
+                    if let room = viewContext.object(with: roomObjectID) as? CollaborationFile {
+                        fileState.setActiveFile(.collaborationFile(room))
                     }
                 }
             } catch {

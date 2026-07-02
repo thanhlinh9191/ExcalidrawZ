@@ -136,14 +136,15 @@ actor SyncCoordinator {
     func enqueue(_ event: SyncEvent, autoProcess: Bool = true) async {
         await syncQueue.enqueue(event)
 
-        // Update UI status - mark as queued
-        let queuedOp: FileSyncStatus.QueuedOperation = switch event.operation {
-            case .uploadToCloud: .upload
-            case .downloadFromCloud: .download
-            case .deleteFromCloud, .deleteFromLocal: .delete
-        }
-        Task { @MainActor in
-            FileStatusService.shared.markSyncQueued(fileID: event.fileID, operation: queuedOp)
+        if event.priority == .high {
+            let queuedOp: FileSyncStatus.QueuedOperation = switch event.operation {
+                case .uploadToCloud: .upload
+                case .downloadFromCloud: .download
+                case .deleteFromCloud, .deleteFromLocal: .delete
+            }
+            Task { @MainActor in
+                FileStatusService.shared.markSyncQueued(fileID: event.fileID, operation: queuedOp)
+            }
         }
 
         guard autoProcess else { return }
@@ -216,6 +217,9 @@ actor SyncCoordinator {
         
         let initialCount = await syncQueue.count()
         guard initialCount > 0 else { return }
+        let initialEvents = await syncQueue.getAll()
+        let initialUserVisibleCount = initialEvents.filter { $0.priority == .high }.count
+        let tracksOverallProgress = initialUserVisibleCount >= 3
         
         isSyncing = true
         
@@ -224,15 +228,20 @@ actor SyncCoordinator {
         }
         
         var processedCount = 0
+        var processedUserVisibleCount = 0
         var failedCount = 0
         
-        // Initialize overall progress tracking
-        await FileStatusService.shared.updateOverallProgress(current: 0, total: initialCount)
+        if tracksOverallProgress {
+            await FileStatusService.shared.updateOverallProgress(current: 0, total: initialUserVisibleCount)
+        } else {
+            await FileStatusService.shared.clearOverallProgress()
+        }
         
         // Process operations one by one from the queue
         // This allows high-priority tasks added during processing to be processed immediately
         while let event = await syncQueue.dequeueFirst() {
             processedCount += 1
+            let isUserVisibleEvent = event.priority == .high
             
             // Mark as syncing
             let syncOp: FileSyncStatus.QueuedOperation = switch event.operation {
@@ -240,17 +249,29 @@ actor SyncCoordinator {
                 case .downloadFromCloud: .download
                 case .deleteFromCloud, .deleteFromLocal: .delete
             }
-            await FileStatusService.shared.markSyncInProgress(fileID: event.fileID, operation: syncOp)
+            if isUserVisibleEvent {
+                await FileStatusService.shared.markSyncInProgress(fileID: event.fileID, operation: syncOp)
+            }
             
             do {
                 try await executeSyncOperation(event)
-                // Success - mark as completed in UI
-                await FileStatusService.shared.markSyncCompleted(fileID: event.fileID)
                 
-                // Update overall progress
-                await FileStatusService.shared.updateOverallProgress(current: processedCount, total: initialCount)
+                if isUserVisibleEvent {
+                    // Success - mark as completed in UI
+                    await FileStatusService.shared.markSyncCompleted(fileID: event.fileID)
+                    processedUserVisibleCount += 1
+                    if tracksOverallProgress {
+                        await FileStatusService.shared.updateOverallProgress(
+                            current: processedUserVisibleCount,
+                            total: initialUserVisibleCount
+                        )
+                    }
+                }
             } catch {
                 logger.error("Failed to execute sync operation: \(error.localizedDescription)")
+                if isUserVisibleEvent {
+                    processedUserVisibleCount += 1
+                }
                 
                 // Check retry count
                 if event.retryCount < maxRetryCount {
@@ -264,11 +285,17 @@ actor SyncCoordinator {
                     logger.warning("Max retry count reached for sync operation, dropping")
                     
                     // Mark as failed in UI
-                    await FileStatusService.shared.markSyncFailed(fileID: event.fileID, error: error.localizedDescription)
+                    if isUserVisibleEvent {
+                        await FileStatusService.shared.markSyncFailed(fileID: event.fileID, error: error.localizedDescription)
+                    }
                 }
                 
-                // Update overall progress even on failure
-                await FileStatusService.shared.updateOverallProgress(current: processedCount, total: initialCount)
+                if tracksOverallProgress {
+                    await FileStatusService.shared.updateOverallProgress(
+                        current: processedUserVisibleCount,
+                        total: initialUserVisibleCount
+                    )
+                }
             }
         }
         
@@ -426,14 +453,14 @@ actor SyncCoordinator {
                         let timeDifference = local.modifiedAt.timeIntervalSince(cloud.modifiedAt)
 
                         if timeDifference < -tolerance {
-                            // Cloud is newer, download it
-                            syncOperations.append(SyncEvent(
-                                fileID: cloud.fileID,
+                            // Cloud is newer, but only a placeholder is local.
+                            // Request iCloud Drive download and retry DiffScan later;
+                            // do not enqueue an immediate read of unavailable bytes.
+                            await requestICloudDownload(
                                 relativePath: cloud.relativePath,
-                                operation: .downloadFromCloud,
-                                timestamp: Date(),
-                                priority: .normal  // DiffScan: background priority
-                            ))
+                                fileID: cloud.fileID
+                            )
+                            scheduleDiffScanRetry(after: 10, allowRetry: false)
                         } else if timeDifference > tolerance {
                             // Local is newer, upload to ensure cloud has latest
                             syncOperations.append(SyncEvent(
@@ -484,6 +511,16 @@ actor SyncCoordinator {
                     
                 case (nil, let cloud?):
                     // File exists in iCloud but not locally
+#if os(macOS)
+                    if cloud.downloadStatus == .notDownloaded {
+                        await requestICloudDownload(
+                            relativePath: cloud.relativePath,
+                            fileID: cloud.fileID
+                        )
+                        scheduleDiffScanRetry(after: 10, allowRetry: false)
+                        continue
+                    }
+#endif
                     syncOperations.append(SyncEvent(
                         fileID: cloud.fileID,
                         relativePath: cloud.relativePath,
@@ -609,11 +646,49 @@ actor SyncCoordinator {
             logger.warning("Failed to start iCloud container download: \(error.localizedDescription)")
         }
     }
+
+    @discardableResult
+    private func requestICloudDownload(relativePath: String, fileID: String) async -> Bool {
+        let status = await iCloudManager.checkICloudAvailability()
+        guard status.isAvailable else {
+            logger.debug("Skipped iCloud Drive download request because iCloud is unavailable: \(relativePath)")
+            return false
+        }
+
+        do {
+            let iCloudURL = try await iCloudManager.getFileURL(relativePath: relativePath)
+            logger.debug("Requesting iCloud Drive download: \(relativePath)")
+            try FileManager.default.startDownloadingUbiquitousItem(at: iCloudURL)
+            logger.debug("Requested iCloud Drive download: \(relativePath)")
+            return true
+        } catch {
+            logger.warning("Failed to request iCloud Drive download for \(relativePath): \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    private func isICloudContentUnavailableForRead(_ status: ICloudFileStatus) -> Bool {
+        switch status {
+            case .notDownloaded, .downloading(_):
+                return true
+            default:
+                return false
+        }
+    }
+
+    private func iCloudModificationDate(for url: URL) -> Date? {
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.filePath),
+           let modifiedAt = attributes[.modificationDate] as? Date {
+            return modifiedAt
+        }
+
+        return try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
     
     // MARK: - Helper Methods
     
     /// Check if iCloud has newer version than local
-    func checkForICloudUpdate(relativePath: String) async throws -> Bool {
+    func checkForICloudUpdate(relativePath: String, fileID: String? = nil) async throws -> Bool {
         // Check if file exists locally
         guard await localManager.fileExists(relativePath: relativePath) else {
             // File doesn't exist locally, check if it exists in iCloud
@@ -621,14 +696,18 @@ actor SyncCoordinator {
             guard status.isAvailable else {
                 return false
             }
-            
-            // Check if file actually exists in iCloud
-            guard let iCloudURL = try? await iCloudManager.getFileURL(relativePath: relativePath),
-                  FileManager.default.fileExists(at: iCloudURL) else {
-                return false  // File doesn't exist in iCloud either
+
+            let iCloudURL = try await iCloudManager.getFileURL(relativePath: relativePath)
+#if os(macOS)
+            if let iCloudStatus = try? await ICloudStatusChecker.shared.checkStatus(for: iCloudURL),
+               isICloudContentUnavailableForRead(iCloudStatus) {
+                if let fileID {
+                    await requestICloudDownload(relativePath: relativePath, fileID: fileID)
+                }
+                return false
             }
-            
-            // File exists in iCloud but not locally - should download
+#endif
+
             return true
         }
         
@@ -644,9 +723,15 @@ actor SyncCoordinator {
         
         // Get iCloud modification date
         let iCloudURL = try await iCloudManager.getFileURL(relativePath: relativePath)
-        guard FileManager.default.fileExists(at: iCloudURL) else {
+#if os(macOS)
+        if let iCloudStatus = try? await ICloudStatusChecker.shared.checkStatus(for: iCloudURL),
+           isICloudContentUnavailableForRead(iCloudStatus) {
+            if let fileID {
+                await requestICloudDownload(relativePath: relativePath, fileID: fileID)
+            }
             return false
         }
+#endif
         
 #if os(iOS)
         // iOS: Force refresh metadata from iCloud before checking timestamps
@@ -663,8 +748,8 @@ actor SyncCoordinator {
         }
 #endif
         
-        let attributes = try FileManager.default.attributesOfItem(atPath: iCloudURL.filePath)
-        guard let iCloudModifiedAt = attributes[.modificationDate] as? Date else {
+        guard let iCloudModifiedAt = iCloudModificationDate(for: iCloudURL) else {
+            logger.debug("Skipped iCloud update check because modification date is unavailable: \(relativePath)")
             return false
         }
         
@@ -679,7 +764,7 @@ actor SyncCoordinator {
     /// Load content with iCloud version check
     func loadContentWithSync(relativePath: String, fileID: String) async throws -> Data {
         // Check if iCloud has newer version
-        if try await checkForICloudUpdate(relativePath: relativePath) {
+        if try await checkForICloudUpdate(relativePath: relativePath, fileID: fileID) {
             // Download from iCloud
             let downloadEvent = SyncEvent(
                 fileID: fileID,
@@ -691,6 +776,26 @@ actor SyncCoordinator {
         }
         
         // Load from local storage
+        return try await localManager.loadContent(relativePath: relativePath)
+    }
+
+    /// Load content after refreshing the local cache from iCloud when possible.
+    ///
+    /// Use this when an iCloud Drive status event already told us the remote
+    /// file is stale locally. In that case the event is a stronger signal than
+    /// filesystem modification dates, which can lag behind iCloud metadata.
+    func loadContentByRefreshingFromCloud(relativePath: String, fileID: String) async throws -> Data {
+        let status = await iCloudManager.checkICloudAvailability()
+        if status.isAvailable {
+            let downloadEvent = SyncEvent(
+                fileID: fileID,
+                relativePath: relativePath,
+                operation: .downloadFromCloud,
+                timestamp: Date()
+            )
+            try await downloadFromCloud(event: downloadEvent)
+        }
+
         return try await localManager.loadContent(relativePath: relativePath)
     }
 }

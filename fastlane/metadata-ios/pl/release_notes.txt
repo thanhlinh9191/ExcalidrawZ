@@ -1,0 +1,5 @@
+Ta aktualizacja naprawia ważny problem ze zgodnością rysowania i jest zalecana wszystkim użytkownikom.
+
+- Naprawiono zgodność z najnowszymi ustawieniami szerokości kreski Excalidraw.
+- Naprawiono problem, przez który niektóre rysunki lub kopie zapasowe z nowszymi danymi kreski mogły się nie wczytywać.
+- Ulepszono obsługę nacisku pióra i ustawień kreski.

@@ -74,7 +74,7 @@ struct LocalFilesListContentView: View {
                         files: files,
                         fileState: fileState
                     )
-                    .id(updateFlags[file])
+                    .id(SidebarActiveFileScrollTarget.localFile(file))
                 }
             }
             .animation(.default, value: files)

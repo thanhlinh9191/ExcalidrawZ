@@ -20,6 +20,13 @@ class SyncState: ObservableObject {
     /// Files currently syncing
     @Published var syncingFiles: [FileStatusBox] = []
 
+    /// Files queued for sync. Kept separate from `syncingFiles` so DEBUG UI can
+    /// show debounce/queue behavior without changing the user-facing popover.
+    @Published var queuedFiles: [FileStatusBox] = []
+
+    /// Files whose last sync operation failed.
+    @Published var failedFiles: [FileStatusBox] = []
+
     /// MediaItems batch download progress
     @Published var mediaItemsDownloadProgress: (current: Int, total: Int)?
 
@@ -65,6 +72,18 @@ class SyncState: ObservableObject {
     /// Update syncing files from all status boxes
     func updateSyncingFiles(from boxes: [FileStatusBox]) {
         syncingFiles = boxes.filter { $0.status.syncStatus?.isSyncing == true }
+        queuedFiles = boxes.filter { box in
+            if case .queued = box.status.syncStatus {
+                return true
+            }
+            return false
+        }
+        failedFiles = boxes.filter { box in
+            if case .error = box.status.syncStatus {
+                return true
+            }
+            return false
+        }
     }
 }
 
@@ -111,6 +130,10 @@ class FileStatusService {
 
     private init() {}
 
+    private func refreshSyncState() {
+        syncState.updateSyncingFiles(from: Array(statusBoxes.values))
+    }
+
     /// Get or create status box for file identifier
     /// - Parameters:
     ///   - fileID: The file identifier (UUID string, URL.absoluteString, or objectID.description)
@@ -126,8 +149,12 @@ class FileStatusService {
         // Subscribe to box changes to update syncState
         subscriptions[fileID] = box.objectWillChange.sink { [weak self] in
             guard let self = self else { return }
-            // Update syncState when any box changes
-            self.syncState.updateSyncingFiles(from: Array(self.statusBoxes.values))
+            // `objectWillChange` fires before the new status is stored. Hop to
+            // the next main-actor turn so aggregate sync debug state is current.
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.syncState.updateSyncingFiles(from: Array(self.statusBoxes.values))
+            }
         }
 
         return box
@@ -161,6 +188,7 @@ class FileStatusService {
     func markMissing(fileID: String, failureCount: Int) {
         let box = statusBox(fileID: fileID)
         box.updateContentAvailability(.missing)
+        refreshSyncState()
     }
     
     /// Called by FileStorageManager when content is available
@@ -168,6 +196,7 @@ class FileStatusService {
     func markAvailable(fileID: String) {
         let box = statusBox(fileID: fileID)
         box.updateContentAvailability(.available)
+        refreshSyncState()
     }
     
     /// Called by FileStorageManager when content is loading
@@ -175,6 +204,7 @@ class FileStatusService {
     func markLoading(fileID: String) {
         let box = statusBox(fileID: fileID)
         box.updateContentAvailability(.loading)
+        refreshSyncState()
     }
     
     /// Called by FileSyncCoordinator or iCloudDriveFileManager when iCloud status changes
@@ -184,6 +214,7 @@ class FileStatusService {
     func updateICloudStatus(fileID: String, status: ICloudFileStatus) {
         let box = statusBox(fileID: fileID)
         box.updateICloudStatus(status)
+        refreshSyncState()
     }
     
     // MARK: - Sync Status Management (for CoreData Files)
@@ -206,6 +237,7 @@ class FileStatusService {
         }
         
         box.updateSyncStatus(status)
+        refreshSyncState()
     }
     
     /// Mark file sync as completed (called by SyncCoordinator)
@@ -213,6 +245,7 @@ class FileStatusService {
     func markSyncCompleted(fileID: String) {
         let box = statusBox(fileID: fileID)
         box.updateSyncStatus(.synced)
+        refreshSyncState()
     }
     
     /// Mark file sync as failed (called by SyncCoordinator)
@@ -222,6 +255,7 @@ class FileStatusService {
     func markSyncFailed(fileID: String, error: String) {
         let box = statusBox(fileID: fileID)
         box.updateSyncStatus(.error(error))
+        refreshSyncState()
     }
     
     /// Mark file as queued for sync (called by SyncCoordinator)
@@ -231,6 +265,7 @@ class FileStatusService {
     func markSyncQueued(fileID: String, operation: FileSyncStatus.QueuedOperation) {
         let box = statusBox(fileID: fileID)
         box.updateSyncStatus(.queued(operation: operation))
+        refreshSyncState()
     }
     
     /// Update sync download progress (called by SyncCoordinator)
@@ -241,6 +276,7 @@ class FileStatusService {
         let box = statusBox(fileID: fileID)
         let clampedProgress = min(max(progress, 0.0), 1.0)
         box.updateSyncStatus(.downloading(progress: clampedProgress))
+        refreshSyncState()
         
         // Auto-complete when done
         if clampedProgress >= 1.0 {

@@ -141,9 +141,14 @@ extension ExcalidrawCore {
     }
 
     @MainActor
-    public func togglePencilInterationMode(mode: ToolState.PencilInteractionMode) async throws {
+    public func setPointerInputPolicy(mode: ToolState.PencilInteractionMode) async throws {
         _ = try await webView.callAsyncJavaScript(
-            "window.excalidrawZHelper.togglePencilInterationMode(\(mode.rawValue));",
+            """
+            window.excalidrawZHelper.setPointerInputPolicy({
+              oneFingerAction: "\(mode.oneFingerAction)",
+              penPriority: \(mode.penPriority),
+            });
+            """,
             arguments: [:],
             contentWorld: .page
         )

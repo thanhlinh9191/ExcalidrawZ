@@ -164,6 +164,7 @@ struct HomeView: View {
 struct RecentlyFilesProvider: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var localFolderState: LocalFolderState
 
     var content: ([FileState.ActiveFile]) -> AnyView
     
@@ -258,9 +259,29 @@ struct RecentlyFilesProvider: View {
                     getRecentlyFiles()
                 }
             }
+            .onReceive(localFolderState.itemRemovedPublisher) { path in
+                handleLocalFileRemoved(path: path)
+            }
+            .onReceive(localFolderState.itemRenamedPublisher) { _ in
+                getRecentlyFiles()
+            }
+            .onReceive(localFolderState.refreshFilesPublisher) { _ in
+                getRecentlyFiles()
+            }
             .onAppear {
                 getRecentlyFiles()
             }
+    }
+
+    private func handleLocalFileRemoved(path: String) {
+        let standardizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
+        let nextFiles = recentlyFiles.filter { file in
+            guard case .localFile(let url) = file else { return true }
+            return url.standardizedFileURL.path != standardizedPath
+        }
+        guard nextFiles.count != recentlyFiles.count else { return }
+        recentlyFiles = nextFiles
+        lastRecentlyFileIDs = nextFiles.map(\.id)
     }
     
     private func getRecentlyFiles() {

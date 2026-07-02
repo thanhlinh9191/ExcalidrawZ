@@ -170,7 +170,32 @@ actor GroupRepository {
         let context = PersistenceController.shared.newTaskContext()
 
         // Check if trash group already exists
-        if let existingTrashObjectID = try await getTrashGroupObjectID() {
+        let existingTrashObjectID: NSManagedObjectID? = try await context.perform {
+            let fetchRequest = NSFetchRequest<Group>(entityName: "Group")
+            fetchRequest.predicate = NSPredicate(format: "type == %@", Group.GroupType.trash.rawValue)
+            fetchRequest.sortDescriptors = [
+                NSSortDescriptor(keyPath: \Group.createdAt, ascending: true)
+            ]
+            fetchRequest.fetchLimit = 1
+
+            guard let group = try context.fetch(fetchRequest).first else { return nil }
+
+            var didChange = false
+            if group.parent != nil {
+                group.parent = nil
+                didChange = true
+            }
+            if group.name?.isEmpty != false {
+                group.name = "Recently Deleted"
+                didChange = true
+            }
+            if didChange {
+                try context.save()
+            }
+
+            return group.objectID
+        }
+        if let existingTrashObjectID {
             return existingTrashObjectID
         }
 
@@ -221,18 +246,6 @@ actor GroupRepository {
     }
 
     // MARK: - Helper Methods
-
-    /// Get the trash group object ID
-    private func getTrashGroupObjectID() async throws -> NSManagedObjectID? {
-        let context = PersistenceController.shared.newTaskContext()
-
-        return try await context.perform {
-            let fetchRequest = NSFetchRequest<Group>(entityName: "Group")
-            fetchRequest.predicate = NSPredicate(format: "type == %@", Group.GroupType.trash.rawValue)
-            fetchRequest.fetchLimit = 1
-            return try context.fetch(fetchRequest).first?.objectID
-        }
-    }
 
     /// Get the default group object ID
     private func getDefaultGroupObjectID() async throws -> NSManagedObjectID? {

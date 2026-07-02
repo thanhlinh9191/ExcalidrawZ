@@ -1,7 +1,0 @@
-Leistungs- und Zuverlässigkeitsverbesserungen für die tägliche Arbeit auf der Zeichenfläche.
-
-- Dateien öffnen, schließen und wechseln sich flüssiger an.
-- Größere Zeichnungen werden schneller gespeichert und geladen.
-- Dateicovers, Checkpoint-Vorschauen und Bibliothekselement-Vorschauen sind zuverlässiger.
-- Verbesserte Vorschauzeilen im Dateiverlauf.
-- Besseres Layout für Mermaid-Bearbeitung und Vorschau auf dem Mac.

@@ -150,10 +150,31 @@ struct DrawingSettingsPanel: View {
             SettingSection(title: String(localizable: .settingsExcalidrawDrawingSettingsStrokeWidthTitle)) {
                 StrokeWidthPicker(
                     widths: [1, 2, 4],
-                    selectedWidth: settings.currentItemStrokeWidth ?? UserDrawingSettings.Defaults.strokeWidth
+                    selectedWidth: settings.strokeWidth ?? UserDrawingSettings.Defaults.strokeWidth
                 ) { width in
-                    settings.currentItemStrokeWidth = width
+                    settings.setStrokeWidth(width)
                     onSettingsChange()
+                }
+            }
+
+            // Stroke Variability (Pressure)
+            SettingSection(title: String(localizable: .settingsExcalidrawDrawingSettingsPressureTitle)) {
+                OptionButtonGroup(
+                    options: [
+                        UserDrawingSettings.StrokeVariability.constant,
+                        UserDrawingSettings.StrokeVariability.variable
+                    ],
+                    selectedValue: settings.currentItemStrokeVariability ?? UserDrawingSettings.Defaults.strokeVariability
+                ) { value in
+                    settings.currentItemStrokeVariability = value
+                    onSettingsChange()
+                } label: { value in
+                    switch value {
+                        case .constant:
+                            StrokeVariabilityConstantIcon()
+                        case .variable:
+                            StrokeVariabilityVariableIcon()
+                    }
                 }
             }
             

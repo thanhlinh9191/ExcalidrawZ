@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 import ChocofordUI
 
 #if canImport(UIKit)
@@ -14,11 +15,72 @@ typealias PlatformImage = UIImage
 typealias PlatformImage = NSImage
 #endif
 
-class FileItemPreviewCache: NSCache<NSString, PlatformImage> {
+final class FileItemPreviewCache: NSCache<NSString, PlatformImage> {
     static let shared = FileItemPreviewCache()
+
+#if os(iOS)
+    private static let retainedCostLimit = 96 * 1024 * 1024
+#else
+    private static let retainedCostLimit = 192 * 1024 * 1024
+#endif
+    private static let retainedCountLimit = 240
+
+    private struct RetainedPreview {
+        let image: PlatformImage
+        let cost: Int
+    }
+
+    private let retainedLock = NSLock()
+    private var retainedPreviews: [String: RetainedPreview] = [:]
+    private var retainedOrder: [String] = []
+    private var retainedTotalCost = 0
+
+    private override init() {
+        super.init()
+        countLimit = Self.retainedCountLimit
+        totalCostLimit = Self.retainedCostLimit
+    }
     
     static func cacheKey(forID id: String, colorScheme: ColorScheme) -> NSString {
         (id + (colorScheme == .light ? "_light" : "_dark")) as NSString
+    }
+
+    override func object(forKey key: NSString) -> PlatformImage? {
+        if let image = super.object(forKey: key) {
+            touchRetainedPreview(forKey: key)
+            return image
+        }
+
+        guard let retainedPreview = retainedPreview(forKey: key) else {
+            return nil
+        }
+
+        super.setObject(retainedPreview.image, forKey: key, cost: retainedPreview.cost)
+        return retainedPreview.image
+    }
+
+    override func setObject(_ obj: PlatformImage, forKey key: NSString) {
+        setObject(obj, forKey: key, cost: Self.estimatedMemoryCost(for: obj))
+    }
+
+    override func setObject(_ obj: PlatformImage, forKey key: NSString, cost g: Int) {
+        let cost = max(1, g)
+        super.setObject(obj, forKey: key, cost: cost)
+        retainPreview(obj, forKey: key, cost: cost)
+    }
+
+    override func removeObject(forKey key: NSString) {
+        super.removeObject(forKey: key)
+        removeRetainedPreview(forKey: key)
+    }
+
+    override func removeAllObjects() {
+        super.removeAllObjects()
+        retainedLock.lock()
+        retainedPreviews.removeAll()
+        retainedOrder.removeAll()
+        retainedTotalCost = 0
+        retainedLock.unlock()
     }
     
     func getPreviewCache(forID id: String, colorScheme: ColorScheme) -> PlatformImage? {
@@ -32,6 +94,93 @@ class FileItemPreviewCache: NSCache<NSString, PlatformImage> {
     func removePreviewCache(forID id: String) {
         self.removePreviewCache(forID: id, colorScheme: .light)
         self.removePreviewCache(forID: id, colorScheme: .dark)
+    }
+
+    private func retainedPreview(forKey key: NSString) -> RetainedPreview? {
+        let key = key as String
+        retainedLock.lock()
+        defer { retainedLock.unlock() }
+
+        guard let preview = retainedPreviews[key] else {
+            return nil
+        }
+
+        moveRetainedPreviewToEnd(forKey: key)
+        return preview
+    }
+
+    private func retainPreview(
+        _ image: PlatformImage,
+        forKey key: NSString,
+        cost: Int
+    ) {
+        let key = key as String
+        retainedLock.lock()
+
+        if let existingPreview = retainedPreviews[key] {
+            retainedTotalCost -= existingPreview.cost
+            retainedOrder.removeAll { $0 == key }
+        }
+
+        retainedPreviews[key] = RetainedPreview(image: image, cost: cost)
+        retainedOrder.append(key)
+        retainedTotalCost += cost
+
+        trimRetainedPreviewsIfNeeded()
+        retainedLock.unlock()
+    }
+
+    private func touchRetainedPreview(forKey key: NSString) {
+        let key = key as String
+        retainedLock.lock()
+        if retainedPreviews[key] != nil {
+            moveRetainedPreviewToEnd(forKey: key)
+        }
+        retainedLock.unlock()
+    }
+
+    private func removeRetainedPreview(forKey key: NSString) {
+        let key = key as String
+        retainedLock.lock()
+        if let existingPreview = retainedPreviews.removeValue(forKey: key) {
+            retainedTotalCost -= existingPreview.cost
+        }
+        retainedOrder.removeAll { $0 == key }
+        retainedLock.unlock()
+    }
+
+    private func moveRetainedPreviewToEnd(forKey key: String) {
+        retainedOrder.removeAll { $0 == key }
+        retainedOrder.append(key)
+    }
+
+    private func trimRetainedPreviewsIfNeeded() {
+        while retainedOrder.count > Self.retainedCountLimit
+                || (retainedTotalCost > Self.retainedCostLimit && retainedOrder.count > 1) {
+            let key = retainedOrder.removeFirst()
+            if let preview = retainedPreviews.removeValue(forKey: key) {
+                retainedTotalCost -= preview.cost
+            }
+            super.removeObject(forKey: key as NSString)
+        }
+    }
+
+    private static func estimatedMemoryCost(for image: PlatformImage) -> Int {
+#if canImport(UIKit)
+        if let cgImage = image.cgImage {
+            return max(1, cgImage.bytesPerRow * cgImage.height)
+        }
+
+        let scale = max(1, image.scale)
+        return max(1, Int(image.size.width * scale * image.size.height * scale * 4))
+#elseif canImport(AppKit)
+        var rect = CGRect(origin: .zero, size: image.size)
+        if let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) {
+            return max(1, cgImage.bytesPerRow * cgImage.height)
+        }
+
+        return max(1, Int(image.size.width * image.size.height * 4))
+#endif
     }
 }
 

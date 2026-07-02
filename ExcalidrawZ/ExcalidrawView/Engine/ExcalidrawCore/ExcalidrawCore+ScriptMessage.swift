@@ -64,21 +64,20 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     if message.data.type == .lasso { return }
                     if message.data.type == .hand {
                         self.lastTool = .hand
-                        DispatchQueue.main.async {
-                            self.parent?.toolState.setActivedTool(.hand)
+                        self.withActiveToolbarToolState { toolState in
+                            toolState.setActiveToolFromWeb(.hand)
                         }
                     } else {
-                        self.parent?.toolState.previousActivatedTool = self.parent?.toolState.activatedTool
                         if let tool = ExcalidrawTool(from: message.data.type) {
                             self.lastTool = tool
-                            DispatchQueue.main.async {
-                                self.parent?.toolState.setActivedTool(tool)
+                            self.withActiveToolbarToolState { toolState in
+                                toolState.setActiveToolFromWeb(tool)
                             }
                         }
                     }
                 case .didToggleToolLock(let message):
-                    DispatchQueue.main.async {
-                        self.parent?.toolState.isToolLocked = message.data
+                    self.withActiveToolbarToolState { toolState in
+                        toolState.isToolLocked = message.data
                     }
                 case .onLoadLibrary(let message):
                     self.onLoadLibrary(library: message.data)
@@ -92,8 +91,13 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                             self.canUndo = !message.data.disabled
                     }
                 case .didPenDown:
-                    self.parent?.toolState.inPenMode = true
-                    NotificationCenter.default.post(name: .didPencilConnected, object: nil)
+                    Task { @MainActor in
+                        guard let toolState = self.parent?.toolState,
+                              toolState.excalidrawWebCoordinator === self else { return }
+                        toolState.inPenMode = true
+                        try? await toolState.setPencilInteractionMode(toolState.pencilInteractionMode)
+                        NotificationCenter.default.post(name: .didPencilConnected, object: nil)
+                    }
                 case .didSelectElements(let message):
                     DispatchQueue.main.async {
                         self.updateSelectedElementIDs(message.data.map(\.id))
@@ -192,6 +196,17 @@ extension ExcalidrawCore: WKScriptMessageHandler {
         } catch {
             self.logger.error("[WKScriptMessageHandler] Decode received message failed. Raw data:\n\(String(describing: message.body))")
             self.publishError(error)
+        }
+    }
+
+    private func withActiveToolbarToolState(_ update: @escaping (ToolState) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  let toolState = self.parent?.toolState,
+                  toolState.excalidrawWebCoordinator === self else {
+                return
+            }
+            update(toolState)
         }
     }
 
@@ -998,7 +1013,8 @@ extension ExcalidrawCore {
         let currentItemFontSize, currentItemOpacity, currentItemRoughness: Int
 //        let currentItemStartArrowhead: JSONNull?
         let currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle: String
-        let currentItemStrokeWidth: Int
+        let currentItemStrokeWidthKey: String?
+        let currentItemStrokeVariability: String?
         let currentItemTextAlign, cursorButton: String
 //        let editingGroupID: JSONNull?
         let activeTool: ActiveTool
@@ -1021,7 +1037,7 @@ extension ExcalidrawCore {
 //        let selectedLinearElement: JSONNull?
 
         enum CodingKeys: String, CodingKey {
-            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
+            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidthKey, currentItemStrokeVariability, currentItemTextAlign, cursorButton
             
             case activeTool, penMode, penDetected, exportBackground, exportScale, exportEmbedScene, exportWithDarkMode, defaultSidebarDockedPreference, lastPointerDownWith, name
             case previousSelectedElementIDS = "previousSelectedElementIds"

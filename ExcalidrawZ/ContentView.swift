@@ -49,10 +49,12 @@ struct ContentView: View {
 #endif
     
     @State private var cloudContainerEventChangeListener: AnyCancellable?
+    @State private var cloudContainerImportCleanupTask: Task<Void, Never>?
     
     @State private var isFirstAppear = true
 
     private static let activeFileCloseInspectorDismissalDelay: UInt64 = 400_000_000
+    private static let cloudKitImportSettleDelay: UInt64 = 4_000_000_000
     
     var body: some View {
         content()
@@ -221,10 +223,23 @@ struct ContentView: View {
         self.cloudContainerEventChangeListener = NotificationCenter.default.publisher(
             for: NSPersistentCloudKitContainer.eventChangedNotification
         ).sink { notification in
-            Task {
-                try? await fileState.mergeDefaultGroupAndTrashIfNeeded(context: viewContext)
+            guard let event = notification.userInfo?["event"] as? NSPersistentCloudKitContainer.Event,
+                  event.type == .import,
+                  event.succeeded else {
+                return
+            }
+
+            Task { @MainActor in
+                cloudContainerImportCleanupTask?.cancel()
+                cloudContainerImportCleanupTask = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: Self.cloudKitImportSettleDelay)
+                    guard !Task.isCancelled else { return }
+                    try? await fileState.mergeDefaultGroupAndTrashIfNeeded(context: viewContext)
+                }
             }
         }
+
+        try? await fileState.mergeDefaultGroupAndTrashIfNeeded(context: viewContext)
     }
 }
 

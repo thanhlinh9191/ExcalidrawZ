@@ -186,10 +186,12 @@ struct CompactGroupBrowserView: View {
             }
         }()
         
-        self._files = FetchRequest(sortDescriptors: sortDescriptors, predicate: NSPredicate(
-            format: group.groupType == .trash ? "inTrash == YES" : "group == %@ AND inTrash == NO",
-            group
-        ))
+        self._files = FetchRequest(
+            sortDescriptors: sortDescriptors,
+            predicate: group.groupType == .trash
+            ? NSPredicate(format: "inTrash == YES")
+            : NSPredicate(format: "group == %@ AND inTrash == NO", group)
+        )
     }
 
     var body: some View {

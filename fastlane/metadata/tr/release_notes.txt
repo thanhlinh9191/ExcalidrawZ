@@ -1,7 +1,0 @@
-Günlük tuval çalışmaları için performans ve güvenilirlik iyileştirmeleri.
-
-- Dosya açma, kapatma ve geçiş işlemleri daha akıcı.
-- Büyük çizimlerde daha hızlı kaydetme ve yükleme.
-- Dosya kapakları, checkpoint önizlemeleri ve kütüphane öğesi önizlemeleri daha güvenilir.
-- Dosya geçmişindeki önizleme satırları iyileştirildi.
-- Mac'te Mermaid düzenleme ve önizleme yerleşimi iyileştirildi.

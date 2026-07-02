@@ -132,6 +132,11 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             endStateChangeSuppression(canvasToken)
         }
 
+        let dataForLoad = await dataByApplyingLocalViewportIfNeeded(
+            data,
+            fileID: fileID
+        )
+
         let maxAttempts = 2
         for attempt in 1...maxAttempts {
             guard !Task.isCancelled else {
@@ -149,7 +154,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 }
             }
 
-            let result = await loadPreparedFile(fileID: fileID, data: data, force: force)
+            let result = await loadPreparedFile(fileID: fileID, data: dataForLoad, force: force)
 
             if validateCurrentParentFile {
                 let isStillCurrent = await MainActor.run {
@@ -185,7 +190,13 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         guard let core else { return }
 
         if let rejectionReason = receivedStateChangedRejectionReason(isCoreLoading: core.isLoading) {
+#if DEBUG
+            core.logger.debug(
+                "Ignored stateChanged during file load: \(rejectionReason) \(debugStateChangedSummary(data))"
+            )
+#else
             core.logger.debug("Ignored stateChanged during file load: \(rejectionReason)")
+#endif
             return
         }
 
@@ -330,10 +341,15 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                 }
                 guard let existingContent else { return }
 
+                let fileDataForPersistence = try await canvasFileDataForPersistence(
+                    fileData,
+                    currentFileID: currentFileID
+                )
+
                 let preparedUpdate = try await Task.detached(priority: .utility) { () async throws -> ExcalidrawFile.PreparedCanvasDataUpdate in
                     try ExcalidrawFile.prepareCanvasDataUpdate(
                         existingContent: existingContent,
-                        data: fileData
+                        data: fileDataForPersistence
                     )
                 }.value
 
@@ -347,6 +363,14 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
                     if markProgrammaticCommit, let currentFileID {
                         core.parent?.fileState.noteProgrammaticCanvasMutation(fileID: currentFileID)
                     }
+                    guard persistPreparedLibraryCanvasUpdateIfNeeded(
+                        preparedUpdate,
+                        currentFileID: currentFileID,
+                        type: type,
+                        core: core
+                    ) else {
+                        return
+                    }
                     core.parent?.file?.apply(preparedUpdate)
                 }
         }
@@ -358,6 +382,95 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         from snapshot: ExcalidrawCore.CurrentFileSnapshot
     ) throws -> ExcalidrawCore.ExcalidrawFileData {
         return .init(documentData: try snapshot.documentData(), elements: nil, files: [:])
+    }
+
+    private func dataByApplyingLocalViewportIfNeeded(
+        _ data: Data,
+        fileID: String
+    ) async -> Data {
+        guard await usesLocalViewportSidecar(fileID: fileID) else {
+            return data
+        }
+
+        do {
+            return try await ExcalidrawViewportStateStore.shared.contentDataByApplyingStoredViewport(
+                to: data,
+                fileID: fileID
+            )
+        } catch {
+            core?.logger.warning("Failed to apply local viewport state for file \(fileID): \(error)")
+            return data
+        }
+    }
+
+    private func canvasFileDataForPersistence(
+        _ fileData: ExcalidrawCore.ExcalidrawFileData,
+        currentFileID: String?
+    ) async throws -> ExcalidrawCore.ExcalidrawFileData {
+        var fileDataForPersistence = fileData
+
+        if let currentFileID,
+           await usesLocalViewportSidecar(fileID: currentFileID) {
+            fileDataForPersistence.documentData = try await ExcalidrawViewportStateStore.shared.contentDataBySeparatingViewport(
+                from: fileData.documentData,
+                fileID: currentFileID
+            )
+        }
+
+        fileDataForPersistence.documentData = try ExcalidrawDocumentAppStatePersistence.documentData(
+            fileDataForPersistence.documentData,
+            settingNativeFileName: await nativeFileNameForPersistence(currentFileID: currentFileID)
+        )
+        return fileDataForPersistence
+    }
+
+    private func usesLocalViewportSidecar(fileID: String) async -> Bool {
+        await MainActor.run {
+            guard core?.parent?.type == .normal,
+                  let activeFile = core?.parent?.fileState.currentActiveFile,
+                  case .file(let file) = activeFile else {
+                return false
+            }
+            return file.id?.uuidString == fileID
+        }
+    }
+
+    private func nativeFileNameForPersistence(currentFileID: String?) async -> String? {
+        await MainActor.run {
+            guard let activeFile = core?.parent?.fileState.currentActiveFile,
+                  currentFileID == nil || activeFile.id == currentFileID else {
+                return nil
+            }
+            return activeFile.name
+        }
+    }
+
+    @MainActor
+    private func persistPreparedLibraryCanvasUpdateIfNeeded(
+        _ preparedUpdate: ExcalidrawFile.PreparedCanvasDataUpdate,
+        currentFileID: String?,
+        type: ExcalidrawCanvasView.ExcalidrawType?,
+        core: ExcalidrawCore
+    ) -> Bool {
+        guard type == .normal else {
+            return true
+        }
+        guard let currentFileID,
+              let fileState = core.parent?.fileState,
+              case .file(let activeFile) = fileState.currentActiveFile else {
+            return true
+        }
+        guard activeFile.id?.uuidString == currentFileID else {
+            core.logger.debug(
+                "Skipped persisting prepared library canvas update: active file mismatch expected=\(currentFileID) actual=\(activeFile.id?.uuidString ?? "nil")"
+            )
+            return false
+        }
+
+        var file = ExcalidrawFile()
+        file.id = currentFileID
+        file.apply(preparedUpdate)
+        return fileState.persistPreparedLibraryCanvasUpdate(activeFile, with: file)
     }
 
     private static func elements(
@@ -552,6 +665,35 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
             lhs.startedAt < rhs.startedAt
         }
     }
+
+#if DEBUG
+    private func debugStateChangedSummary(_ data: ExcalidrawCore.StateChangedMessageData) -> String {
+        if let metadata = data.metadata, data.fileData == nil {
+            return debugMetadataSummary(metadata)
+        }
+
+        if data.fileData != nil {
+            return "payload=fullSnapshot"
+        }
+
+        return "payload=empty"
+    }
+
+    private func debugMetadataSummary(_ metadata: ExcalidrawCore.StateChangedMetadata) -> String {
+        [
+            "payload=metadata",
+            "revision=\(metadata.revision.map(String.init) ?? "nil")",
+            "dirty=\(metadata.dirty.map(String.init) ?? "nil")",
+            "contentDirty=\(metadata.contentDirty.map(String.init) ?? "nil")",
+            "appStateDirty=\(metadata.appStateDirty.map(String.init) ?? "nil")",
+            "currentFileId=\(metadata.currentFileId ?? "nil")",
+            "elements=\(metadata.elementCount.map(String.init) ?? "nil")",
+            "fileElements=\(metadata.fileElementCount.map(String.init) ?? "nil")",
+            "appStateKeys=\(metadata.appStateKeyCount.map(String.init) ?? "nil")",
+            "appStateChars=\(metadata.appStateChars.map(String.init) ?? "nil")"
+        ].joined(separator: " ")
+    }
+#endif
 }
 
 extension ExcalidrawDocumentSyncController: ExcalidrawDocumentSnapshotCoordinatorDelegate {

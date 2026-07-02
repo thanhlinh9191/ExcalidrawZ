@@ -402,27 +402,70 @@ final class ToolState: ObservableObject {
     enum PencilInteractionMode: Int, Hashable {
         case fingerSelect = 0
         case fingerMove
+        case none
+
+        var oneFingerAction: String {
+            switch self {
+                case .fingerSelect:
+                    "select"
+                case .fingerMove:
+                    "pan"
+                case .none:
+                    "none"
+            }
+        }
+
+        var penPriority: Bool {
+            switch self {
+                case .fingerSelect, .fingerMove:
+                    true
+                case .none:
+                    false
+            }
+        }
     }
 
-    @AppStorage("PencilInteractionMode") var pencilInteractionMode: PencilInteractionMode = .fingerSelect
+    static let pencilInteractionModeDefaultsKey = "PencilInteractionMode"
+
+    private static func storedPencilInteractionMode() -> PencilInteractionMode {
+        let rawValue = UserDefaults.standard.integer(forKey: pencilInteractionModeDefaultsKey)
+        return PencilInteractionMode(rawValue: rawValue) ?? .fingerSelect
+    }
+
+    var pencilInteractionMode: PencilInteractionMode {
+        get { Self.storedPencilInteractionMode() }
+        set {
+            guard newValue != pencilInteractionMode else { return }
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue.rawValue, forKey: Self.pencilInteractionModeDefaultsKey)
+        }
+    }
     
     func setActivedTool(_ tool: ExcalidrawTool?, animation: Animation? = .smooth) {
         withAnimation(animation) {
             self.activatedTool = tool
         }
     }
+
+    func setActiveToolFromWeb(_ tool: ExcalidrawTool, animation: Animation? = .smooth) {
+        setActiveToolMirror(tool, animation: animation)
+    }
+
+    private func setActiveToolMirror(_ tool: ExcalidrawTool, animation: Animation? = .smooth) {
+        guard activatedTool != tool else { return }
+        previousActivatedTool = activatedTool
+        setActivedTool(tool, animation: animation)
+    }
     
     func toggleTool(_ tool: ExcalidrawTool) async throws {
-        logger.debug("Toggle tool: \(String(describing: tool))")
-
         let coordinator = excalidrawWebCoordinator
-        let previousTool = await MainActor.run { activatedTool }
         let previousLastTool = coordinator?.lastTool
-
-        await MainActor.run {
-            coordinator?.lastTool = tool
-            setActivedTool(tool)
+        if coordinator != nil, previousLastTool == tool {
+            return
         }
+
+        coordinator?.lastTool = tool
+        logger.debug("Toggle tool: \(String(describing: tool))")
 
         do {
             switch tool {
@@ -439,10 +482,14 @@ final class ToolState: ObservableObject {
                         try await coordinator?.toggleToolbarAction(key: tool.rawValue)
                     }
             }
+            await MainActor.run {
+                setActiveToolMirror(tool)
+            }
         } catch {
             await MainActor.run {
-                coordinator?.lastTool = previousLastTool
-                setActivedTool(previousTool)
+                if coordinator?.lastTool == tool {
+                    coordinator?.lastTool = previousLastTool
+                }
             }
             throw error
         }
@@ -483,17 +530,35 @@ final class ToolState: ObservableObject {
         try await excalidrawWebCoordinator?.toggleDeleteAction()
     }
     
-    func togglePencilInterationMode(_ mode: PencilInteractionMode) async throws {
-        try await excalidrawWebCoordinator?.togglePencilInterationMode(mode: mode)
+    func setPencilInteractionMode(_ mode: PencilInteractionMode) async throws {
+        let shouldSync = await MainActor.run {
+            self.pencilInteractionMode = mode
+            return self.inPenMode
+        }
+        guard shouldSync else { return }
+        try await excalidrawWebCoordinator?.setPointerInputPolicy(mode: mode)
     }
     
     func togglePenMode(enabled: Bool, pencilConnected: Bool = false) async throws {
+        let previousPenMode = await MainActor.run { self.inPenMode }
+        let interactionMode = await MainActor.run { self.pencilInteractionMode }
+
         await MainActor.run {
             self.inPenMode = enabled
         }
-        try await excalidrawWebCoordinator?.togglePenMode(enabled: enabled)
-        if pencilConnected || !enabled {
-            try await excalidrawWebCoordinator?.connectPencil(enabled: enabled)
+        do {
+            try await excalidrawWebCoordinator?.togglePenMode(enabled: enabled)
+            if pencilConnected || !enabled {
+                try await excalidrawWebCoordinator?.connectPencil(enabled: enabled)
+            }
+            if enabled {
+                try await excalidrawWebCoordinator?.setPointerInputPolicy(mode: interactionMode)
+            }
+        } catch {
+            await MainActor.run {
+                self.inPenMode = previousPenMode
+            }
+            throw error
         }
     }
     
@@ -506,6 +571,18 @@ final class ToolState: ObservableObject {
             }
         }
     }
+}
+
+struct PencilPenModeChangeRequest {
+    let enabled: Bool
+    let pencilConnected: Bool
+}
+
+extension Notification.Name {
+    static let pencilInteractionModeDidChange = Notification.Name("PencilInteractionModeDidChange")
+    static let pencilPenModeChangeRequested = Notification.Name("PencilPenModeChangeRequested")
+    static let pencilPenModeStateRequested = Notification.Name("PencilPenModeStateRequested")
+    static let pencilPenModeStateDidChange = Notification.Name("PencilPenModeStateDidChange")
 }
 
 fileprivate struct Cursor: Shape {

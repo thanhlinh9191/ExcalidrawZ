@@ -323,7 +323,11 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
                 )
                 return
             }
-            let fileData = try delegate.snapshotCoordinatorMakeFileData(from: snapshot)
+            let fileData = try await capturedCanvasFileDataForPersistence(
+                delegate.snapshotCoordinatorMakeFileData(from: snapshot),
+                expectedFileID: expectedFileID,
+                target: target
+            )
             var file = ExcalidrawFile()
             file.id = expectedFileID
             file.content = capturedContent ?? file.content
@@ -340,5 +344,27 @@ final class ExcalidrawDocumentSnapshotCoordinator: @unchecked Sendable {
             core.logger.error("Failed to commit background dirty canvas snapshot \(reason): \(error)")
             core.publishError(error)
         }
+    }
+
+    private func capturedCanvasFileDataForPersistence(
+        _ fileData: ExcalidrawCore.ExcalidrawFileData,
+        expectedFileID: String,
+        target: FileState.CapturedCanvasSaveTarget
+    ) async throws -> ExcalidrawCore.ExcalidrawFileData {
+        var fileDataForPersistence = fileData
+
+        if case .libraryFile(_, let fileName, _, _) = target.kind {
+            fileDataForPersistence.documentData = try await ExcalidrawViewportStateStore.shared
+                .contentDataBySeparatingViewport(
+                    from: fileDataForPersistence.documentData,
+                    fileID: expectedFileID
+                )
+            fileDataForPersistence.documentData = try ExcalidrawDocumentAppStatePersistence.documentData(
+                fileDataForPersistence.documentData,
+                settingNativeFileName: fileName
+            )
+        }
+
+        return fileDataForPersistence
     }
 }

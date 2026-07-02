@@ -22,17 +22,7 @@ struct ExcalidrawToolbar: View {
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var toolState: ToolState
     @EnvironmentObject var layoutState: LayoutState
-    
-    private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
-        switch fileState.currentActiveFile {
-            case .collaborationFile:
-                fileState.excalidrawCollaborationWebCoordinator ?? toolState.excalidrawWebCoordinator
-            default:
-                fileState.excalidrawWebCoordinator ?? toolState.excalidrawWebCoordinator
-        }
-    }
-    
-    
+
     var body: some View {
         if fileState.currentActiveFile != nil {
             toolbar()
@@ -444,8 +434,8 @@ struct ExcalidrawToolbar: View {
                 Spacer()
                 
                 if toolState.activatedTool == .cursor {
-                    if let activeCoordinator {
-                        CursorModeTrailingButton(coordinator: activeCoordinator) {
+                    if let coordinator = toolState.excalidrawWebCoordinator {
+                        CursorModeTrailingButton(coordinator: coordinator) {
                             toolState.setActivedTool(.hand)
                         }
                     } else {

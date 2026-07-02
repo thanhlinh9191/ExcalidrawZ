@@ -154,6 +154,7 @@ struct LocalFoldersView: View {
                 folder: folder,
                 onDelete: onDeleteSelected
             )
+            .id(SidebarGroupScrollTarget.localFolder(folder.objectID))
             .modifier(LocalFolderDragModifier(folder: folder))
             .simultaneousGesture(TapGesture(count: 2).onEnded {
                 fileState.expandToGroup(folder.objectID)
@@ -218,6 +219,7 @@ struct LocalFoldersView: View {
                 folder: folder,
                 onDelete: onDeleteSelected
             )
+            .id(SidebarGroupScrollTarget.localFolder(folder.objectID))
             .modifier(LocalFolderDragModifier(folder: folder))
             .modifier(
                 LocalFolderContextMenuModifier(

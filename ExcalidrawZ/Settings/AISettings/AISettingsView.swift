@@ -63,6 +63,10 @@ struct AISettingsView: View {
         false
 #endif
     }
+
+    var canRunMCPServer: Bool {
+        ExcalidrawZMCPServerController.isAvailable
+    }
     
     var body: some View {
         SwiftUI.Group {

@@ -8,6 +8,9 @@
 import SwiftUI
 import Combine
 import CoreData
+#if os(macOS)
+import AppKit
+#endif
 #if os(iOS)
 import UIKit
 #endif
@@ -24,7 +27,6 @@ struct ExcalidrawEditor: View {
     @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var localFolderState: LocalFolderState
-    @EnvironmentObject var toolState: ToolState
     /// Drives the AI chat island overlay — its presentation toggle is global,
     /// but the *anchor* (bottom-center) is editor-local, hence the overlay
     /// lives here rather than at the NavigationSplitView level.
@@ -35,6 +37,8 @@ struct ExcalidrawEditor: View {
 
     @Binding var activeFile: FileState.ActiveFile?
     var interactionEnabled: Bool
+
+    @StateObject private var toolState = ToolState()
 
     @State private var isSettingsPresented = false
     @State private var excalidrawFile: ExcalidrawFile?
@@ -132,6 +136,16 @@ struct ExcalidrawEditor: View {
     private var nativeViewportInsetsForWeb: ExcalidrawNativeViewportInsets {
         shouldFloatNavigationToolbarOverCanvas ? measuredNativeViewportInsets : .zero
     }
+
+#if os(macOS)
+    private var shouldShowFloatingToolbarDragRegion: Bool {
+        shouldFloatNavigationToolbarOverCanvas && activeFile != nil && !isLoadingFile
+    }
+
+    private var floatingToolbarDragRegionHeight: CGFloat {
+        max(measuredNativeViewportInsets.top, 72)
+    }
+#endif
     
     
     @State private var canvasLoadingState: ExcalidrawCanvasView.LoadingState = .loading
@@ -151,7 +165,7 @@ struct ExcalidrawEditor: View {
                         applyExcalidrawFile(val)
                     },
                     loadingState: $canvasLoadingState,
-                    interactionEnabled: interactionEnabled,
+                    interactionEnabled: interactionEnabled && !isInCollaborationSpace,
                     onDocumentLoadFinished: { fileID in
                         documentLoadCompletion = ExcalidrawDocumentLoadCompletion(fileID: fileID)
                         revealLoadedFileAfterRender(fileID: fileID)
@@ -177,6 +191,24 @@ struct ExcalidrawEditor: View {
 #if os(iOS)
             .dismissKeyboardOnCanvasTap()
 #endif
+            .background {
+#if os(iOS)
+                Color.clear
+                    .anchorPreference(key: FileHomeItemPreferenceKey.self, value: .bounds) { value in
+                        [FileHomeItemTransitionPreferenceID.viewportDestination: value]
+                    }
+#endif
+            }
+
+#if os(macOS)
+            if shouldShowFloatingToolbarDragRegion {
+                WindowDragRegion()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: floatingToolbarDragRegionHeight)
+                    .ignoresSafeArea(.container, edges: .top)
+                    .transition(.opacity)
+            }
+#endif
 
             ExcalidrawTrailingControls()
                 .opacity(isLoadingFile ? 0 : 1)
@@ -192,6 +224,21 @@ struct ExcalidrawEditor: View {
             AIChatIslandOverlay(canvasSize: editorContentSize)
 #endif
         }
+//#if DEBUG
+//        .overlay(alignment: .bottomTrailing) {
+//#if os(iOS)
+//            if !usesCompactIOSAIChatSurfaces {
+//                IndicatorOverlay()
+//                    .padding(.trailing, 8)
+//                    .ignoresSafeArea(.container, edges: .bottom)
+//            }
+//#else
+//            IndicatorOverlay()
+//                .padding(.trailing, 8)
+//                .padding(.bottom, 18)
+//#endif
+//        }
+//#endif
 #if os(iOS)
         .overlay(alignment: .bottom) {
             CompactAIChatInputOverlay()
@@ -294,6 +341,43 @@ struct ExcalidrawEditor: View {
             recordVisitTask?.cancel()
             recordVisitTask = nil
         }
+        .modifier(ExcalidrawEditorToolbarModifier())
+        .onReceive(NotificationCenter.default.publisher(for: .pencilInteractionModeDidChange)) { notification in
+            guard let mode = notification.object as? ToolState.PencilInteractionMode else { return }
+            Task {
+                do {
+                    try await toolState.setPencilInteractionMode(mode)
+                } catch {
+                    alertToast(error)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pencilPenModeChangeRequested)) { notification in
+            guard let request = notification.object as? PencilPenModeChangeRequest else { return }
+            Task {
+                do {
+                    try await toolState.togglePenMode(
+                        enabled: request.enabled,
+                        pencilConnected: request.pencilConnected
+                    )
+                } catch {
+                    alertToast(error)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pencilPenModeStateRequested)) { _ in
+            NotificationCenter.default.post(
+                name: .pencilPenModeStateDidChange,
+                object: toolState.inPenMode
+            )
+        }
+        .watch(value: toolState.inPenMode, initial: true) { _, inPenMode in
+            NotificationCenter.default.post(
+                name: .pencilPenModeStateDidChange,
+                object: inPenMode
+            )
+        }
+        .environmentObject(toolState)
     }
 
     private func collapseCompactAISurfacesIfCurrentFileIsTrashed() {
@@ -373,7 +457,7 @@ struct ExcalidrawEditor: View {
         do {
             switch activeFile {
                 case .file(let file):
-                    let content = try await file.loadContent()
+                    let content = try await file.loadContent(applyingLocalViewport: true)
                     let parsedFile = try? ExcalidrawFile(data: content, id: activeFile.id)
                     await MainActor.run {
                         guard self.activeFile?.id == activeFile.id else { return }
@@ -529,7 +613,19 @@ struct ExcalidrawEditor: View {
 
         self.logger.info("pullUpdatingFromCloud")
         do {
-            let file = try ExcalidrawFile(data: latestData, id: excalidrawFile?.id)
+            let data: Data
+            if let activeFile,
+               case .file = activeFile,
+               let fileID = excalidrawFile?.id {
+                data = try await ExcalidrawViewportStateStore.shared
+                    .contentDataByApplyingStoredViewport(
+                        to: latestData,
+                        fileID: fileID
+                    )
+            } else {
+                data = latestData
+            }
+            let file = try ExcalidrawFile(data: data, id: excalidrawFile?.id)
             await MainActor.run {
                 self.excalidrawFile = file
                 NotificationCenter.default.post(name: .forceReloadExcalidrawFile, object: nil)
@@ -607,8 +703,8 @@ struct ExcalidrawEditor: View {
                     logger.debug("Ignored canvas update: no persistent changes id=\(file.id)")
                     return .ignoredNoChanges
                 }
-                logger.debug("Persisting library canvas update id=\(file.id) elements=\(file.elements.count)")
-                return fileState.updateFile(activeFile, with: file) ? .accepted : .rejected
+                logger.debug("Mirroring library canvas update id=\(activeFile.id?.uuidString ?? file.id) elements=\(file.elements.count)")
+                return .accepted
 
             case .localFile(let url):
                 guard case .localFolder(let folder) = fileState.currentActiveGroup else { return .rejected }
@@ -678,6 +774,32 @@ private struct NativeViewportInsetsMeasurementView: View {
         .allowsHitTesting(false)
     }
 }
+
+#if os(macOS)
+private struct WindowDragRegion: NSViewRepresentable {
+    func makeNSView(context: Context) -> DragView {
+        DragView()
+    }
+
+    func updateNSView(_ nsView: DragView, context: Context) {}
+
+    final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            bounds.contains(point) ? self : nil
+        }
+
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+            true
+        }
+
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+    }
+}
+#endif
 
 #if os(iOS)
 private extension View {

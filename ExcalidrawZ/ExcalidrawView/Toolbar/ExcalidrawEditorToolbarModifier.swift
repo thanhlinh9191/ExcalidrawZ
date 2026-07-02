@@ -35,6 +35,10 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @State private var lockedFileAccessRequest: LockedFileAccessRequest?
     @State private var existingRecoveryKeyLockRequest: LockedFileAccessRequest?
     @State private var isLockingFile = false
+#if os(iOS)
+    @AppStorage(ApplePencilDefaults.isFirstOpenPencilModeKey) private var isFirstOpenPencilMode = true
+    @State private var isPencilModeTipsPresented = false
+#endif
 #if os(macOS)
     @State private var isMacOSToolPickerToolbarContentPresented = false
     @State private var macOSToolPickerToolbarContentPresentationTask: Task<Void, Never>?
@@ -148,6 +152,16 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
             for: .navigationBar
         )
         .navigationBarTitleDisplayMode(.inline) // <- fix principal toolbar
+        .watch(value: toolState.inPenMode) { inPenMode in
+            guard inPenMode else { return }
+            presentPencilModeTipsIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .didPencilConnected)) { _ in
+            presentPencilModeTipsIfNeeded()
+        }
+        .sheet(isPresented: $isPencilModeTipsPresented) {
+            PencilTipsSheetView()
+        }
 #elseif os(macOS)
         .apply { view in
             if #available(macOS 15.0, *) {
@@ -192,6 +206,12 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
 
         sharedPrimaryActionToolbarContent()
+    }
+
+    private func presentPencilModeTipsIfNeeded() {
+        guard isFirstOpenPencilMode else { return }
+        isPencilModeTipsPresented = true
+        isFirstOpenPencilMode = false
     }
 #endif
 
@@ -665,12 +685,14 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 }
                 
                 Task {
-                    toolState.inPenMode.toggle()
+                    let enabled = !toolState.inPenMode
                     do {
-                        try await toolState.excalidrawWebCoordinator?.togglePenMode(enabled: toolState.inPenMode)
-                        try await toolState.toggleTool(.freedraw)
+                        try await toolState.togglePenMode(enabled: enabled, pencilConnected: enabled)
+                        if enabled {
+                            try await toolState.toggleTool(.freedraw)
+                        }
                     } catch {
-                        toolState.inPenMode.toggle()
+                        alertToast(error)
                     }
                 }
             } label: {

@@ -9,13 +9,11 @@ import SwiftUI
 import CoreData
 import Combine
 
-/// ViewModifier that handles CloudKit sync events and UI for database files
+/// ViewModifier that handles CloudKit sync events for database files.
 private struct CloudKitSyncModifier: ViewModifier {
-    @Environment(\.alertToast) var alertToast
     @EnvironmentObject var fileState: FileState
 
     let activeFile: FileState.ActiveFile?
-    let isLoadingFile: Bool
     let onReloadNeeded: () -> Void
 
     @State private var isImporting = false
@@ -24,28 +22,6 @@ private struct CloudKitSyncModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .overlay(alignment: .top) {
-                if case .file = activeFile,
-                   isImporting,
-                   !isLoadingFile {
-                    HStack {
-                        ProgressView().controlSize(.small)
-                        Text(.localizable(.iCloudSyncingDataTitle))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background {
-                        if #available(iOS 26.0, macOS 26.0, *) {
-                            Capsule().glassEffect(in: Capsule())
-                        } else {
-                            Capsule().fill(.ultraThinMaterial)
-                        }
-                    }
-                    .padding()
-                    .transition(.move(edge: .top))
-                }
-            }
-            .animation(.easeOut, value: isImporting)
             .task {
                 startCloudKitEventListener()
             }
@@ -105,16 +81,14 @@ private struct CloudKitSyncModifier: ViewModifier {
 // MARK: - View Extensions
 
 extension View {
-    /// Apply CloudKit sync monitoring and UI overlay
+    /// Apply CloudKit sync monitoring.
     @ViewBuilder
     func applyCloudKitSync(
         activeFile: FileState.ActiveFile?,
-        isLoadingFile: Bool,
         onReloadNeeded: @escaping () -> Void
     ) -> some View {
         self.modifier(CloudKitSyncModifier(
             activeFile: activeFile,
-            isLoadingFile: isLoadingFile,
             onReloadNeeded: onReloadNeeded
         ))
     }
